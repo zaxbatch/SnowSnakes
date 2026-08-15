@@ -24,11 +24,19 @@ class Comic {
   }
 
   // Create a new comic
-  static async create({ title, scene, dialogue, caption, characters, author_id }) {
+  static async create({ title, scene, dialogue, caption, characters, author_id, image_url }) {
     const result = await pool.query(
-      `INSERT INTO comics (title, scene, dialogue, caption, characters, author_id)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [title, scene || '📢', dialogue, caption || '', characters || [], author_id]
+      `INSERT INTO comics (title, scene, dialogue, caption, characters, author_id, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [
+        title, 
+        scene || '📢', 
+        dialogue || '', 
+        caption || '', 
+        characters || [], 
+        author_id || null, 
+        image_url || null
+      ]
     );
     return result.rows[0];
   }

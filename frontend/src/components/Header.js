@@ -271,10 +271,6 @@ const Header = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>JOKE ID (optional)</label>
-                  <input className="form-control" type="number" value={doodleJokeId} onChange={(e) => setDoodleJokeId(e.target.value)} />
-                </div>
-                <div className="form-group">
                   <label>CHARACTER ID (optional)</label>
                   <input className="form-control" type="number" value={doodleCharacterId} onChange={(e) => setDoodleCharacterId(e.target.value)} />
                 </div>
@@ -350,8 +346,8 @@ const Header = () => {
                 <input className="form-control" value={comicScene} onChange={(e) => setComicScene(e.target.value)} maxLength={2} />
               </div>
               <div className="form-group">
-                <label>DIALOGUE <span style={{ color: '#ff0000' }}>*</span></label>
-                <textarea className="form-control" value={comicDialogue} onChange={(e) => setComicDialogue(e.target.value)} required />
+                <label>DIALOGUE <span style={{ color: '#ff0000' }}>(optional)</span></label>
+                <textarea className="form-control" value={comicDialogue} onChange={(e) => setComicDialogue(e.target.value)} />
               </div>
               <div className="form-group">
                 <label>CAPTION <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
