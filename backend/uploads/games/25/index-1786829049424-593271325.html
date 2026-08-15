@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Drag-N-Haul G's | Saiyan Strength Trucking</title>
+  <!-- Google Fonts for anime-style typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,800&family=Orbitron:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <!-- Font Awesome 6 (free icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 30%, #0a0f1e, #03060c);
+      font-family: 'Inter', sans-serif;
+      color: #f0f3fa;
+      line-height: 1.4;
+      scroll-behavior: smooth;
+    }
+
+    /* DRAGON BALL Z VIBES: ENERGY ORANGE, SAIYAN BLUE, GOLDEN AURA */
+    :root {
+      --saiyan-orange: #f97316;
+      --saiyan-glow: #ffb347;
+      --ultra-instinct: #e0f2fe;
+      --galaxy-purple: #6b21a5;
+      --scouter-green: #22d3ee;
+      --dark-char: #111827;
+    }
+
+    /* custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e1f2c;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--saiyan-orange);
+      border-radius: 10px;
+    }
+
+    /* lightning fx for headers */
+    h1, h2, .logo {
+      font-family: 'Orbitron', monospace;
+      letter-spacing: 2px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* header with power aura */
+    .header {
+      padding: 1.2rem 0;
+      border-bottom: 2px solid rgba(249, 115, 22, 0.4);
+      box-shadow: 0 0 15px rgba(249, 115, 22, 0.2);
+      backdrop-filter: blur(3px);
+      background: rgba(3, 6, 12, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-size: 1.9rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffb347, #f97316);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 8px rgba(249,115,22,0.5);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo i {
+      background: none;
+      color: #f97316;
+      text-shadow: 0 0 6px #ffb347;
+      font-size: 2rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: #eef2ff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.2s;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      position: relative;
+    }
+    .nav-links a:hover {
+      color: var(--saiyan-orange);
+      text-shadow: 0 0 5px #f97316;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 0;
+      width: 0%;
+      height: 2px;
+      background: linear-gradient(90deg, #f97316, #ffcf4a);
+      transition: 0.3s;
+    }
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    /* hero / kamehameha section */
+    .hero {
+      padding: 5rem 0 6rem 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 3rem;
+    }
+    .hero-content {
+      flex: 1;
+      min-width: 260px;
+    }
+    .hero-badge {
+      background: rgba(249, 115, 22, 0.2);
+      backdrop-filter: blur(4px);
+      display: inline-block;
+      padding: 0.3rem 1rem;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      border-left: 3px solid #f97316;
+      color: #ffcf4a;
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 900;
+      line-height: 1.2;
+      background: linear-gradient(to right, #ffffff, #ffb347);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, #f97316, #ffcf4a);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      margin: 1.5rem 0;
+      color: #cbd5e6;
+      max-width: 500px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 0.9rem 2rem;
+      border-radius: 60px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Orbitron', monospace;
+    }
+    .btn-primary {
+      background: linear-gradient(95deg, #f97316, #fdba74);
+      color: #0a0f1e;
+      box-shadow: 0 0 12px #f97316;
+      border: none;
+    }
+    .btn-primary:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 20px #ffb347;
+      background: linear-gradient(95deg, #ff8c2e, #ffcf4a);
+    }
+    .btn-outline {
+      border: 2px solid #f97316;
+      background: transparent;
+      color: #f97316;
+    }
+    .btn-outline:hover {
+      background: rgba(249, 115, 22, 0.2);
+      box-shadow: 0 0 8px #f97316;
+    }
+    .hero-image {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+    .hero-image i {
+      font-size: 14rem;
+      filter: drop-shadow(0 0 20px #f97316);
+      color: #ffa559;
+      transition: 0.3s;
+    }
+    .hero-image i:hover {
+      filter: drop-shadow(0 0 35px #ffb347);
+      transform: scale(1.02);
+    }
+
+    /* energy aura lines */
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 2rem;
+      position: relative;
+      display: inline-block;
+      width: auto;
+    }
+    .section-title:after {
+      content: "⚡";
+      font-size: 1.8rem;
+      margin-left: 10px;
+      color: #f97316;
+      text-shadow: 0 0 6px orange;
+    }
+    .title-wrapper {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0;
+    }
+    .service-card {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(8px);
+      border-radius: 2rem;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      transition: all 0.3s;
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    .service-card:hover {
+      transform: translateY(-8px);
+      border-color: #f97316;
+      box-shadow: 0 0 22px rgba(249,115,22,0.4);
+    }
+    .service-card i {
+      font-size: 3rem;
+      color: #f97316;
+      margin-bottom: 1rem;
+    }
+    .service-card h3 {
+      font-size: 1.7rem;
+      margin-bottom: 0.8rem;
+      font-family: 'Orbitron', monospace;
+    }
+    .power-level {
+      font-size: 0.8rem;
+      background: #1e293b;
+      display: inline-block;
+      padding: 0.2rem 1rem;
+      border-radius: 20px;
+      margin-top: 1rem;
+      color: #ffcf4a;
+    }
+
+    /* FLEET / DRAGON BALL TRUCKS */
+    .fleet-showcase {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: center;
+      margin: 2rem 0 3rem;
+    }
+    .truck-card {
+      background: linear-gradient(145deg, #0f172a, #030712);
+      border-radius: 2rem;
+      padding: 1.5rem;
+      width: 280px;
+      text-align: center;
+      border-right: 3px solid #f97316;
+      border-bottom: 3px solid #f97316;
+    }
+    .truck-card i {
+      font-size: 4rem;
+      color: #ffb347;
+    }
+    .truck-card h4 {
+      font-size: 1.5rem;
+      margin: 0.7rem 0;
+    }
+
+    /* star dragon radar (stats) */
+    .stats {
+      background: radial-gradient(circle at left, #0f172a, #020617);
+      padding: 3rem 0;
+      border-radius: 3rem;
+      margin: 3rem 0;
+    }
+    .stats-grid {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      text-align: center;
+      gap: 2rem;
+    }
+    .stat-item {
+      font-size: 2rem;
+      font-weight: 800;
+      font-family: 'Orbitron', monospace;
+    }
+    .stat-item span {
+      font-size: 3.5rem;
+      color: #f97316;
+      display: block;
+    }
+
+    /* contact & ki blast form */
+    .contact-section {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 3rem;
+      padding: 2.5rem;
+      margin: 2rem 0 4rem;
+      border: 1px solid #f97316;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 1rem;
+      border-radius: 2rem;
+      border: none;
+      background: #1e293b;
+      color: white;
+      font-family: inherit;
+      outline: none;
+      transition: 0.2s;
+    }
+    input:focus, textarea:focus {
+      box-shadow: 0 0 0 2px #f97316;
+    }
+    button[type="submit"] {
+      background: linear-gradient(95deg, #f97316, #ea580c);
+      border: none;
+      padding: 1rem 2rem;
+      font-weight: bold;
+      border-radius: 3rem;
+      font-family: 'Orbitron', monospace;
+      cursor: pointer;
+      color: white;
+      transition: 0.2s;
+    }
+    button[type="submit"]:hover {
+      background: #ff8c2e;
+      box-shadow: 0 0 15px #f97316;
+    }
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid rgba(249,115,22,0.3);
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-top: 2rem;
+    }
+
+    /* floating energy orbs */
+    .energy-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      background: radial-gradient(circle, rgba(249,115,22,0.2), transparent);
+      border-radius: 50%;
+      filter: blur(25px);
+      animation: float 12s infinite alternate;
+    }
+    @keyframes float {
+      0% { transform: translateY(0px) translateX(0px); opacity: 0.4; }
+      100% { transform: translateY(-40px) translateX(25px); opacity: 0.8; }
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2.3rem;
+      }
+      .nav {
+        flex-direction: column;
+      }
+      .hero-image i {
+        font-size: 9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="energy-bg">
+    <div class="orb" style="width: 250px; height: 250px; top: 10%; left: -5%;"></div>
+    <div class="orb" style="width: 400px; height: 400px; bottom: 5%; right: -10%; background: radial-gradient(circle, rgba(34,211,238,0.15), transparent);"></div>
+    <div class="orb" style="width: 180px; height: 180px; top: 60%; left: 15%; background: radial-gradient(circle, rgba(249,115,22,0.2), transparent);"></div>
+  </div>
+
+  <header class="header">
+    <div class="container">
+      <div class="nav">
+        <div class="logo">
+          <i class="fas fa-dragon"></i>
+          <span>DRAG-N-HAUL G'S</span>
+          <i class="fas fa-bolt"></i>
+        </div>
+        <ul class="nav-links">
+          <li><a href="#home">HOME</a></li>
+          <li><a href="#services">TECHNIQUES</a></li>
+          <li><a href="#fleet">FLEET</a></li>
+          <li><a href="#contact">SENZU CONTACT</a></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- home section / hero -->
+    <section id="home">
+      <div class="container">
+        <div class="hero">
+          <div class="hero-content">
+            <div class="hero-badge">
+              <i class="fas fa-charging-station"></i> OVER 9000 MILES DELIVERED
+            </div>
+            <h1>Unleash the <span>Saiyan</span> <br>Hauling Power!</h1>
+            <p>Instant Transmission Freight • Kaio-Ken Speeds • Spirit Bomb Reliability. From Capsule Corp docks to the Hyperbolic Time Chamber warehouse, we deliver with Z-Fighter precision.</p>
+            <div class="btn-group">
+              <a href="#contact" class="btn btn-primary"><i class="fas fa-dharmachakra"></i> KAMEHAMEHA QUOTE</a>
+              <a href="#services" class="btn btn-outline"><i class="fas fa-eye"></i> SCOUT OUR SERVICES</a>
+            </div>
+          </div>
+          <div class="hero-image">
+            <i class="fas fa-truck-moving"></i>
+            <!-- subtle energy aura -->
+            <div style="position: absolute; inset: 0; background: radial-gradient(circle, #f9731640, transparent); border-radius: 50%; filter: blur(30px); z-index:-1;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SERVICES / TECHNIQUES section with DBZ flavour -->
+    <section id="services">
+      <div class="container">
+        <div class="title-wrapper">
+          <h2 class="section-title">Hauling Techniques</h2>
+          <p style="text-align: center; max-width: 600px; margin: 0 auto;">Trained under Master Roshi & Vegeta's royal logistics</p>
+        </div>
+        <div class="services-grid">
+          <div class="service-card">
+            <i class="fas fa-bolt"></i>
+            <h3>Instant Transmission</h3>
+            <p>Real-time tracking & expedited freight. Cross-state delivery before you finish a Senzu bean.</p>
+            <div class="power-level">POW. LVL. 9400</div>
+          </div>
+          <div class="service-card">
+            <i class="fas fa-dragon"></i>
+            <h3>Dragon Dash</h3>
+            <p>Overnight hauling with legendary speed. Perfect for urgent cargo and time-sensitive materials.</p>
+            <div class="power-level">KAIO-KEN x4</div>
+          </div>
+          <div class="service-card">
+            <i class="fas fa-shield-alt"></i>
+            <h3>Spirit Bomb Logistics</h3>
+            <p>Heavy-duty, oversized freight. We gather energy from every driver to move mountains.</p>
+            <div class="power-level">GENKI DAMA</div>
+          </div>
+          <div class="service-card">
+            <i class="fas fa-boxes"></i>
+            <h3>Frieza Force Fleet</h3>
+            <p>Refrigerated & temperature-controlled shipments. Nothing stops our coolers.</p>
+            <div class="power-level">500° BELOW ZERO</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FLEET / legendary trucks -->
+    <section id="fleet">
+      <div class="container">
+        <div class="title-wrapper">
+          <h2 class="section-title">Saiyan Armada</h2>
+          <p>Our legendary vehicles — each one a Z-warrior on asphalt</p>
+        </div>
+        <div class="fleet-showcase">
+          <div class="truck-card">
+            <i class="fas fa-truck"></i>
+            <h4>SSJ Freightliner</h4>
+            <p>Golden aura, 600HP, 3,200 lb-ft torque</p>
+            <small><i class="fas fa-star" style="color: gold;"></i> Super Saiyan Edition</small>
+          </div>
+          <div class="truck-card">
+            <i class="fas fa-truck-ramp-box"></i>
+            <h4>Vegeta's Pride</h4>
+            <p>Royal flush flatbed · 53' capacity · Royal emblem</p>
+            <small><i class="fas fa-crown"></i> Prince of all Haulers</small>
+          </div>
+          <div class="truck-card">
+            <i class="fas fa-trailer"></i>
+            <h4>Gohan's Scholar</h4>
+            <p>Eco-friendly hybrid engine · Smart navigation</p>
+            <small>Ultimate Gohan precision</small>
+          </div>
+          <div class="truck-card">
+            <i class="fas fa-charging-station"></i>
+            <h4>Android 18 Express</h4>
+            <p>Infinite energy electric fleet · zero emissions</p>
+            <small>Infinite ki range</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS: power levels in numbers -->
+    <div class="container">
+      <div class="stats">
+        <div class="stats-grid">
+          <div class="stat-item"><span>1,250+</span> Deliveries</div>
+          <div class="stat-item"><span>47</span> States Covered</div>
+          <div class="stat-item"><span>99.7%</span> On-Time (King Kai verified)</div>
+          <div class="stat-item"><span>∞</span> Saiyan Pride</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACT / SENZU BEAN MESSAGES -->
+    <section id="contact">
+      <div class="container">
+        <div class="contact-section">
+          <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 class="section-title" style="font-size: 2rem;">Send a <i class="fas fa-seedling"></i> Senzu Message</h2>
+            <p>Our dispatch team (Krillen & Piccolo) will respond within 2 hours — or we'll give you a Senzu bean!</p>
+          </div>
+          <form id="contactForm" action="#" method="post">
+            <div class="form-group">
+              <input type="text" id="name" placeholder="Your Name / Z-Fighter Alias" required>
+            </div>
+            <div class="form-group">
+              <input type="email" id="email" placeholder="Scouter Email Address" required>
+            </div>
+            <div class="form-group">
+              <textarea id="message" rows="4" placeholder="Describe your haul: weight, type, delivery planet (Earth or Namek) ..." required></textarea>
+            </div>
+            <div style="text-align: center;">
+              <button type="submit" id="submitBtn"><i class="fas fa-fist-raised"></i> FIRE KAMEHAMEHA REQUEST</button>
+            </div>
+            <p id="formFeedback" style="margin-top: 1rem; text-align: center; font-size: 0.9rem; color: #ffcf4a;"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p><i class="fas fa-dragon"></i> Drag-N-Haul G's — "It's Over 9000 Miles On Time!"  <i class="fas fa-charging-station"></i></p>
+      <p style="margin-top: 0.5rem;">© 2026 · Powered by Senzu Beans & Capsule Corp · All 7 Dragon Balls used for navigation</p>
+      <div style="margin-top: 0.5rem;">
+        <i class="fab fa-twitter"></i>   <i class="fab fa-instagram"></i>   <i class="fab fa-facebook"></i>
+      </div>
+    </div>
+  </footer>
+
+  <!-- simple javascript to emulate a ki blast form response with anime alert -->
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const feedback = document.getElementById('formFeedback');
+
+      if (!name || !email || !message) {
+        feedback.innerHTML = '<i class="fas fa-exclamation-triangle"></i> You must charge your energy! Fill all fields.';
+        feedback.style.color = "#f97316";
+        return;
+      }
+      if (!email.includes('@')) {
+        feedback.innerHTML = '<i class="fas fa-dragon"></i> Invalid scouter email, try again!';
+        return;
+      }
+
+      // simulate sending + dragon ball sound effect (console)
+      feedback.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Transmitting Instant Transmission...';
+      setTimeout(() => {
+        feedback.innerHTML = '<i class="fas fa-check-circle"></i> Successful! Our team will contact you in less than 1 hour. KAI-KEN!';
+        feedback.style.color = "#a3e635";
+        document.getElementById('contactForm').reset();
+        // extra flair: small confetti? but keep simple
+        const btn = document.getElementById('submitBtn');
+        btn.style.transform = "scale(0.98)";
+        setTimeout(() => { btn.style.transform = ""; }, 200);
+      }, 1200);
+    });
+
+    // smooth anchor navigation
+    document.querySelectorAll('.nav-links a, .btn-primary, .btn-outline').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const hash = this.getAttribute('href');
+        if (hash && hash.startsWith('#') && hash !== '#') {
+          e.preventDefault();
+          const target = document.querySelector(hash);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      });
+    });
+  </script>
+  <!-- extra animated hover effect on hero image -->
+</body>
+</html>

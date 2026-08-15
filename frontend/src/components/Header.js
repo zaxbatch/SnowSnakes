@@ -1,27 +1,30 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
+
+  // ─── Modal visibility ───
+  const [showJokeModal, setShowJokeModal] = useState(false);
   const [showDoodleModal, setShowDoodleModal] = useState(false);
   const [showComicModal, setShowComicModal] = useState(false);
-  const [showJokeModal, setShowJokeModal] = useState(false);
+  const [showGameModal, setShowGameModal] = useState(false);
 
-  // Joke form state
+  // ─── Joke form state ───
   const [jokeContent, setJokeContent] = useState('');
   const [jokePunchline, setJokePunchline] = useState('');
   const [jokeTags, setJokeTags] = useState('');
   const [jokeSeries, setJokeSeries] = useState('');
 
-  // Doodle form state
+  // ─── Doodle form state ───
   const [doodleTitle, setDoodleTitle] = useState('');
   const [doodleImageUrl, setDoodleImageUrl] = useState('');
   const [doodleImagePreview, setDoodleImagePreview] = useState('');
   const [doodleJokeId, setDoodleJokeId] = useState('');
   const [doodleCharacterId, setDoodleCharacterId] = useState('');
 
-  // Comic form state
+  // ─── Comic form state ───
   const [comicTitle, setComicTitle] = useState('');
   const [comicImageUrl, setComicImageUrl] = useState('');
   const [comicImagePreview, setComicImagePreview] = useState('');
@@ -30,12 +33,88 @@ const Header = () => {
   const [comicCaption, setComicCaption] = useState('');
   const [comicCharacters, setComicCharacters] = useState('');
 
-  // ─── Cloudinary Widget (Signed) ───
+  // ─── Game form state ───
+  const [gameTitle, setGameTitle] = useState('');
+  const [gameDescription, setGameDescription] = useState('');
+  const [gameIcon, setGameIcon] = useState('🎮');
+  const [gameTags, setGameTags] = useState('');
+  const [gameCode, setGameCode] = useState('');
+  const [gameFiles, setGameFiles] = useState([]);
+  const [gameFilesList, setGameFilesList] = useState([]);
+  const [isUploadingGame, setIsUploadingGame] = useState(false);
 
+  const dropZoneRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // ─── Prevent default browser behaviour for drag/drop globally ──
+  useEffect(() => {
+    const preventDefaults = (e) => {
+      e.preventDefault();
+    };
+    window.addEventListener('dragover', preventDefaults);
+    window.addEventListener('drop', preventDefaults);
+    document.addEventListener('dragover', preventDefaults);
+    document.addEventListener('drop', preventDefaults);
+
+    return () => {
+      window.removeEventListener('dragover', preventDefaults);
+      window.removeEventListener('drop', preventDefaults);
+      document.removeEventListener('dragover', preventDefaults);
+      document.removeEventListener('drop', preventDefaults);
+    };
+  }, []);
+
+  // ─── Native DnD listeners on the drop zone ─────────────
+  useEffect(() => {
+    const zone = dropZoneRef.current;
+    if (!zone) return;
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
+      zone.style.borderColor = '#ff00ff';
+      zone.style.background = '#ffffcc';
+    };
+
+    const handleDragLeave = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      zone.style.borderColor = '#003399';
+      zone.style.background = '#f8f9fa';
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      zone.style.borderColor = '#003399';
+      zone.style.background = '#f8f9fa';
+
+      const files = Array.from(e.dataTransfer.files);
+      console.log('📂 Dropped files:', files);
+      if (files.length > 0) {
+        setGameFiles(files);
+        setGameFilesList(files.map(f => f.name));
+        alert(`✅ Dropped ${files.length} file(s)`);
+      }
+    };
+
+    zone.addEventListener('dragover', handleDragOver);
+    zone.addEventListener('dragleave', handleDragLeave);
+    zone.addEventListener('drop', handleDrop);
+
+    return () => {
+      zone.removeEventListener('dragover', handleDragOver);
+      zone.removeEventListener('dragleave', handleDragLeave);
+      zone.removeEventListener('drop', handleDrop);
+    };
+  }, []);
+
+  // ─── Cloudinary Widget ───
   const openWidget = (setImageUrl, setPreview) => {
     const widget = window.cloudinary.createUploadWidget(
       {
-        cloudName: 'r6natkse',  // your cloud name
+        cloudName: 'r6natkse',
         uploadPreset: 'snowsnakes_unsigned',
         folder: 'snowsnakes',
         sources: ['local', 'url', 'camera'],
@@ -60,7 +139,7 @@ const Header = () => {
     widget.open();
   };
 
-  // ─── Form Handlers ───
+  // ─── Form Handlers ──────────────────────────────────────
 
   const handleAddJoke = async (e) => {
     e.preventDefault();
@@ -135,6 +214,75 @@ const Header = () => {
     }
   };
 
+  const handleGameFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setGameFiles(files);
+    setGameFilesList(files.map(f => f.name));
+  };
+
+  const handleAddGame = async (e) => {
+    e.preventDefault();
+    if (!gameTitle || !gameDescription) {
+      alert('Title and description are required!');
+      return;
+    }
+
+    setIsUploadingGame(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 600000);
+
+    try {
+      const formData = new FormData();
+      formData.append('title', gameTitle);
+      formData.append('description', gameDescription);
+      formData.append('icon', gameIcon || '🎮');
+      formData.append('tags', gameTags);
+      formData.append('code', gameCode);
+
+      for (let i = 0; i < gameFiles.length; i++) {
+        formData.append('files', gameFiles[i]);
+      }
+
+      const response = await fetch('/api/games', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Submission failed');
+      }
+
+      const data = await response.json();
+      console.log('✅ Game submitted:', data);
+
+      setShowGameModal(false);
+      setGameTitle('');
+      setGameDescription('');
+      setGameIcon('🎮');
+      setGameTags('');
+      setGameCode('');
+      setGameFiles([]);
+      setGameFilesList([]);
+      alert('🎮 Game submitted successfully!');
+      window.location.reload();
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        alert('Upload timed out after 10 minutes. Try reducing the number of files.');
+      } else {
+        console.error('❌ Error submitting game:', err);
+        alert('Error submitting game: ' + err.message);
+      }
+    } finally {
+      setIsUploadingGame(false);
+    }
+  };
+
+  // ─── Render ─────────────────────────────────────────────
+
   return (
     <>
       <header className="header">
@@ -172,6 +320,9 @@ const Header = () => {
           </button>
           <button className="btn btn-purple" onClick={() => setShowComicModal(true)}>
             <i className="fas fa-bullhorn"></i> NEW COMIC
+          </button>
+          <button className="btn btn-success" onClick={() => setShowGameModal(true)}>
+            <i className="fas fa-upload"></i> SUBMIT GAME
           </button>
         </div>
       </header>
@@ -211,7 +362,7 @@ const Header = () => {
         </div>
       )}
 
-      {/* ─── DOODLE MODAL with Cloudinary ─── */}
+      {/* ─── DOODLE MODAL ─── */}
       {showDoodleModal && (
         <div className="modal-overlay active" onClick={() => setShowDoodleModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -271,6 +422,10 @@ const Header = () => {
 
               <div className="form-row">
                 <div className="form-group">
+                  <label>JOKE ID (optional)</label>
+                  <input className="form-control" type="number" value={doodleJokeId} onChange={(e) => setDoodleJokeId(e.target.value)} />
+                </div>
+                <div className="form-group">
                   <label>CHARACTER ID (optional)</label>
                   <input className="form-control" type="number" value={doodleCharacterId} onChange={(e) => setDoodleCharacterId(e.target.value)} />
                 </div>
@@ -283,7 +438,7 @@ const Header = () => {
         </div>
       )}
 
-      {/* ─── COMIC MODAL with Cloudinary ─── */}
+      {/* ─── COMIC MODAL ─── */}
       {showComicModal && (
         <div className="modal-overlay active" onClick={() => setShowComicModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -346,7 +501,7 @@ const Header = () => {
                 <input className="form-control" value={comicScene} onChange={(e) => setComicScene(e.target.value)} maxLength={2} />
               </div>
               <div className="form-group">
-                <label>DIALOGUE <span style={{ color: '#ff0000' }}>(optional)</span></label>
+                <label>DIALOGUE <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
                 <textarea className="form-control" value={comicDialogue} onChange={(e) => setComicDialogue(e.target.value)} />
               </div>
               <div className="form-group">
@@ -359,6 +514,151 @@ const Header = () => {
               </div>
               <button className="btn btn-purple" type="submit" style={{ width: '100%' }}>
                 <i className="fas fa-save"></i> PUBLISH COMIC
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── GAME MODAL ─── */}
+      {showGameModal && (
+        <div
+          className="modal-overlay active"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowGameModal(false);
+          }}
+          // Allow drag events to pass through the overlay to the drop zone
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => e.preventDefault()}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            onDragOver={(e) => e.stopPropagation()}
+            onDrop={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>🎮 Submit a Game</h2>
+              <button className="modal-close" onClick={() => setShowGameModal(false)}>×</button>
+            </div>
+            <form onSubmit={handleAddGame}>
+              <div className="form-group">
+                <label>GAME TITLE <span style={{ color: '#ff0000' }}>*</span></label>
+                <input
+                  className="form-control"
+                  value={gameTitle}
+                  onChange={(e) => setGameTitle(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>DESCRIPTION <span style={{ color: '#ff0000' }}>*</span></label>
+                <textarea
+                  className="form-control"
+                  value={gameDescription}
+                  onChange={(e) => setGameDescription(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>🎨 ICON EMOJI</label>
+                  <input
+                    className="form-control"
+                    value={gameIcon}
+                    onChange={(e) => setGameIcon(e.target.value)}
+                    maxLength={2}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>🏷️ TAGS (comma separated)</label>
+                  <input
+                    className="form-control"
+                    value={gameTags}
+                    onChange={(e) => setGameTags(e.target.value)}
+                    placeholder="arcade, puzzle, adventure"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>📁 GAME FILES (drag & drop or click to select)</label>
+                <div
+                  ref={dropZoneRef}
+                  className="drop-zone"
+                  style={{
+                    border: '4px dashed #003399',
+                    padding: '20px',
+                    textAlign: 'center',
+                    background: '#f8f9fa',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    minHeight: '100px',
+                    borderRadius: '0px',
+                  }}
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  <div style={{ fontSize: '40px', marginBottom: '10px' }}>📂</div>
+                  <p style={{ color: '#003399', fontWeight: 'bold' }}>
+                    Drag & drop your game files here<br />
+                    <span style={{ fontSize: '12px', color: '#7f8c8d' }}>or click to browse</span>
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    id="game-file-input"
+                    style={{ display: 'none' }}
+                    multiple
+                    webkitdirectory="true"
+                    onChange={handleGameFileChange}
+                  />
+                  {gameFilesList.length > 0 && (
+                    <div style={{ marginTop: '15px' }}>
+                      {gameFilesList.map((name, idx) => (
+                        <span
+                          key={idx}
+                          style={{
+                            display: 'inline-block',
+                            background: '#e8f4f8',
+                            border: '2px solid #003399',
+                            padding: '4px 12px',
+                            margin: '4px',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            color: '#003399',
+                          }}
+                        >
+                          📄 {name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
+                  Supported: HTML, JS, CSS, PNG, JPG, GIF, MP3, MP4, and more.
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>💻 GAME CODE <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
+                <textarea
+                  className="form-control"
+                  value={gameCode}
+                  onChange={(e) => setGameCode(e.target.value)}
+                  placeholder="function myGame() { // Your game code here }"
+                  style={{ minHeight: '80px', fontFamily: 'monospace' }}
+                />
+              </div>
+
+              <button
+                className="btn btn-success"
+                type="submit"
+                style={{ width: '100%' }}
+                disabled={isUploadingGame}
+              >
+                <i className="fas fa-upload"></i> {isUploadingGame ? 'SUBMITTING...' : 'SUBMIT GAME'}
               </button>
             </form>
           </div>

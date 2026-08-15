@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>SOFT CRASH // a very human feeling website</title>
+  <style>
+    /* ---------------------------------------------
+      THIS IS NOT A GRID. THIS IS A FEELING.
+      hand-coded quirks, weird margins, intentional chaos
+      like a zine from another dimension
+    --------------------------------------------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #fef7e8;
+      background-image: repeating-linear-gradient(45deg, #ffeedd 0px, #ffeedd 2px, #fff3e6 2px, #fff3e6 8px);
+      font-family: 'Courier New', 'Times New Roman', 'Georgia', monospace;
+      color: #1e2a2a;
+      padding: 2rem 1rem;
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="27" viewBox="0 0 24 27"><polygon points="2,2 22,13 12,16 2,25" fill="%23ff8866" stroke="%23332211" stroke-width="1.5"/><circle cx="12" cy="13" r="2" fill="white"/></svg>') 12 5, auto;
+    }
+
+    /* weird sticky tape effect */
+    .tape {
+      position: fixed;
+      top: 20px;
+      right: 30px;
+      background: rgba(255,248,205,0.9);
+      padding: 0.3rem 1.2rem;
+      font-size: 0.7rem;
+      font-family: monospace;
+      transform: rotate(6deg);
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+      border-left: 1px dashed #ccaa77;
+      z-index: 999;
+      backdrop-filter: blur(2px);
+      pointer-events: none;
+    }
+
+    /* main container — no symmetry */
+    .weird-world {
+      max-width: 1300px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* header that tilts */
+    .broken-header {
+      text-align: right;
+      margin-bottom: 4rem;
+      border-bottom: 3px dotted #ffaa88;
+      padding-bottom: 1rem;
+      transform: skewY(-1deg);
+    }
+    h1 {
+      font-size: 4.2rem;
+      font-weight: 800;
+      font-family: 'Georgia', serif;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, #cc5533, #aa6644, #997755);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 4px 4px 0px #ffe0b5;
+      line-height: 1;
+    }
+    .sub {
+      font-size: 1rem;
+      background: #ffe0b5;
+      display: inline-block;
+      padding: 0.2rem 1rem;
+      margin-top: 0.5rem;
+      border-radius: 40px;
+      font-style: italic;
+    }
+
+    /* hand-drawn card system — organic */
+    .messy-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: space-between;
+    }
+    .card {
+      background: #fffaf2;
+      border-radius: 48px 24px 56px 24px;
+      box-shadow: 12px 14px 0 #ccaa88;
+      padding: 1.8rem;
+      flex: 1 1 280px;
+      transition: all 0.2s ease;
+      border: 1px solid #eeddcc;
+      transform: rotate(var(--rot, 0deg));
+    }
+    .card:nth-child(odd) { --rot: -0.8deg; background: #fff5ea; }
+    .card:nth-child(3n) { --rot: 1.2deg; background: #fffaf0; }
+    .card:hover {
+      transform: rotate(0deg) translateY(-10px);
+      box-shadow: 18px 20px 0 #bb9977;
+      background: #fffff2;
+    }
+    .card h2 {
+      font-size: 1.8rem;
+      border-left: 8px solid #ffaa77;
+      padding-left: 0.8rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    /* SOUND MACHINE - weird oscillators */
+    .button-lab {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 1.5rem 0;
+    }
+    .sound-btn {
+      background: #f0e2d0;
+      border: 2px solid #aa7a5a;
+      padding: 0.5rem 1.2rem;
+      border-radius: 60px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.06s linear;
+      font-family: monospace;
+      box-shadow: 3px 3px 0 #bb8866;
+    }
+    .sound-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 #bb8866;
+    }
+
+    /* hand-crafted beat sequence (step visual) */
+    .step-strip {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+    .beat {
+      width: 38px;
+      height: 38px;
+      background: #edd5bc;
+      border-radius: 12px 4px 16px 4px;
+      cursor: pointer;
+      transition: 0.05s;
+      border: 1px solid #ccaa88;
+    }
+    .beat.active {
+      background: #ffaa66;
+      box-shadow: 0 0 0 2px #ffdd99, 0 0 0 4px #aa6644;
+    }
+    .play-panel {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .retro-btn {
+      background: #2c1e12;
+      color: #ffddbb;
+      border: none;
+      padding: 6px 18px;
+      font-family: monospace;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+    }
+
+    /* drawing space — interactive scribble */
+    .sketch-zone {
+      background: #fff9ef;
+      border: 3px dashed #ccaa88;
+      border-radius: 28px;
+      min-height: 260px;
+      margin: 1.5rem 0;
+      cursor: crosshair;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 2px #ffeee0, 0 8px 12px rgba(0,0,0,0.05);
+    }
+    canvas#drawCanvas {
+      display: block;
+      width: 100%;
+      height: 260px;
+      background: #fffcf5;
+    }
+
+    /* weird slider */
+    .weird-slider {
+      margin: 20px 0;
+    }
+    input[type="range"] {
+      width: 100%;
+      background: #eeddcc;
+      height: 5px;
+      border-radius: 10px;
+    }
+
+    /* glitchy footer */
+    .footer-junk {
+      margin-top: 4rem;
+      text-align: center;
+      font-size: 0.7rem;
+      background: #ffe5cf;
+      padding: 1rem;
+      border-radius: 80px 20px 80px 20px;
+      font-family: monospace;
+      word-break: break-word;
+    }
+
+    @media (max-width: 700px) {
+      h1 { font-size: 2.6rem; }
+      .card { flex-basis: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="tape">📼  handmade glitch   •   version 0.92α  •  made by a human at 2am</div>
+<div class="weird-world">
+  <div class="broken-header">
+    <h1>soft crash //<br>imperfect playground</h1>
+    <div class="sub">✦ a website that sweats a little ✦</div>
+  </div>
+
+  <div class="messy-grid">
+    <!-- card 1: wonky beat machine -->
+    <div class="card">
+      <h2>🥁  wonky beat</h2>
+      <p style="margin-bottom: 12px;">tap the squares → 8-step lo-fi pulse</p>
+      <div class="step-strip" id="stepContainer"></div>
+      <div class="play-panel">
+        <button class="retro-btn" id="playBeat">▶ play</button>
+        <button class="retro-btn" id="stopBeat">■ stop</button>
+        <button class="retro-btn" id="randomBeat">🎲 random</button>
+      </div>
+      <div class="weird-slider">
+        <label>🐌 BPM → 🐇</label>
+        <input type="range" id="bpmSlider" min="60" max="160" value="100">
+        <span id="bpmVal">100</span>
+      </div>
+      <div class="button-lab">
+        <div class="sound-btn" data-sound="kick">💥 kick</div>
+        <div class="sound-btn" data-sound="snare">🥁 snare</div>
+        <div class="sound-btn" data-sound="hat">🔔 hat</div>
+        <div class="sound-btn" data-sound="bass">🎸 bass</div>
+      </div>
+    </div>
+
+    <!-- card 2: weird synthesizer + voice (clunky but fun) -->
+    <div class="card">
+      <h2>🌀  analog guts</h2>
+      <div class="button-lab">
+        <div class="sound-btn" data-note="C">C note</div>
+        <div class="sound-btn" data-note="D">D note</div>
+        <div class="sound-btn" data-note="E">E note</div>
+        <div class="sound-btn" data-note="F">F note</div>
+        <div class="sound-btn" data-note="G">G note</div>
+        <div class="sound-btn" data-note="A">A note</div>
+      </div>
+      <div class="weird-slider">
+        <label>🎛️  wave warp</label>
+        <input type="range" id="waveMix" min="0" max="100" value="45">
+      </div>
+      <div class="button-lab">
+        <button id="micAccess" class="sound-btn" style="background:#ffe0c0;">🎙️  HEAR ME (mic freakout)</button>
+      </div>
+      <div id="micStatus" style="font-size:0.7rem; margin-top: 8px;">⚡ speak to generate weird tones</div>
+    </div>
+
+    <!-- card 3: scribble & destroy -->
+    <div class="card">
+      <h2>✏️  scribble scrabble</h2>
+      <div class="sketch-zone">
+        <canvas id="drawCanvas" width="500" height="200" style="width:100%; height:200px; background: #fffcf0;"></canvas>
+      </div>
+      <div class="button-lab">
+        <button class="sound-btn" id="clearDraw">🧽 clear mess</button>
+        <button class="sound-btn" id="rainbowMode">🌈 chaotic rainbow</button>
+      </div>
+      <p style="font-size:0.7rem;">drag mouse / finger — your doodle becomes a glitch instrument</p>
+    </div>
+  </div>
+
+  <!-- extra broken zone: secret konami + poetry -->
+  <div style="margin: 3rem 0 2rem; background: #f3e5d5; border-radius: 88px 28px 88px 28px; padding: 1.8rem; text-align: center; border-left: 12px solid #ffaa77;">
+    <p style="font-family: monospace; font-size: 1rem;">⬆️ ⬆️ ⬇️ ⬇️ ⬅️ ➡️ ⬅️ ➡️  B A &nbsp;&nbsp; → &nbsp; unleash the glitch poetry</p>
+    <div id="secretZone" style="margin-top: 12px; font-style: italic; color:#aa6644;">[ secret dormant ]</div>
+    <button id="forceKonami" class="retro-btn" style="margin-top: 14px;">💥  BREAK REALITY</button>
+  </div>
+
+  <div class="footer-junk">
+    ✦  this website is a little drunk  ✦  refresh if you miss the weirdness  ✦  made with tired eyes & love for broken things  ✦
+  </div>
+</div>
+
+<script>
+  // -------------------------------------------------------------
+  //  WEIRD AUDIO ENGINE (human-friendly chaos)
+  // -------------------------------------------------------------
+  let audioCtx = null;
+  function getAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  // play drum sounds (raw synthesis)
+  function playKick() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 120;
+    gain.gain.value = 0.45;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+    osc.stop(ctx.currentTime + 0.28);
+  }
+  function playSnare() {
+    const ctx = getAudio();
+    const noise = ctx.createBufferSource();
+    const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.2, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < buffer.length; i++) data[i] = Math.random() * 2 - 1;
+    noise.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.35;
+    noise.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+    noise.stop(ctx.currentTime + 0.2);
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.value = 210;
+    const g2 = ctx.createGain();
+    g2.gain.value = 0.18;
+    osc.connect(g2);
+    g2.connect(ctx.destination);
+    osc.start();
+    g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+    osc.stop(ctx.currentTime + 0.2);
+  }
+  function playHat() {
+    const ctx = getAudio();
+    const noise = ctx.createBufferSource();
+    const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < buffer.length; i++) data[i] = Math.random() * 2 - 1;
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 5000;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.28;
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    noise.stop(ctx.currentTime + 0.1);
+  }
+  function playBass() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = 82;
+    gain.gain.value = 0.4;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+    osc.stop(ctx.currentTime + 0.7);
+  }
+  function playNote(freq, waveType = 'square') {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = waveType;
+    osc.frequency.value = freq;
+    gain.gain.value = 0.35;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+    osc.stop(ctx.currentTime + 1.0);
+  }
+
+  // attach drum buttons
+  document.querySelectorAll('.sound-btn[data-sound]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const s = btn.getAttribute('data-sound');
+      if (s === 'kick') playKick();
+      if (s === 'snare') playSnare();
+      if (s === 'hat') playHat();
+      if (s === 'bass') playBass();
+    });
+  });
+  // synth notes
+  const noteFreq = { 'C': 261.63, 'D': 293.66, 'E': 329.63, 'F': 349.23, 'G': 392.00, 'A': 440.00 };
+  document.querySelectorAll('.sound-btn[data-note]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      let wave = document.getElementById('waveMix').value > 50 ? 'sawtooth' : 'square';
+      playNote(noteFreq[btn.getAttribute('data-note')], wave);
+    });
+  });
+
+  // ----- 8 step sequencer (weird) -----
+  let sequence = [false, false, false, false, false, false, false, false];
+  let isPlayingSeq = false;
+  let seqInterval = null;
+  let currentStep = 0;
+  let bpm = 100;
+  function renderSteps() {
+    const container = document.getElementById('stepContainer');
+    container.innerHTML = '';
+    sequence.forEach((active, idx) => {
+      const stepDiv = document.createElement('div');
+      stepDiv.className = 'beat';
+      if (active) stepDiv.classList.add('active');
+      stepDiv.addEventListener('click', () => {
+        sequence[idx] = !sequence[idx];
+        renderSteps();
+      });
+      container.appendChild(stepDiv);
+    });
+  }
+  function stepPlayback() {
+    if (!isPlayingSeq) return;
+    if (sequence[currentStep]) playKick();  // kick for simplicity
+    currentStep = (currentStep + 1) % 8;
+    // update visual active state
+    document.querySelectorAll('.beat').forEach((el, i) => {
+      if (i === currentStep && isPlayingSeq) el.style.outline = '3px solid #ff8866';
+      else el.style.outline = '';
+    });
+  }
+  function startSeq() {
+    if (seqInterval) clearInterval(seqInterval);
+    const intervalMs = (60000 / bpm) / 2; // 16th feel
+    seqInterval = setInterval(() => stepPlayback(), intervalMs);
+  }
+  document.getElementById('playBeat').onclick = () => {
+    if (!audioCtx) getAudio();
+    if (isPlayingSeq) return;
+    isPlayingSeq = true;
+    startSeq();
+  };
+  document.getElementById('stopBeat').onclick = () => {
+    isPlayingSeq = false;
+    if (seqInterval) clearInterval(seqInterval);
+    document.querySelectorAll('.beat').forEach(el => el.style.outline = '');
+  };
+  document.getElementById('randomBeat').onclick = () => {
+    sequence = sequence.map(() => Math.random() > 0.7);
+    renderSteps();
+  };
+  document.getElementById('bpmSlider').oninput = (e) => {
+    bpm = parseInt(e.target.value);
+    document.getElementById('bpmVal').innerText = bpm;
+    if (isPlayingSeq) {
+      if (seqInterval) clearInterval(seqInterval);
+      startSeq();
+    }
+  };
+  renderSteps();
+
+  // -----  DRAWING + weird rainbow mode + canvas destruction-----
+  const canvas = document.getElementById('drawCanvas');
+  const ctxDraw = canvas.getContext('2d');
+  let drawing = false;
+  function resizeCanvas() {
+    const container = canvas.parentElement;
+    const rect = container.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = 200;
+    ctxDraw.fillStyle = '#fffcf5';
+    ctxDraw.fillRect(0, 0, canvas.width, canvas.height);
+    ctxDraw.strokeStyle = '#aa7755';
+    ctxDraw.lineWidth = 4;
+    ctxDraw.lineCap = 'round';
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  let lastX = 0, lastY = 0;
+  function startDraw(e) {
+    drawing = true;
+    const pos = getMousePos(e);
+    lastX = pos.x;
+    lastY = pos.y;
+    ctxDraw.beginPath();
+    ctxDraw.moveTo(lastX, lastY);
+  }
+  function draw(e) {
+    if (!drawing) return;
+    const pos = getMousePos(e);
+    ctxDraw.lineTo(pos.x, pos.y);
+    ctxDraw.stroke();
+    // also generate random tone while drawing (weird)
+    if (Math.random() > 0.92) {
+      const freq = 200 + (pos.x % 500);
+      playNote(freq, 'triangle');
+    }
+    lastX = pos.x;
+    lastY = pos.y;
+  }
+  function stopDraw() { drawing = false; ctxDraw.beginPath(); }
+  function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    let clientX, clientY;
+    if (e.touches) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    let x = (clientX - rect.left) * scaleX;
+    let y = (clientY - rect.top) * scaleY;
+    x = Math.min(Math.max(0, x), canvas.width);
+    y = Math.min(Math.max(0, y), canvas.height);
+    return { x, y };
+  }
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDraw);
+  canvas.addEventListener('touchstart', startDraw);
+  canvas.addEventListener('touchmove', draw);
+  canvas.addEventListener('touchend', stopDraw);
+  document.getElementById('clearDraw').onclick = () => {
+    ctxDraw.fillStyle = '#fffcf5';
+    ctxDraw.fillRect(0, 0, canvas.width, canvas.height);
+    ctxDraw.strokeStyle = '#aa7755';
+  };
+  let rainbow = false;
+  document.getElementById('rainbowMode').onclick = () => {
+    rainbow = !rainbow;
+    if (rainbow) {
+      setInterval(() => {
+        if (rainbow) ctxDraw.strokeStyle = `hsl(${Date.now() / 20 % 360}, 70%, 60%)`;
+      }, 100);
+    } else ctxDraw.strokeStyle = '#aa7755';
+  };
+
+  // microphone voice -> generate notes (human playful)
+  let mediaRec;
+  document.getElementById('micAccess').onclick = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const micCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = micCtx.createMediaStreamSource(stream);
+      const analyser = micCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      micCtx.resume();
+      document.getElementById('micStatus').innerHTML = '🎤 listening! shout -> glitch synth';
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      function checkVolume() {
+        if (!micCtx || micCtx.state === 'closed') return;
+        analyser.getByteFrequencyData(dataArray);
+        let avg = 0;
+        for (let i = 0; i < dataArray.length; i++) avg += dataArray[i];
+        avg /= dataArray.length;
+        if (avg > 25) {
+          const freq = 220 + (avg * 6);
+          playNote(Math.min(freq, 880), 'sine');
+        }
+        requestAnimationFrame(checkVolume);
+      }
+      checkVolume();
+    } catch(e) { document.getElementById('micStatus').innerHTML = '❌ mic error, but still weird'; }
+  };
+
+  // SECRET KONAMI + poetry
+  let konamiIdx = 0;
+  const konami = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+  window.addEventListener('keydown', (e) => {
+    if (e.key === konami[konamiIdx]) {
+      konamiIdx++;
+      if (konamiIdx === konami.length) {
+        unleashGlitchPoem();
+        konamiIdx = 0;
+      }
+    } else konamiIdx = 0;
+  });
+  function unleashGlitchPoem() {
+    const secretDiv = document.getElementById('secretZone');
+    const poems = [
+      "✦  the screen breathes. you are not alone.  ✦",
+      "🌀  glitch haiku:  broken pixels / sing like old friends / hello again  🌀",
+      "💾  this website remembers your cursor's heartbeat.  💾",
+      "✨  reality is a suggestion. thanks for playing.  ✨"
+    ];
+    secretDiv.innerHTML = poems[Math.floor(Math.random() * poems.length)];
+    secretDiv.style.fontSize = '1rem';
+    secretDiv.style.fontWeight = 'bold';
+    secretDiv.style.background = '#ffeedd';
+    secretDiv.style.padding = '8px';
+    for(let i=0;i<5;i++) setTimeout(() => playBass(), i*150);
+    setTimeout(() => {
+      secretDiv.innerHTML = '[ secret dormant ]';
+      secretDiv.style.background = 'none';
+    }, 4000);
+  }
+  document.getElementById('forceKonami').onclick = () => unleashGlitchPoem();
+  
+  // extra: weird cursor trail? no, but friendly console message
+  console.log("%c👾 you found the secret console message — this website has feelings. 👾", "color:#ff8866; font-size:16px; font-family:monospace");
+</script>
+</body>
+</html>
