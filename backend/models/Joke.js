@@ -24,12 +24,11 @@ class Joke {
     return result.rows[0];
   }
 
-  static async create(data) {
-    const { content, punchline, tags, series, author_id } = data;
+  static async create({ content, punchline, tags, series, author_id }) {
     const result = await pool.query(
       `INSERT INTO jokes (content, punchline, tags, series, author_id, created_at, kill_count, likes, shares)
        VALUES ($1, $2, $3, $4, $5, NOW(), 0, 0, 0) RETURNING *`,
-      [content, punchline || '', tags || [], series || '', author_id]
+      [content, punchline || '', tags || [], series || '', author_id || null]
     );
     return result.rows[0];
   }
