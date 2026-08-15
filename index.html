@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>❄️ Snowsnakes — Games & More!</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+    <!-- MARQUEE MADNESS -->
+    <div class="marquee-container">
+        <marquee behavior="scroll" direction="left" scrollamount="5">
+            🐍 WELCOME TO SNOWSNAKES — DAD JOKES! 🎨 DOODLES! 📢 COMICS! 🎬 SPREAD DA WORD! 🎮 SUBMIT YOUR OWN GAMES! 🐍 
+            ❄️ MAYO & MIRACLE WHIP — THE WHITE TWINS! 🍅 KETCHUP — EVERYONE USES HIM, NOBODY TRUSTS HIM! 🌶️ SALSA — MEXICAN FIESTA! 
+            🧅 VIN NEGAR — BOLD BLACK FLAVOR! 🌭 MUSTARD — GERMAN SHARP! 🎮 SUBMIT GAMES AND GET FEATURED!
+        </marquee>
+    </div>
+
+    <div class="app" id="app">
+
+        <!-- HEADER -->
+        <header class="header">
+            <div class="logo">
+                <span class="snow-snake s-first">🐍</span><span class="letter-s">S</span><span>now</span>
+                <span class="snow-snake s-second">🐍</span><span class="letter-s">S</span><span>nakes</span>
+                <span class="subtitle">— Submit Games!</span>
+            </div>
+            <div class="header-actions">
+                <div class="user-profile" id="user-profile">
+                    <button class="btn btn-secondary" id="login-btn">
+                        <i class="fas fa-sign-in-alt"></i> LOGIN
+                    </button>
+                    <div class="user-info" id="user-info" style="display: none;">
+                        <span class="user-avatar" id="user-avatar">👤</span>
+                        <span class="user-name" id="user-name">Guest</span>
+                        <button class="btn btn-danger btn-sm" id="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <button class="btn btn-warning" id="killer-btn">
+                    <i class="fas fa-skull"></i> KILLER MODE
+                </button>
+                <button class="btn btn-success" id="add-joke-btn">
+                    <i class="fas fa-plus"></i> ADD JOKE
+                </button>
+                <button class="btn btn-pink" id="add-doodle-btn">
+                    <i class="fas fa-palette"></i> ADD DOODLE
+                </button>
+                <button class="btn btn-purple" id="add-comic-btn">
+                    <i class="fas fa-bullhorn"></i> NEW COMIC
+                </button>
+            </div>
+        </header>
+
+        <!-- NAVIGATION -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="home">HOME</button>
+            <button class="nav-tab" data-tab="jokes">DAD JOKES</button>
+            <button class="nav-tab" data-tab="doodles">DOODLES</button>
+            <button class="nav-tab" data-tab="comics">COMICS</button>
+            <button class="nav-tab" data-tab="games">GAMES</button>
+            <button class="nav-tab" data-tab="spread">SPREAD DA WORD</button>
+            <button class="nav-tab" data-tab="randomizer">RANDOMIZER</button>
+        </nav>
+
+        <!-- ============================================
+        PANEL: HOME
+        ============================================ -->
+        <div class="panel active" id="panel-home">
+            <div style="text-align: center; padding: 30px 0;">
+                <div style="font-size: 60px; animation: slither 3s infinite ease-in-out;">🐍</div>
+                <h1 style="font-size: 48px; color: #003399; text-shadow: 3px 3px 0 #ff00ff; font-family: 'Comic Sans MS', cursive;">WELCOME TO SNOWSNAKES!</h1>
+                <p style="font-size: 20px; color: #003399; font-weight: bold;">🌭 Where condiments live their best lives! 🧈</p>
+                
+                <div class="site-counter">
+                    <span>👁️ VISITORS: </span>
+                    <span id="visitor-counter">00000042</span>
+                    <span style="font-size: 12px;"> (since 1998)</span>
+                </div>
+
+                <div id="welcome-message" style="margin: 10px 0; font-size: 18px; color: #003399;">
+                    👋 Welcome, <strong id="welcome-user">Guest</strong>!
+                </div>
+
+                <div class="grid-5" style="max-width: 1200px; margin: 20px auto;">
+                    <div class="card" style="text-align: center; background: #ffccff; border-color: #ff00ff;">
+                        <div style="font-size: 40px;">😂</div>
+                        <h3 id="stats-jokes">0 Jokes</h3>
+                        <p style="color: #003399;">Dad jokes that kill</p>
+                    </div>
+                    <div class="card" style="text-align: center; background: #ccffcc; border-color: #00ff00;">
+                        <div style="font-size: 40px;">🎨</div>
+                        <h3 id="stats-doodles">0 Doodles</h3>
+                        <p style="color: #003399;">Art masterpieces</p>
+                    </div>
+                    <div class="card" style="text-align: center; background: #ccccff; border-color: #0000ff;">
+                        <div style="font-size: 40px;">📢</div>
+                        <h3 id="stats-comics">0 Comics</h3>
+                        <p style="color: #003399;">User submitted</p>
+                    </div>
+                    <div class="card" style="text-align: center; background: #ffffcc; border-color: #ff9900;">
+                        <div style="font-size: 40px;">🎬</div>
+                        <h3 id="stats-spread">0 Episodes</h3>
+                        <p style="color: #003399;">Animated series</p>
+                    </div>
+                    <div class="card" style="text-align: center; background: #ccffcc; border-color: #00cc66;">
+                        <div style="font-size: 40px;">🎮</div>
+                        <h3 id="stats-games">0 Games</h3>
+                        <p style="color: #003399;">User submitted</p>
+                    </div>
+                </div>
+
+                <div style="background: #ffffcc; border: 3px solid #ff00ff; padding: 10px; border-radius: 15px; margin: 15px auto; max-width: 500px;">
+                    <span style="font-weight: 700; color: #003399;">🎮 NEW!</span>
+                    <span style="color: #666;">Submit your own mini-games and get featured!</span>
+                </div>
+
+                <marquee behavior="scroll" direction="right" scrollamount="3" style="color: #ff6600; font-weight: bold;">
+                    🐍 Why don't snow snakes eat? They're cold-blooded! ❄️
+                </marquee>
+
+                <button class="btn btn-primary" id="randomizer-btn" style="margin-top: 20px; font-size: 24px;">
+                    <i class="fas fa-dice"></i> FEELIN' LUCKY?
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================
+        PANEL: DAD JOKES
+        ============================================ -->
+        <div class="panel" id="panel-jokes">
+            <div class="section-header" style="background: linear-gradient(135deg, #ff0066, #ff00ff);">
+                <span class="section-icon">😂</span>
+                <h2>DAD JOKES VAULT</h2>
+                <p>The most killer jokes on the internet (literally)</p>
+            </div>
+            <div class="flex justify-between align-center mb-20" style="flex-wrap: wrap; gap: 10px;">
+                <div class="flex gap-10" style="flex-wrap: wrap;">
+                    <input type="text" id="joke-search" placeholder="Search jokes..." class="form-control" style="width: 200px;" />
+                    <button class="btn btn-secondary" id="search-btn">🔍 SEARCH</button>
+                </div>
+                <div class="flex gap-10">
+                    <button class="btn btn-secondary" data-sort="likes">👍 MOST LIKED</button>
+                    <button class="btn btn-secondary" data-sort="newest">🕐 NEWEST</button>
+                    <button class="btn btn-secondary" data-sort="oldest">🕐 OLDEST</button>
+                    <button class="btn btn-success" id="add-joke-btn2">
+                        <i class="fas fa-plus"></i> NEW JOKE
+                    </button>
+                </div>
+            </div>
+            <!-- ✅ CONTAINER FOR JOKES -->
+            <div id="joke-list" class="grid-2"></div>
+        </div>
+
+        <!-- ============================================
+        PANEL: DOODLES
+        ============================================ -->
+        <div class="panel" id="panel-doodles">
+            <div class="section-header" style="background: linear-gradient(135deg, #00cc66, #00ff99);">
+                <span class="section-icon">🎨</span>
+                <h2>DOODLE GALLERY</h2>
+                <p>Where art meets condiments</p>
+            </div>
+            <div class="flex justify-between align-center mb-20">
+                <h2><i class="fas fa-palette"></i> Doodle Gallery</h2>
+                <button class="btn btn-success" id="add-doodle-btn2">
+                    <i class="fas fa-upload"></i> UPLOAD DOODLE
+                </button>
+            </div>
+            <!-- ✅ CONTAINER FOR DOODLES -->
+            <div id="doodle-list" class="grid-3"></div>
+        </div>
+
+        <!-- ============================================
+        PANEL: COMICS
+        ============================================ -->
+        <div class="panel" id="panel-comics">
+            <div class="section-header" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                <span class="section-icon">📢</span>
+                <h2>COMICS</h2>
+                <p>User-submitted comics from the condiment universe</p>
+            </div>
+            <div class="flex justify-between align-center mb-20">
+                <h2><i class="fas fa-bullhorn"></i> Community Comics</h2>
+                <button class="btn btn-purple" id="add-comic-btn2">
+                    <i class="fas fa-plus"></i> NEW COMIC
+                </button>
+            </div>
+            <!-- ✅ CONTAINER FOR COMICS -->
+            <div id="comic-list" class="grid-comics"></div>
+        </div>
+
+        <!-- ============================================
+        PANEL: GAMES
+        ============================================ -->
+        <div class="panel" id="panel-games">
+            <div class="section-header" style="background: linear-gradient(135deg, #00cc66, #00ff99);">
+                <span class="section-icon">🎮</span>
+                <h2>MINI GAMES</h2>
+                <p>Play user-submitted games — or submit your own!</p>
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; justify-content: center;">
+                <button class="btn btn-primary game-btn" data-action="showBuiltin">
+                    🎯 Built-in Games
+                </button>
+                <button class="btn btn-success game-btn" data-action="openModal" data-modal="addGame">
+                    <i class="fas fa-upload"></i> SUBMIT GAME
+                </button>
+                <button class="btn btn-secondary game-btn" data-action="showGallery">
+                    📚 Game Gallery
+                </button>
+            </div>
+
+            <div id="game-container" style="background: #f8f9fa; border: 4px solid #000000; padding: 20px; min-height: 400px; position: relative;">
+                <div id="game-content" style="text-align: center; padding: 40px;">
+                    <div style="font-size: 60px;">🎮</div>
+                    <h3 style="color: #003399; font-family: 'Comic Sans MS', cursive;">Select a game to play!</h3>
+                    <p style="color: #7f8c8d;">Click "Built-in Games" or browse the gallery</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+        PANEL: SPREAD DA WORD
+        ============================================ -->
+        <div class="panel" id="panel-spread">
+            <div class="section-header" style="background: linear-gradient(135deg, #e67e22, #f39c12);">
+                <span class="section-icon">🎬</span>
+                <h2>SPREAD DA WORD</h2>
+                <p>The official Snowsnakes animated series — watch only!</p>
+            </div>
+            
+            <div style="background: #fff3cd; border: 3px solid #ff9900; padding: 12px 18px; border-radius: 15px; margin-bottom: 20px; text-align: center;">
+                <span style="font-weight: 700; color: #856404;">🎬 This is the official animated series!</span>
+                <span style="display: block; font-size: 13px; color: #856404; margin-top: 4px;">📺 Episodes are created by the Snowsnakes team — sit back and enjoy!</span>
+            </div>
+
+            <!-- ✅ CONTAINER FOR SPREAD EPISODES -->
+            <div id="spread-list" class="grid-spread"></div>
+        </div>
+
+        <!-- ============================================
+        PANEL: RANDOMIZER
+        ============================================ -->
+        <div class="panel" id="panel-randomizer">
+            <div class="randomizer-display" style="background: #ffffcc; border: 4px dashed #ff00ff; border-radius: 30px; padding: 40px;">
+                <span class="big-emoji" id="random-emoji">🐍</span>
+                <h1 style="color: #ff00ff; font-family: 'Comic Sans MS', cursive;">RANDOM SNOW SNAKE</h1>
+                <p style="color: #003399; font-weight: bold;">CLICK THE BUTTON AND LET THE SNOW SNAKE CHOOSE YOUR FATE!</p>
+                <button class="btn btn-primary mt-20" id="random-btn" style="font-size: 24px; padding: 15px 40px;">
+                    <i class="fas fa-dice"></i> SUMMON!
+                </button>
+                <div id="random-result" style="display: none; margin-top: 30px;">
+                    <div class="card" id="random-content" style="background: #ffffff; border: 4px solid #ff00ff;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+    🎭 MODALS
+    ============================================ -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Modal</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <!-- 🐍 Snow Snake Easter Egg -->
+    <div class="snow-snake-easter" id="easter-egg">
+        🐍
+        <span class="label">★ CLICK ME ★</span>
+    </div>
+
+    <!-- Under construction GIF -->
+    <div class="under-construction">
+        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 50'><text y='35' font-size='20' fill='%23ffcc00' font-weight='bold'>🚧 UNDER CONSTRUCTION 🚧</text></svg>" alt="Under Construction" />
+    </div>
+
+    <!-- ============================================
+    📌 SIMPLE EMERGENCY MODAL FIX (NO DUPLICATE Store)
+    ============================================ -->
+    <script>
+        // ─── These are just to ensure modal close works ───
+        window.closeModal = function() {
+            var overlay = document.getElementById('modal-overlay');
+            if (overlay) overlay.classList.remove('active');
+        };
+        window.openModal = function(type) {
+            // If the real openModal is available, use it
+            if (typeof window._realOpenModal === 'function') {
+                window._realOpenModal(type);
+                return;
+            }
+            // Fallback
+            var overlay = document.getElementById('modal-overlay');
+            var title = document.getElementById('modal-title');
+            var content = document.getElementById('modal-content');
+            if (!overlay || !content) return;
+            var forms = {
+                login: '<h3>Login</h3><p>Loading...</p><button onclick="closeModal()">Close</button>',
+                addJoke: '<h3>Add Joke</h3><p>Loading...</p><button onclick="closeModal()">Close</button>',
+                addDoodle: '<h3>Add Doodle</h3><p>Loading...</p><button onclick="closeModal()">Close</button>',
+                addComic: '<h3>Add Comic</h3><p>Loading...</p><button onclick="closeModal()">Close</button>',
+                addGame: '<h3>Add Game</h3><p>Loading...</p><button onclick="closeModal()">Close</button>'
+            };
+            if (title) title.textContent = type.replace(/([A-Z])/g, ' $1').trim();
+            content.innerHTML = forms[type] || '<p>Form not found</p>';
+            overlay.classList.add('active');
+        };
+        console.log('✅ Emergency modal functions ready.');
+    </script>
+
+    <!-- Main JavaScript -->
+    <script src="js/script.js"></script>
+</body>
+</html>
