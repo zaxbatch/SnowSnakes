@@ -20,12 +20,20 @@ const ComicList = () => {
       <div className="grid-comics">
         {comics.map(c => (
           <div className="comic-card" key={c.id}>
+            {c.image_url && c.image_url.startsWith('http') ? (
+              <img 
+                src={c.image_url} 
+                alt={c.title} 
+                style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', marginBottom: '10px' }} 
+              />
+            ) : (
+              <div className="comic-panel">
+                <span className="scene">{c.scene}</span>
+                <div className="dialogue">"{c.dialogue}"</div>
+                <div className="caption">{c.caption}</div>
+              </div>
+            )}
             <h3 style={{ fontFamily: "'Comic Sans MS', cursive", color: '#660099' }}>{c.title}</h3>
-            <div className="comic-panel">
-              <span className="scene">{c.scene}</span>
-              <div className="dialogue">"{c.dialogue}"</div>
-              <div className="caption">{c.caption}</div>
-            </div>
             <div style={{ fontSize: 12, color: '#666', marginTop: 8 }}>✏️ By {c.author_name || 'anonymous'}</div>
           </div>
         ))}

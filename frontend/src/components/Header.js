@@ -16,16 +16,62 @@ const Header = () => {
 
   // Doodle form state
   const [doodleTitle, setDoodleTitle] = useState('');
-  const [doodleImage, setDoodleImage] = useState('🎨');
+  const [doodleImageUrl, setDoodleImageUrl] = useState('');
+  const [doodleImagePreview, setDoodleImagePreview] = useState('');
   const [doodleJokeId, setDoodleJokeId] = useState('');
   const [doodleCharacterId, setDoodleCharacterId] = useState('');
 
   // Comic form state
   const [comicTitle, setComicTitle] = useState('');
+  const [comicImageUrl, setComicImageUrl] = useState('');
+  const [comicImagePreview, setComicImagePreview] = useState('');
   const [comicScene, setComicScene] = useState('📢');
   const [comicDialogue, setComicDialogue] = useState('');
   const [comicCaption, setComicCaption] = useState('');
   const [comicCharacters, setComicCharacters] = useState('');
+
+  // ─── Cloudinary Widget ───
+
+  const openWidget = (setImageUrl, setPreview) => {
+    api.post('/upload/signature')
+      .then(res => {
+        const { signature, timestamp, cloud_name, api_key } = res.data;
+
+        const widget = window.cloudinary.createUploadWidget(
+          {
+            cloudName: cloud_name,
+            apiKey: api_key,
+            signature: { signature, timestamp },
+            uploadPreset: 'snowsnakes', // optional: create a preset in Cloudinary
+            folder: 'snowsnakes',
+            sources: ['local', 'url', 'camera'],
+            multiple: false,
+            maxFiles: 1,
+            resourceType: 'image',
+          },
+          (error, result) => {
+            if (error) {
+              console.error('Upload error:', error);
+              alert('Upload failed. Please try again.');
+              return;
+            }
+            if (result.event === 'success') {
+              const url = result.info.secure_url;
+              setImageUrl(url);
+              if (setPreview) setPreview(url);
+              alert('✅ Image uploaded successfully!');
+            }
+          }
+        );
+        widget.open();
+      })
+      .catch(err => {
+        console.error('Failed to get signature:', err);
+        alert('Failed to initialize upload. Please try again.');
+      });
+  };
+
+  // ─── Form Handlers ───
 
   const handleAddJoke = async (e) => {
     e.preventDefault();
@@ -42,6 +88,7 @@ const Header = () => {
       setJokeTags('');
       setJokeSeries('');
       alert('😂 Joke added successfully!');
+      window.location.reload();
     } catch (err) {
       alert('Error adding joke: ' + err.message);
     }
@@ -49,19 +96,25 @@ const Header = () => {
 
   const handleAddDoodle = async (e) => {
     e.preventDefault();
+    if (!doodleImageUrl) {
+      alert('Please upload an image first!');
+      return;
+    }
     try {
       await api.post('/doodles', {
         title: doodleTitle,
-        image_url: doodleImage,
+        image_url: doodleImageUrl,
         joke_id: doodleJokeId || null,
         character_id: doodleCharacterId || null,
       });
       setShowDoodleModal(false);
       setDoodleTitle('');
-      setDoodleImage('🎨');
+      setDoodleImageUrl('');
+      setDoodleImagePreview('');
       setDoodleJokeId('');
       setDoodleCharacterId('');
       alert('🎨 Doodle added successfully!');
+      window.location.reload();
     } catch (err) {
       alert('Error adding doodle: ' + err.message);
     }
@@ -72,6 +125,7 @@ const Header = () => {
     try {
       await api.post('/comics', {
         title: comicTitle,
+        image_url: comicImageUrl || null,
         scene: comicScene,
         dialogue: comicDialogue,
         caption: comicCaption,
@@ -79,11 +133,14 @@ const Header = () => {
       });
       setShowComicModal(false);
       setComicTitle('');
+      setComicImageUrl('');
+      setComicImagePreview('');
       setComicScene('📢');
       setComicDialogue('');
       setComicCaption('');
       setComicCharacters('');
       alert('📢 Comic published successfully!');
+      window.location.reload();
     } catch (err) {
       alert('Error adding comic: ' + err.message);
     }
@@ -130,7 +187,7 @@ const Header = () => {
         </div>
       </header>
 
-      {/* JOKE MODAL */}
+      {/* ─── JOKE MODAL ─── */}
       {showJokeModal && (
         <div className="modal-overlay active" onClick={() => setShowJokeModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -165,7 +222,7 @@ const Header = () => {
         </div>
       )}
 
-      {/* DOODLE MODAL (already existing) */}
+      {/* ─── DOODLE MODAL with Cloudinary ─── */}
       {showDoodleModal && (
         <div className="modal-overlay active" onClick={() => setShowDoodleModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -175,13 +232,54 @@ const Header = () => {
             </div>
             <form onSubmit={handleAddDoodle}>
               <div className="form-group">
-                <label>TITLE</label>
+                <label>TITLE <span style={{ color: '#ff0000' }}>*</span></label>
                 <input className="form-control" value={doodleTitle} onChange={(e) => setDoodleTitle(e.target.value)} required />
               </div>
+
               <div className="form-group">
-                <label>DOODLE EMOJI</label>
-                <input className="form-control" value={doodleImage} onChange={(e) => setDoodleImage(e.target.value)} maxLength={2} />
+                <label>📸 UPLOAD IMAGE <span style={{ color: '#ff0000' }}>*</span></label>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => openWidget(setDoodleImageUrl, setDoodleImagePreview)}
+                  >
+                    <i className="fas fa-upload"></i> Choose Image
+                  </button>
+                  {doodleImagePreview && (
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <img
+                        src={doodleImagePreview}
+                        alt="Preview"
+                        style={{ maxWidth: '100px', maxHeight: '100px', border: '3px solid #003399' }}
+                      />
+                      <button
+                        type="button"
+                        style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          right: '-8px',
+                          background: '#ff0000',
+                          color: '#fff',
+                          border: '2px solid #000',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                        }}
+                        onClick={() => { setDoodleImageUrl(''); setDoodleImagePreview(''); }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
+                  Supported: JPG, PNG, GIF. Max 10MB.
+                </div>
               </div>
+
               <div className="form-row">
                 <div className="form-group">
                   <label>JOKE ID (optional)</label>
@@ -192,7 +290,7 @@ const Header = () => {
                   <input className="form-control" type="number" value={doodleCharacterId} onChange={(e) => setDoodleCharacterId(e.target.value)} />
                 </div>
               </div>
-              <button className="btn btn-success" type="submit" style={{ width: '100%' }}>
+              <button className="btn btn-success" type="submit" style={{ width: '100%' }} disabled={!doodleImageUrl}>
                 <i className="fas fa-upload"></i> UPLOAD DOODLE
               </button>
             </form>
@@ -200,7 +298,7 @@ const Header = () => {
         </div>
       )}
 
-      {/* COMIC MODAL (already existing) */}
+      {/* ─── COMIC MODAL with Cloudinary ─── */}
       {showComicModal && (
         <div className="modal-overlay active" onClick={() => setShowComicModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -210,19 +308,64 @@ const Header = () => {
             </div>
             <form onSubmit={handleAddComic}>
               <div className="form-group">
-                <label>TITLE</label>
+                <label>TITLE <span style={{ color: '#ff0000' }}>*</span></label>
                 <input className="form-control" value={comicTitle} onChange={(e) => setComicTitle(e.target.value)} required />
               </div>
+
               <div className="form-group">
-                <label>SCENE EMOJI</label>
+                <label>📸 COMIC IMAGE <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => openWidget(setComicImageUrl, setComicImagePreview)}
+                  >
+                    <i className="fas fa-upload"></i> Choose Image
+                  </button>
+                  {comicImagePreview && (
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <img
+                        src={comicImagePreview}
+                        alt="Preview"
+                        style={{ maxWidth: '100px', maxHeight: '100px', border: '3px solid #660099' }}
+                      />
+                      <button
+                        type="button"
+                        style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          right: '-8px',
+                          background: '#ff0000',
+                          color: '#fff',
+                          border: '2px solid #000',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                        }}
+                        onClick={() => { setComicImageUrl(''); setComicImagePreview(''); }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
+                  Supported: JPG, PNG, GIF. Max 10MB.
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>SCENE EMOJI <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
                 <input className="form-control" value={comicScene} onChange={(e) => setComicScene(e.target.value)} maxLength={2} />
               </div>
               <div className="form-group">
-                <label>DIALOGUE</label>
+                <label>DIALOGUE <span style={{ color: '#ff0000' }}>*</span></label>
                 <textarea className="form-control" value={comicDialogue} onChange={(e) => setComicDialogue(e.target.value)} required />
               </div>
               <div className="form-group">
-                <label>CAPTION</label>
+                <label>CAPTION <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
                 <input className="form-control" value={comicCaption} onChange={(e) => setComicCaption(e.target.value)} />
               </div>
               <div className="form-group">

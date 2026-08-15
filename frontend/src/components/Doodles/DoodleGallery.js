@@ -20,7 +20,15 @@ const DoodleGallery = () => {
       <div className="grid-3">
         {doodles.map(d => (
           <div className="doodle-card" key={d.id}>
-            <span className="doodle-art" style={{ fontSize: 60 }}>{d.image_url || '🎨'}</span>
+            {d.image_url && d.image_url.startsWith('http') ? (
+              <img 
+                src={d.image_url} 
+                alt={d.title} 
+                style={{ maxWidth: '100%', maxHeight: '150px', objectFit: 'contain' }} 
+              />
+            ) : (
+              <span className="doodle-art" style={{ fontSize: 60 }}>{d.image_url || '🎨'}</span>
+            )}
             <div className="card-title">{d.title}</div>
             <div style={{ fontSize: 12, color: '#666' }}>
               {d.joke_content ? `😂 "${d.joke_content.substring(0, 30)}..."` : ''}
