@@ -20,6 +20,6 @@ app.use('/api/games', require('./routes/games'));
 app.use('/api/characters', require('./routes/characters'));
 app.use('/api/fridge', require('./routes/fridge'));
 app.use('/api/random', require('./routes/random'));
-
+app.use('/api/upload', require('./routes/upload'));
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

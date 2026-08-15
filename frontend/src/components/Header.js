@@ -30,45 +30,34 @@ const Header = () => {
   const [comicCaption, setComicCaption] = useState('');
   const [comicCharacters, setComicCharacters] = useState('');
 
-  // ─── Cloudinary Widget ───
+  // ─── Cloudinary Widget (Signed) ───
 
   const openWidget = (setImageUrl, setPreview) => {
-    api.post('/upload/signature')
-      .then(res => {
-        const { signature, timestamp, cloud_name, api_key } = res.data;
-
-        const widget = window.cloudinary.createUploadWidget(
-          {
-            cloudName: cloud_name,
-            apiKey: api_key,
-            signature: { signature, timestamp },
-            uploadPreset: 'snowsnakes', // optional: create a preset in Cloudinary
-            folder: 'snowsnakes',
-            sources: ['local', 'url', 'camera'],
-            multiple: false,
-            maxFiles: 1,
-            resourceType: 'image',
-          },
-          (error, result) => {
-            if (error) {
-              console.error('Upload error:', error);
-              alert('Upload failed. Please try again.');
-              return;
-            }
-            if (result.event === 'success') {
-              const url = result.info.secure_url;
-              setImageUrl(url);
-              if (setPreview) setPreview(url);
-              alert('✅ Image uploaded successfully!');
-            }
-          }
-        );
-        widget.open();
-      })
-      .catch(err => {
-        console.error('Failed to get signature:', err);
-        alert('Failed to initialize upload. Please try again.');
-      });
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: 'r6natkse',  // your cloud name
+        uploadPreset: 'snowsnakes_unsigned',
+        folder: 'snowsnakes',
+        sources: ['local', 'url', 'camera'],
+        multiple: false,
+        maxFiles: 1,
+        resourceType: 'image',
+      },
+      (error, result) => {
+        if (error) {
+          console.error('Upload error:', error);
+          alert('Upload failed. Please try again.');
+          return;
+        }
+        if (result.event === 'success') {
+          const url = result.info.secure_url;
+          setImageUrl(url);
+          if (setPreview) setPreview(url);
+          alert('✅ Image uploaded successfully!');
+        }
+      }
+    );
+    widget.open();
   };
 
   // ─── Form Handlers ───

@@ -25,7 +25,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST a new doodle (auth required)
-router.post('/', auth, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { title, image_url, joke_id, character_id } = req.body;
     if (!title) return res.status(400).json({ error: 'Title is required' });

@@ -22,7 +22,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { title, scene, dialogue, caption, characters } = req.body;
     if (!title || !dialogue) return res.status(400).json({ error: 'Title and dialogue required' });
