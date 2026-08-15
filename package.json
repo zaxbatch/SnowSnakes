@@ -1,0 +1,17 @@
+{
+  "name": "snowsnakes",
+  "version": "1.0.0",
+  "description": "Snowsnakes – full-stack app (Express backend + React frontend)",
+  "private": true,
+  "scripts": {
+    "start": "cd backend && npm start",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm start",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "build:frontend": "cd frontend && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
