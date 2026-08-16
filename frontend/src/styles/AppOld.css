@@ -1212,29 +1212,21 @@ textarea.form-control {
     transform: scale(0.95);
 }
 
-/* ─── MODAL OVERLAY ─── */
-.modal-overlay,
-.game-play-modal {
+/* ─── MODAL ─── */
+.modal-overlay {
     display: none;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0,0,0,0.7);
     z-index: 1000;
     justify-content: center;
     align-items: center;
-    padding: 20px;
-    box-sizing: border-box;
 }
+.modal-overlay.active { display: flex; }
 
-.modal-overlay.active,
-.game-play-modal.active {
-    display: flex;
-}
-
-/* ─── STANDARD MODAL BOX ─── */
 .modal {
     background: #ffffcc;
     border: 8px solid #ff00ff;
@@ -1247,8 +1239,6 @@ textarea.form-control {
     box-shadow: 16px 16px 0 #000000;
     animation: fadeIn 0.3s ease;
     border-radius: 0px;
-    margin: auto;
-    flex-shrink: 0;
 }
 
 .modal-header {
@@ -1281,52 +1271,6 @@ textarea.form-control {
     border-radius: 0px;
 }
 .modal-close:hover { transform: rotate(90deg) scale(1.1); }
-
-/* ─── GAME PLAY MODAL (custom full-screen style) ─── */
-.game-play-modal {
-    background: rgba(0, 0, 0, 0.85);
-    padding: 20px;
-}
-.game-play-modal .modal-box {
-    max-width: 1100px;
-    width: 85vw;
-    max-height: 85vh;
-    height: 70vh;
-    background: #fff;
-    border-radius: 12px;
-    border: none;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 0;
-    margin: auto;
-    flex-shrink: 0;
-}
-
-.game-play-modal .modal-box .game-header {
-    background: #222;
-    color: #fff;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-.game-play-modal .modal-box .game-body {
-    flex: 1;
-    min-height: 300px;
-    background: #fff;
-    position: relative;
-}
-
-.game-play-modal .modal-box iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
-}
 
 .empty-state {
     text-align: center;
@@ -1421,7 +1365,6 @@ textarea.form-control {
     .nav-tab { padding: 6px 12px; font-size: 11px; flex: 1; justify-content: center; }
     .nav-tabs { gap: 3px; padding: 3px; }
     .modal { padding: 20px; border-width: 4px; }
-    .game-play-modal .modal-box { width: 95vw; height: 60vh; max-height: 80vh; }
     .fridge, .hood { padding: 12px; min-height: 250px; }
     .shelf { padding: 8px; min-height: 50px; }
     .fridge-item { padding: 4px 10px; font-size: 11px; }
@@ -1438,7 +1381,6 @@ textarea.form-control {
     .nav-tab { font-size: 9px; padding: 4px 8px; }
     .card .card-title { font-size: 14px; }
     .modal { padding: 15px; border-width: 3px; }
-    .game-play-modal .modal-box { width: 98vw; height: 50vh; }
     .logo { font-size: 18px; }
     .logo .s-first, .logo .s-second { font-size: 22px; }
     .logo span:not(.snow-snake):not(.subtitle):not(.letter-s) { font-size: 18px; }
