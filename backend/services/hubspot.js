@@ -1,15 +1,14 @@
 const fetch = require('node-fetch');
 
-const HUBSPOT_API_KEY = process.env.HUBSPOT_API_KEY;
+// Use the new environment variable name
+//const HUBSPOT_ACCESS_TOKEN = process.env.HUBSPOT_ACCESS_TOKEN;
+const HUBSPOT_ACCESS_TOKEN = process.env.HUBSPOT_ACCESS_TOKEN;
 const HUBSPOT_API_URL = 'https://api.hubapi.com/crm/v3/objects/contacts';
-
-/**
- * Create a contact in HubSpot (lead)
- * @param {Object} userData - { email, firstname, lastname? }
- */
+console.log('🔑 Token exists?', !!HUBSPOT_ACCESS_TOKEN);
+console.log('🔑 Token starts with:', HUBSPOT_ACCESS_TOKEN ? HUBSPOT_ACCESS_TOKEN.substring(0, 8) + '...' : 'undefined');
 async function createHubSpotContact(userData) {
-  if (!HUBSPOT_API_KEY) {
-    console.warn('⚠️ HubSpot API key not set – skipping lead creation');
+  if (!HUBSPOT_ACCESS_TOKEN) {
+    console.warn('⚠️ HubSpot access token not set – skipping lead creation');
     return null;
   }
 
@@ -18,7 +17,6 @@ async function createHubSpotContact(userData) {
       email: userData.email,
       firstname: userData.firstname || userData.username,
       lastname: userData.lastname || '',
-      // You can add more fields: phone, company, etc.
     }
   };
 
@@ -27,14 +25,14 @@ async function createHubSpotContact(userData) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${HUBSPOT_API_KEY}`
+        'Authorization': `Bearer ${HUBSPOT_ACCESS_TOKEN}`  // ✅ Use Bearer token
       },
       body: JSON.stringify(body)
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('HubSpot error:', errorText);
+      console.error('❌ HubSpot error:', errorText);
       return null;
     }
 
@@ -42,7 +40,7 @@ async function createHubSpotContact(userData) {
     console.log('✅ HubSpot lead created:', data.id);
     return data;
   } catch (err) {
-    console.error('HubSpot request failed:', err.message);
+    console.error('❌ HubSpot request failed:', err.message);
     return null;
   }
 }
