@@ -13,6 +13,9 @@ const Header = ({ showGameModal, setShowGameModal }) => {
   const [authPassword, setAuthPassword] = useState('');
   const [authDisplayName, setAuthDisplayName] = useState('');
   const [authEmail, setAuthEmail] = useState('');
+  // ─── Show password toggle ───
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
   // ─── Other modals ───
   const [showJokeModal, setShowJokeModal] = useState(false);
@@ -96,6 +99,8 @@ const Header = ({ showGameModal, setShowGameModal }) => {
       setAuthPassword('');
       setAuthDisplayName('');
       setAuthEmail('');
+      setShowLoginPassword(false);
+      setShowRegisterPassword(false);
       alert('✅ Success!');
       window.location.reload(); // Refresh to update UI
     } catch (err) {
@@ -346,13 +351,30 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                 )}
                 <div className="form-group">
                   <label>Password</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    required
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type={authMode === 'login' ? (showLoginPassword ? 'text' : 'password') : (showRegisterPassword ? 'text' : 'password')}
+                      className="form-control"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      required
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        if (authMode === 'login') {
+                          setShowLoginPassword(!showLoginPassword);
+                        } else {
+                          setShowRegisterPassword(!showRegisterPassword);
+                        }
+                      }}
+                      style={{ padding: '8px 12px', minWidth: '40px' }}
+                    >
+                      <i className={`fas fa-${authMode === 'login' ? (showLoginPassword ? 'eye-slash' : 'eye') : (showRegisterPassword ? 'eye-slash' : 'eye')}`}></i>
+                    </button>
+                  </div>
                 </div>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
                   {authMode === 'login' ? 'Login' : 'Register'}
