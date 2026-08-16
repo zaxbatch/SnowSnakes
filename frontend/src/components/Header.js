@@ -1,12 +1,12 @@
 import React, { useContext, useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';  // ✅ Import ReactDOM
+import ReactDOM from 'react-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api';
 
 const Header = ({ showGameModal, setShowGameModal }) => {
   const { user, logout } = useContext(AuthContext);
 
-  // ─── Other modals (keep local state) ───
+  // ─── Modal visibility ───
   const [showJokeModal, setShowJokeModal] = useState(false);
   const [showDoodleModal, setShowDoodleModal] = useState(false);
   const [showComicModal, setShowComicModal] = useState(false);
@@ -44,17 +44,6 @@ const Header = ({ showGameModal, setShowGameModal }) => {
   const [gameFiles, setGameFiles] = useState([]);
   const [gameFilesList, setGameFilesList] = useState([]);
   const [isUploadingGame, setIsUploadingGame] = useState(false);
-
-  // ─── Prevent default drag behavior ───
-  useEffect(() => {
-    const preventDefault = (e) => e.preventDefault();
-    document.addEventListener('dragover', preventDefault);
-    document.addEventListener('drop', preventDefault);
-    return () => {
-      document.removeEventListener('dragover', preventDefault);
-      document.removeEventListener('drop', preventDefault);
-    };
-  }, []);
 
   // ─── Cloudinary Widget ───
   const openWidget = (setImageUrl, setPreview) => {
@@ -240,12 +229,11 @@ const Header = ({ showGameModal, setShowGameModal }) => {
   // ─── Helper to close modals ─────────────────────────────
   const closeModal = (setter) => setter(false);
 
-  // ─── Render with Portals ──────────────────────────────
+  // ─── Render ─────────────────────────────────────────────
 
   return (
     <>
       <header className="header">
-        {/* header content – unchanged */}
         <div className="logo">
           <span className="snow-snake s-first">🐍</span>
           <span className="letter-s">S</span><span>now</span>
@@ -287,7 +275,7 @@ const Header = ({ showGameModal, setShowGameModal }) => {
         </div>
       </header>
 
-      {/* ─── All modals are rendered via portals ─── */}
+      {/* ─── Portals for Modals ─── */}
       {showJokeModal &&
         ReactDOM.createPortal(
           <div className="modal-overlay active" onClick={() => closeModal(setShowJokeModal)}>
@@ -340,41 +328,17 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                 <div className="form-group">
                   <label>📸 UPLOAD IMAGE <span style={{ color: '#ff0000' }}>*</span></label>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={() => openWidget(setDoodleImageUrl, setDoodleImagePreview)}
-                    >
+                    <button type="button" className="btn btn-primary" onClick={() => openWidget(setDoodleImageUrl, setDoodleImagePreview)}>
                       <i className="fas fa-upload"></i> Choose Image
                     </button>
                     {doodleImagePreview && (
                       <div style={{ position: 'relative', display: 'inline-block' }}>
                         <img src={doodleImagePreview} alt="Preview" style={{ maxWidth: '100px', maxHeight: '100px', border: '3px solid #003399' }} />
-                        <button
-                          type="button"
-                          style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            background: '#ff0000',
-                            color: '#fff',
-                            border: '2px solid #000',
-                            borderRadius: '50%',
-                            width: '24px',
-                            height: '24px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                          }}
-                          onClick={() => { setDoodleImageUrl(''); setDoodleImagePreview(''); }}
-                        >
-                          ×
-                        </button>
+                        <button type="button" style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ff0000', color: '#fff', border: '2px solid #000', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => { setDoodleImageUrl(''); setDoodleImagePreview(''); }}>×</button>
                       </div>
                     )}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
-                    Supported: JPG, PNG, GIF. Max 10MB.
-                  </div>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>Supported: JPG, PNG, GIF. Max 10MB.</div>
                 </div>
                 <div className="form-row">
                   <div className="form-group">
@@ -411,41 +375,17 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                 <div className="form-group">
                   <label>📸 COMIC IMAGE <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={() => openWidget(setComicImageUrl, setComicImagePreview)}
-                    >
+                    <button type="button" className="btn btn-primary" onClick={() => openWidget(setComicImageUrl, setComicImagePreview)}>
                       <i className="fas fa-upload"></i> Choose Image
                     </button>
                     {comicImagePreview && (
                       <div style={{ position: 'relative', display: 'inline-block' }}>
                         <img src={comicImagePreview} alt="Preview" style={{ maxWidth: '100px', maxHeight: '100px', border: '3px solid #660099' }} />
-                        <button
-                          type="button"
-                          style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            background: '#ff0000',
-                            color: '#fff',
-                            border: '2px solid #000',
-                            borderRadius: '50%',
-                            width: '24px',
-                            height: '24px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                          }}
-                          onClick={() => { setComicImageUrl(''); setComicImagePreview(''); }}
-                        >
-                          ×
-                        </button>
+                        <button type="button" style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ff0000', color: '#fff', border: '2px solid #000', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => { setComicImageUrl(''); setComicImagePreview(''); }}>×</button>
                       </div>
                     )}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
-                    Supported: JPG, PNG, GIF. Max 10MB.
-                  </div>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>Supported: JPG, PNG, GIF. Max 10MB.</div>
                 </div>
                 <div className="form-group">
                   <label>SCENE EMOJI <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
@@ -474,20 +414,14 @@ const Header = ({ showGameModal, setShowGameModal }) => {
 
       {showGameModal &&
         ReactDOM.createPortal(
-          <div
-            className="modal-overlay active"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setShowGameModal(false);
-            }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => e.preventDefault()}
-          >
+          <div className="modal-overlay active" onClick={(e) => { if (e.target === e.currentTarget) setShowGameModal(false); }}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>🎮 Submit a Game</h2>
                 <button className="modal-close" onClick={() => setShowGameModal(false)}>×</button>
               </div>
               <form onSubmit={handleAddGame}>
+                {/* ... rest of form ... */}
                 <div className="form-group">
                   <label>GAME TITLE <span style={{ color: '#ff0000' }}>*</span></label>
                   <input className="form-control" value={gameTitle} onChange={(e) => setGameTitle(e.target.value)} required />
@@ -500,60 +434,28 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                   <div className="form-group">
                     <label>🎨 GAME ICON</label>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <input
-                        className="form-control"
-                        style={{ width: '80px' }}
-                        value={gameIconEmoji}
-                        onChange={(e) => setGameIconEmoji(e.target.value)}
-                        maxLength={2}
-                        placeholder="🎮"
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={() => openWidget(setGameIconImageUrl, setGameIconImagePreview)}
-                      >
+                      <input className="form-control" style={{ width: '80px' }} value={gameIconEmoji} onChange={(e) => setGameIconEmoji(e.target.value)} maxLength={2} placeholder="🎮" />
+                      <button type="button" className="btn btn-primary" onClick={() => openWidget(setGameIconImageUrl, setGameIconImagePreview)}>
                         <i className="fas fa-upload"></i> Upload Image
                       </button>
                       {gameIconImagePreview && (
                         <div style={{ position: 'relative', display: 'inline-block' }}>
                           <img src={gameIconImagePreview} alt="Icon" style={{ maxWidth: '50px', maxHeight: '50px', border: '2px solid #003399' }} />
-                          <button
-                            type="button"
-                            style={{
-                              position: 'absolute',
-                              top: '-8px',
-                              right: '-8px',
-                              background: '#ff0000',
-                              color: '#fff',
-                              border: '2px solid #000',
-                              borderRadius: '50%',
-                              width: '20px',
-                              height: '20px',
-                              cursor: 'pointer',
-                              fontWeight: 'bold',
-                              fontSize: '12px',
-                              lineHeight: '20px',
-                              textAlign: 'center',
-                            }}
-                            onClick={() => { setGameIconImageUrl(''); setGameIconImagePreview(''); }}
-                          >
-                            ×
-                          </button>
+                          <button type="button" style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ff0000', color: '#fff', border: '2px solid #000', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', lineHeight: '20px', textAlign: 'center' }} onClick={() => { setGameIconImageUrl(''); setGameIconImagePreview(''); }}>×</button>
                         </div>
                       )}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
-                      Choose an emoji or upload an image (max 10MB). Image will be displayed if uploaded.
-                    </div>
+                    <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>Choose an emoji or upload an image (max 10MB). Image will be displayed if uploaded.</div>
                   </div>
                   <div className="form-group">
                     <label>🏷️ TAGS (comma separated)</label>
                     <input className="form-control" value={gameTags} onChange={(e) => setGameTags(e.target.value)} placeholder="arcade, puzzle, adventure" />
                   </div>
                 </div>
+
+                {/* ─── Game Files – DnD DISABLED ─── */}
                 <div className="form-group">
-                  <label>📁 GAME FILES (drag & drop or click to select)</label>
+                  <label>📁 GAME FILES (click to select)</label>
                   <div
                     className="drop-zone"
                     style={{
@@ -566,31 +468,11 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                       minHeight: '100px',
                       borderRadius: '0px',
                     }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.style.borderColor = '#ff00ff';
-                      e.currentTarget.style.background = '#ffffcc';
-                    }}
-                    onDragLeave={(e) => {
-                      e.currentTarget.style.borderColor = '#003399';
-                      e.currentTarget.style.background = '#f8f9fa';
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.style.borderColor = '#003399';
-                      e.currentTarget.style.background = '#f8f9fa';
-                      const files = Array.from(e.dataTransfer.files);
-                      if (files.length > 0) {
-                        setGameFiles(files);
-                        setGameFilesList(files.map(f => f.name));
-                        console.log('📂 Dropped files:', files);
-                      }
-                    }}
                     onClick={() => document.getElementById('game-file-input').click()}
                   >
                     <div style={{ fontSize: '40px', marginBottom: '10px' }}>📂</div>
                     <p style={{ color: '#003399', fontWeight: 'bold' }}>
-                      Drag & drop your game files here<br />
+                      Click to select files<br />
                       <span style={{ fontSize: '12px', color: '#7f8c8d' }}>or click to browse</span>
                     </p>
                     <input
@@ -627,22 +509,13 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                     Supported: HTML, JS, CSS, PNG, JPG, GIF, MP3, MP4, and more.
                   </div>
                 </div>
+
                 <div className="form-group">
                   <label>💻 GAME CODE <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
-                  <textarea
-                    className="form-control"
-                    value={gameCode}
-                    onChange={(e) => setGameCode(e.target.value)}
-                    placeholder="Paste HTML or JavaScript code here (or upload files above)"
-                    style={{ minHeight: '80px', fontFamily: 'monospace' }}
-                  />
+                  <textarea className="form-control" value={gameCode} onChange={(e) => setGameCode(e.target.value)} placeholder="Paste HTML or JavaScript code here (or upload files above)" style={{ minHeight: '80px', fontFamily: 'monospace' }} />
                 </div>
-                <button
-                  className="btn btn-success"
-                  type="submit"
-                  style={{ width: '100%' }}
-                  disabled={isUploadingGame}
-                >
+
+                <button className="btn btn-success" type="submit" style={{ width: '100%' }} disabled={isUploadingGame}>
                   <i className="fas fa-upload"></i> {isUploadingGame ? 'SUBMITTING...' : 'SUBMIT GAME'}
                 </button>
               </form>
