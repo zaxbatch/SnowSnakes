@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useContext } from 'react';
 import api from '../../api';
 import { AuthContext } from '../../context/AuthContext';
+import { useDeleteMode } from '../../context/DeleteModeContext';
 
 const AdminPanel = () => {
   const { user } = useContext(AuthContext);
+  const { deleteMode } = useDeleteMode();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [episodes, setEpisodes] = useState([]);
@@ -22,7 +24,6 @@ const AdminPanel = () => {
   });
   const [showEpisodeForm, setShowEpisodeForm] = useState(false);
 
-  // ─── Fetch all users ───
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -35,7 +36,6 @@ const AdminPanel = () => {
     }
   };
 
-  // ─── Fetch episodes ───
   const fetchEpisodes = async () => {
     setEpisodeLoading(true);
     try {
@@ -53,7 +53,7 @@ const AdminPanel = () => {
     fetchEpisodes();
   }, []);
 
-  // ─── User management ───
+  // ─── User actions ──────────────────────────────────────
   const promote = async (id) => {
     if (!window.confirm('Promote this user to admin?')) return;
     try {
@@ -74,7 +74,17 @@ const AdminPanel = () => {
     }
   };
 
-  // ─── Episode CRUD ───
+  const deleteUser = async (id) => {
+    if (!window.confirm('Delete this user permanently? This cannot be undone.')) return;
+    try {
+      await api.delete(`/admin/users/${id}`);
+      fetchUsers();
+    } catch (err) {
+      alert('Error: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
+  // ─── Episode CRUD ──────────────────────────────────────
   const resetEpisodeForm = () => {
     setEpisodeForm({
       title: '',
@@ -130,7 +140,7 @@ const AdminPanel = () => {
     setShowEpisodeForm(true);
   };
 
-  // ─── If not admin ───
+  // ─── If not admin ──────────────────────────────────────
   if (!user || !user.is_admin) {
     return (
       <div className="panel active">
@@ -149,6 +159,11 @@ const AdminPanel = () => {
         <span className="section-icon">🛡️</span>
         <h2>ADMIN PANEL</h2>
         <p>Manage users, content, and episodes</p>
+        {deleteMode && (
+          <div style={{ marginTop: '8px', background: '#ff0000', color: '#fff', padding: '4px 12px', borderRadius: '20px', display: 'inline-block', fontSize: '14px' }}>
+            ⚠️ DELETE MODE ACTIVE – deletions are permanent!
+          </div>
+        )}
       </div>
 
       {/* ─── User Management ─── */}
@@ -179,6 +194,9 @@ const AdminPanel = () => {
                           <button className="btn btn-warning btn-sm" onClick={() => demote(u.id)}>Demote</button>
                         ) : (
                           <button className="btn btn-success btn-sm" onClick={() => promote(u.id)}>Promote</button>
+                        )}
+                        {deleteMode && (
+                          <button className="btn btn-danger btn-sm" onClick={() => deleteUser(u.id)}>Delete</button>
                         )}
                       </>
                     ) : (
@@ -227,7 +245,7 @@ const AdminPanel = () => {
                   className="form-control"
                   value={episodeForm.youtube_id}
                   onChange={(e) => setEpisodeForm({ ...episodeForm, youtube_id: e.target.value })}
-                  placeholder="e.g. dQw4w9WgXcQ"
+                  placeholder="e.g. dQw4w9WgXcQ (or full URL)"
                   required
                 />
               </div>

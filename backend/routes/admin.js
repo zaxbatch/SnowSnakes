@@ -48,5 +48,20 @@ router.post('/users/:id/demote', auth, admin, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// Delete a user (admin only)
+router.delete('/users/:id', auth, admin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (id === req.user.id) {
+      return res.status(400).json({ error: 'You cannot delete yourself' });
+    }
+    const user = await User.delete(id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 module.exports = router;

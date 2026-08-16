@@ -1,60 +1,58 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../../api';
+import { useDeleteMode } from '../../context/DeleteModeContext';
 
-// ─── Extract YouTube video ID from URL or return the input if it's already an ID ───
+// ─── Robust YouTube ID extractor ──────────────────────────
 const extractYouTubeId = (input) => {
   if (!input) return null;
-  // Trim whitespace
-  let str = input.trim();
-  // If it's already a clean 11‑character ID (allow dashes and underscores)
-  if (/^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
 
-  // Try to extract from common URL patterns
+  // If it's already a clean 11‑character ID
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+
+  // Try common YouTube URL patterns
   const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/,  // standard watch and youtu.be
-    /youtube\.com\/embed\/([^?/]+)/,                     // embed
-    /youtube\.com\/v\/([^?/]+)/,                         // old v/ format
-    /youtube\.com\/shorts\/([^?/]+)/,                    // shorts
-    /youtube\.com\/live\/([^?/]+)/,                      // live
-    /(?:v=|\/)([a-zA-Z0-9_-]{11})(?:[&?/]|$)/,           // any 11‑char ID in URL
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&?/]+)/,
   ];
   for (const pattern of patterns) {
-    const match = str.match(pattern);
+    const match = input.match(pattern);
     if (match) return match[1];
   }
-  // Last attempt: try to find any 11-character alphanumeric string with - and _
-  const idMatch = str.match(/([a-zA-Z0-9_-]{11})/);
-  if (idMatch) return idMatch[1];
+
+  // As a last resort, search for an 11‑character ID anywhere in the string
+  const fallbackMatch = input.match(/[a-zA-Z0-9_-]{11}/);
+  if (fallbackMatch) return fallbackMatch[0];
 
   return null;
 };
 
 const EpisodeList = () => {
+  const { deleteMode } = useDeleteMode();
   const [episodes, setEpisodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeEpisode, setActiveEpisode] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
 
+  const fetchEpisodes = async () => {
+    try {
+      const res = await api.get('/episodes');
+      setEpisodes(res.data);
+    } catch (err) {
+      console.error('Failed to fetch episodes:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchEpisodes = async () => {
-      try {
-        const res = await api.get('/episodes');
-        setEpisodes(res.data);
-      } catch (err) {
-        console.error('Failed to fetch episodes:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchEpisodes();
   }, []);
 
-  // ─── Play an episode – validate and extract the YouTube ID ───
   const playEpisode = (ep) => {
     const videoId = extractYouTubeId(ep.youtube_id);
     if (!videoId) {
       alert('Invalid YouTube ID or URL. Please check the episode.');
+      console.warn('Failed to extract ID from:', ep.youtube_id);
       return;
     }
     setActiveEpisode({ ...ep, youtube_id: videoId });
@@ -91,11 +89,20 @@ const EpisodeList = () => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // ─── Get thumbnail – use custom URL or auto‑fetch from YouTube ───
   const getThumbnail = (ep) => {
     const id = extractYouTubeId(ep.youtube_id);
     if (!id) return '';
     return ep.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  };
+
+  const deleteEpisode = async (id) => {
+    if (!window.confirm('Delete this episode?')) return;
+    try {
+      await api.delete(`/episodes/${id}`);
+      fetchEpisodes();
+    } catch (err) {
+      alert('Failed to delete episode');
+    }
   };
 
   return (
@@ -120,7 +127,7 @@ const EpisodeList = () => {
         </div>
       ) : (
         <div className="grid-spread">
-          {episodes.map((ep) => {
+          {episodes.map(ep => {
             const thumb = getThumbnail(ep);
             return (
               <div className="spread-card" key={ep.id}>
@@ -151,8 +158,8 @@ const EpisodeList = () => {
                       textShadow: '0 0 20px rgba(0,0,0,0.8)',
                     }}
                     onClick={() => playEpisode(ep)}
-                    onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                    onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
                   >
                     ▶️
                   </div>
@@ -163,9 +170,16 @@ const EpisodeList = () => {
                   <span className="episode-number">{ep.episode_number || 'SPECIAL'}</span>
                   <span className="episode-date">📅 {ep.air_date || 'TBA'}</span>
                 </div>
-                <button className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} onClick={() => playEpisode(ep)}>
-                  <i className="fas fa-play"></i> Watch Now
-                </button>
+                <div className="spread-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => playEpisode(ep)}>
+                    <i className="fas fa-play"></i> Watch Now
+                  </button>
+                  {deleteMode && (
+                    <button className="btn btn-danger" onClick={() => deleteEpisode(ep.id)}>
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
