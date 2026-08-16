@@ -3,6 +3,7 @@ import api from '../../api';
 import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
 import SocialActions from '../SocialActions';
+import CommentModal from '../CommentModal';
 import FullscreenMediaModal from '../FullscreenMediaModal';
 
 const DoodleGallery = () => {
@@ -10,6 +11,10 @@ const DoodleGallery = () => {
   const { deleteMode } = useDeleteMode();
   const [doodles, setDoodles] = useState([]);
   const [selectedDoodle, setSelectedDoodle] = useState(null);
+
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [commentContent, setCommentContent] = useState(null);
+  const [commentContentType, setCommentContentType] = useState('');
 
   const fetchDoodles = async () => {
     try {
@@ -32,6 +37,22 @@ const DoodleGallery = () => {
     } catch (err) {
       alert('Failed to delete doodle');
     }
+  };
+
+  const handleComment = async (contentId, text) => {
+    try {
+      await api.post(`/doodles/${contentId}/comment`, { text });
+      fetchDoodles();
+      setCommentModalOpen(false);
+    } catch (err) {
+      alert('Error posting comment');
+    }
+  };
+
+  const openCommentModal = (item) => {
+    setCommentContent(item);
+    setCommentContentType('doodle');
+    setCommentModalOpen(true);
   };
 
   return (
@@ -69,10 +90,11 @@ const DoodleGallery = () => {
               contentType="doodle"
               contentId={d.id}
               likes={d.likes || 0}
-              comments={d.comments || []}
               shares={d.shares || 0}
+              commentCount={d.comments ? d.comments.length : 0}
               currentUser={user}
               onUpdate={fetchDoodles}
+              onOpenCommentModal={() => openCommentModal(d)}
             />
           </div>
         ))}
@@ -88,6 +110,15 @@ const DoodleGallery = () => {
           type="image"
         />
       )}
+
+      <CommentModal
+        isOpen={commentModalOpen}
+        onClose={() => setCommentModalOpen(false)}
+        content={commentContent}
+        contentType={commentContentType}
+        currentUser={user}
+        onComment={handleComment}
+      />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import api from '../../api';
 import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
 import SocialActions from '../SocialActions';
+import CommentModal from '../CommentModal';
 import FullscreenMediaModal from '../FullscreenMediaModal';
 
 const ComicList = () => {
@@ -10,6 +11,10 @@ const ComicList = () => {
   const { deleteMode } = useDeleteMode();
   const [comics, setComics] = useState([]);
   const [selectedComic, setSelectedComic] = useState(null);
+
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [commentContent, setCommentContent] = useState(null);
+  const [commentContentType, setCommentContentType] = useState('');
 
   const fetchComics = async () => {
     try {
@@ -32,6 +37,22 @@ const ComicList = () => {
     } catch (err) {
       alert('Failed to delete comic');
     }
+  };
+
+  const handleComment = async (contentId, text) => {
+    try {
+      await api.post(`/comics/${contentId}/comment`, { text });
+      fetchComics();
+      setCommentModalOpen(false);
+    } catch (err) {
+      alert('Error posting comment');
+    }
+  };
+
+  const openCommentModal = (item) => {
+    setCommentContent(item);
+    setCommentContentType('comic');
+    setCommentModalOpen(true);
   };
 
   return (
@@ -72,10 +93,11 @@ const ComicList = () => {
               contentType="comic"
               contentId={c.id}
               likes={c.likes || 0}
-              comments={c.comments || []}
               shares={c.shares || 0}
+              commentCount={c.comments ? c.comments.length : 0}
               currentUser={user}
               onUpdate={fetchComics}
+              onOpenCommentModal={() => openCommentModal(c)}
             />
           </div>
         ))}
@@ -100,6 +122,15 @@ const ComicList = () => {
           )}
         </FullscreenMediaModal>
       )}
+
+      <CommentModal
+        isOpen={commentModalOpen}
+        onClose={() => setCommentModalOpen(false)}
+        content={commentContent}
+        contentType={commentContentType}
+        currentUser={user}
+        onComment={handleComment}
+      />
     </div>
   );
 };

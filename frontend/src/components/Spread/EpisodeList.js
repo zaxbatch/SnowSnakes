@@ -3,7 +3,9 @@ import api from '../../api';
 import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
 import SocialActions from '../SocialActions';
+import CommentModal from '../CommentModal';
 
+// ─── Extract YouTube video ID from URL or return the input if it's already an ID ───
 const extractYouTubeId = (input) => {
   if (!input) return null;
   if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
@@ -26,6 +28,11 @@ const EpisodeList = () => {
   const [activeEpisode, setActiveEpisode] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
+
+  // ─── Comment modal state ───
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [commentContent, setCommentContent] = useState(null);
+  const [commentContentType, setCommentContentType] = useState('');
 
   const fetchEpisodes = async () => {
     try {
@@ -97,6 +104,23 @@ const EpisodeList = () => {
     } catch (err) {
       alert('Failed to delete episode');
     }
+  };
+
+  // ─── Comment handlers ──────────────────────────────────────
+  const handleComment = async (contentId, text) => {
+    try {
+      await api.post(`/episodes/${contentId}/comment`, { text });
+      fetchEpisodes();
+      setCommentModalOpen(false);
+    } catch (err) {
+      alert('Error posting comment');
+    }
+  };
+
+  const openCommentModal = (item) => {
+    setCommentContent(item);
+    setCommentContentType('episode');
+    setCommentModalOpen(true);
   };
 
   return (
@@ -178,10 +202,11 @@ const EpisodeList = () => {
                   contentType="episode"
                   contentId={ep.id}
                   likes={ep.likes || 0}
-                  comments={ep.comments || []}
                   shares={ep.shares || 0}
+                  commentCount={ep.comments ? ep.comments.length : 0}
                   currentUser={user}
                   onUpdate={fetchEpisodes}
+                  onOpenCommentModal={() => openCommentModal(ep)}
                 />
               </div>
             );
@@ -277,6 +302,16 @@ const EpisodeList = () => {
           </div>
         </div>
       )}
+
+      {/* ─── Comment Modal ─── */}
+      <CommentModal
+        isOpen={commentModalOpen}
+        onClose={() => setCommentModalOpen(false)}
+        content={commentContent}
+        contentType={commentContentType}
+        currentUser={user}
+        onComment={handleComment}
+      />
     </div>
   );
 };

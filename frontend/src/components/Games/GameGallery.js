@@ -4,6 +4,7 @@ import api from '../../api';
 import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
 import SocialActions from '../SocialActions';
+import CommentModal from '../CommentModal';
 
 const BACKEND_URL = api.defaults.baseURL.replace(/\/api$/, '');
 
@@ -17,6 +18,11 @@ const GameGallery = ({ setShowGameModal }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef = useRef(null);
   const containerRef = useRef(null);
+
+  // ─── Comment modal state ───
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [commentContent, setCommentContent] = useState(null);
+  const [commentContentType, setCommentContentType] = useState('');
 
   const fetchGames = async () => {
     setLoading(true);
@@ -94,6 +100,22 @@ const GameGallery = ({ setShowGameModal }) => {
     } catch (err) {
       alert('Failed to delete game');
     }
+  };
+
+  const handleComment = async (contentId, text) => {
+    try {
+      await api.post(`/games/${contentId}/comment`, { text });
+      fetchGames();
+      setCommentModalOpen(false);
+    } catch (err) {
+      alert('Error posting comment');
+    }
+  };
+
+  const openCommentModal = (item) => {
+    setCommentContent(item);
+    setCommentContentType('game');
+    setCommentModalOpen(true);
   };
 
   return (
@@ -199,16 +221,26 @@ const GameGallery = ({ setShowGameModal }) => {
                   contentType="game"
                   contentId={game.id}
                   likes={game.likes || 0}
-                  comments={game.comments || []}
                   shares={game.shares || 0}
+                  commentCount={game.comments ? game.comments.length : 0}
                   currentUser={user}
                   onUpdate={fetchGames}
+                  onOpenCommentModal={() => openCommentModal(game)}
                 />
               </div>
             ))
           )}
         </div>
       )}
+
+      <CommentModal
+        isOpen={commentModalOpen}
+        onClose={() => setCommentModalOpen(false)}
+        content={commentContent}
+        contentType={commentContentType}
+        currentUser={user}
+        onComment={handleComment}
+      />
     </div>
   );
 };

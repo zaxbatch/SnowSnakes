@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDeleteMode } from '../../context/DeleteModeContext';
 import { useKillerMode } from '../../context/KillerModeContext';
-import CommentModal from './CommentModal';
+import CommentModal from '../CommentModal';
 
 const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, onComment, currentUser }) => {
   const [flipped, setFlipped] = useState(false);
