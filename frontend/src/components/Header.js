@@ -11,7 +11,6 @@ const Header = ({ showGameModal, setShowGameModal }) => {
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   const [authUsername, setAuthUsername] = useState('');
   const [authPassword, setAuthPassword] = useState('');
-  const [authDisplayName, setAuthDisplayName] = useState('');
   const [authEmail, setAuthEmail] = useState('');
   // ─── Show password toggle ───
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -92,12 +91,11 @@ const Header = ({ showGameModal, setShowGameModal }) => {
       if (authMode === 'login') {
         await login(authUsername, authPassword);
       } else {
-        await register(authUsername, authPassword, authDisplayName, authEmail);
+        await register(authUsername, authPassword, authEmail);
       }
       setShowAuthModal(false);
       setAuthUsername('');
       setAuthPassword('');
-      setAuthDisplayName('');
       setAuthEmail('');
       setShowLoginPassword(false);
       setShowRegisterPassword(false);
@@ -280,7 +278,7 @@ const Header = ({ showGameModal, setShowGameModal }) => {
             {user ? (
               <div className="user-info">
                 <span className="user-avatar">{user.avatar}</span>
-                <span className="user-name">{user.display_name}</span>
+                <span className="user-name">{user.username}</span>
                 <button className="btn btn-danger btn-sm" onClick={logout}>
                   <i className="fas fa-sign-out-alt"></i>
                 </button>
@@ -329,25 +327,15 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                   />
                 </div>
                 {authMode === 'register' && (
-                  <>
-                    <div className="form-group">
-                      <label>Display Name</label>
-                      <input
-                        className="form-control"
-                        value={authDisplayName}
-                        onChange={(e) => setAuthDisplayName(e.target.value)}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Email (for HubSpot)</label>
-                      <input
-                        type="email"
-                        className="form-control"
-                        value={authEmail}
-                        onChange={(e) => setAuthEmail(e.target.value)}
-                      />
-                    </div>
-                  </>
+                  <div className="form-group">
+                    <label>Email (for HubSpot)</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                    />
+                  </div>
                 )}
                 <div className="form-group">
                   <label>Password</label>

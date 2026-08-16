@@ -13,12 +13,12 @@ class User {
     return result.rows[0];
   }
 
-  static async create({ username, password, displayName, avatar }) {
+  static async create({ username, password, avatar }) {
     const hashed = await bcrypt.hash(password, 10);
     const result = await pool.query(
       `INSERT INTO users (username, password_hash, display_name, avatar, is_admin)
        VALUES ($1, $2, $3, $4, false) RETURNING id, username, display_name, avatar, is_admin`,
-      [username, hashed, displayName || username, avatar || '👤']
+      [username, hashed, username, avatar || '👤']   // display_name = username
     );
     return result.rows[0];
   }
@@ -43,7 +43,27 @@ class User {
     }
   }
 
-  // Admin methods...
+  // Admin methods (keep them)
+  static async findAll() {
+    const result = await pool.query('SELECT id, username, display_name, avatar, is_admin FROM users ORDER BY id');
+    return result.rows;
+  }
+
+  static async promoteToAdmin(id) {
+    const result = await pool.query(
+      'UPDATE users SET is_admin = true WHERE id = $1 RETURNING id, username, display_name, avatar, is_admin',
+      [id]
+    );
+    return result.rows[0];
+  }
+
+  static async demoteFromAdmin(id) {
+    const result = await pool.query(
+      'UPDATE users SET is_admin = false WHERE id = $1 RETURNING id, username, display_name, avatar, is_admin',
+      [id]
+    );
+    return result.rows[0];
+  }
 }
 
 module.exports = User;

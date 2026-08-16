@@ -5,11 +5,11 @@ const { createHubSpotContact } = require('../services/hubspot');
 
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, displayName, avatar, email } = req.body;
+    const { username, password, avatar, email } = req.body;
     const existing = await User.findByUsername(username);
     if (existing) return res.status(400).json({ error: 'Username taken' });
-    const user = await User.create({ username, password, displayName, avatar });
-    if (email) await createHubSpotContact({ email, firstname: displayName || username });
+    const user = await User.create({ username, password, avatar });
+    if (email) await createHubSpotContact({ email, firstname: username });
     const token = User.generateToken(user);
     res.status(201).json({ token, user });
   } catch (err) {
