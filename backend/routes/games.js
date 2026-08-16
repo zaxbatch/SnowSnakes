@@ -1,27 +1,99 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const Game = require('../models/Game');
 const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
 
-// ─── Public routes ──────────────────────────────────────
+// ─── File upload config ──────────────────────────────────
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '../uploads/games/temp');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'game-' + unique + ext);
+  }
+});
 
-// GET all games
+const fileFilter = (req, file, cb) => {
+  const allowedExts = [
+    '.html', '.htm', '.js', '.css', '.json', '.txt',
+    '.png', '.jpg', '.jpeg', '.gif', '.webp',
+    '.mp3', '.wav', '.mp4', '.webm', '.wasm', '.zip'
+  ];
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedExts.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('File type not allowed: ' + file.originalname));
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 50 * 1024 * 1024, files: 100 }
+});
+
+// ─── Helpers ──────────────────────────────────────────────
+const moveFilesToGameFolder = (gameId, files) => {
+  const tempFolder = path.join(__dirname, '../uploads/games/temp');
+  const gameFolder = path.join(__dirname, '../uploads/games', String(gameId));
+  if (!fs.existsSync(gameFolder)) fs.mkdirSync(gameFolder, { recursive: true });
+  const moved = [];
+  for (const file of files) {
+    const src = path.join(tempFolder, file.filename);
+    const dest = path.join(gameFolder, file.filename);
+    if (fs.existsSync(src)) { fs.renameSync(src, dest); moved.push(file.filename); }
+  }
+  return moved;
+};
+
+const cleanupTempFiles = (files) => {
+  if (!files) return;
+  for (const f of files) {
+    const filePath = path.join(__dirname, '../uploads/games/temp', f.filename);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+};
+
+// ─── Routes ──────────────────────────────────────────────
+
+// GET all games with comments and like status
 router.get('/', async (req, res) => {
   try {
     const games = await Game.findAll();
-    for (let game of games) {
-      game.comments = await Interaction.getComments('game', game.id);
+    for (const g of games) {
+      try {
+        g.comments = await Interaction.getComments('game', g.id);
+      } catch (err) {
+        console.error(`Error fetching comments for game ${g.id}:`, err);
+        g.comments = [];
+      }
       if (req.user) {
-        game.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', game.id);
+        try {
+          g.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', g.id);
+        } catch (err) {
+          console.error(`Error fetching like status for game ${g.id}:`, err);
+          g.isLiked = false;
+        }
       } else {
-        game.isLiked = false;
+        g.isLiked = false;
       }
     }
     res.json(games);
   } catch (err) {
     console.error('Error in GET /games:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -30,11 +102,19 @@ router.get('/:id', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id);
     if (!game) return res.status(404).json({ error: 'Not found' });
-    game.comments = await Interaction.getComments('game', req.params.id);
+    try {
+      game.comments = await Interaction.getComments('game', req.params.id);
+    } catch (err) {
+      console.error(`Error fetching comments for game ${req.params.id}:`, err);
+      game.comments = [];
+    }
     if (req.user) {
-      game.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', req.params.id);
-    } else {
-      game.isLiked = false;
+      try {
+        game.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', req.params.id);
+      } catch (err) {
+        console.error(`Error fetching like status for game ${req.params.id}:`, err);
+        game.isLiked = false;
+      }
     }
     res.json(game);
   } catch (err) {
@@ -43,71 +123,117 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST new game (auth required)
-router.post('/', auth, async (req, res) => {
+// POST a new game (with file upload)
+router.post('/', upload.array('files', 100), async (req, res) => {
   try {
-    const { title, description, icon, tags, type, code, file_count } = req.body;
-    if (!title) return res.status(400).json({ error: 'Title required' });
+    const { title, description, icon, tags, type, code } = req.body;
+    const author_id = req.user ? req.user.id : null;
+
+    if (!title || !description) {
+      cleanupTempFiles(req.files);
+      return res.status(400).json({ error: 'Title and description are required' });
+    }
+
     const game = await Game.create({
       title,
       description,
-      icon,
-      tags,
-      author_id: req.user.id,
-      type,
-      code,
-      file_count
+      icon: icon || '🎮',
+      tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      author_id,
+      type: type || 'user',
+      code: code || '',
+      file_count: req.files ? req.files.length : 0,
     });
-    res.status(201).json(game);
+
+    let movedFiles = [];
+    if (req.files && req.files.length > 0) {
+      movedFiles = moveFilesToGameFolder(game.id, req.files);
+    }
+
+    res.status(201).json({ ...game, uploadedFiles: movedFiles });
   } catch (err) {
-    console.error('Error in POST /games:', err);
+    console.error('Game creation error:', err);
+    cleanupTempFiles(req.files);
     res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE game (auth required – admin only)
-router.delete('/:id', auth, async (req, res) => {
+// ─── Launch game ──────────────────────────────────────────
+router.get('/:id/launch', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id);
-    if (!game) return res.status(404).json({ error: 'Not found' });
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Not authorized' });
+    if (!game) return res.status(404).send('Game not found');
+
+    const gameFolder = path.join(__dirname, '../uploads/games', String(game.id));
+    if (game.file_count > 0 && fs.existsSync(gameFolder)) {
+      const files = fs.readdirSync(gameFolder);
+      let htmlFile = files.find(f => f.toLowerCase() === 'index.html') ||
+                     files.find(f => f.endsWith('.html') || f.endsWith('.htm'));
+      if (htmlFile) {
+        return res.sendFile(path.join(gameFolder, htmlFile));
+      }
     }
-    await Game.delete(req.params.id);
-    res.json({ success: true });
+
+    if (game.code) {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head><meta charset="UTF-8"><title>${game.title}</title></head>
+          <body>
+            <div id="game-container"></div>
+            <script>
+              ${game.code}
+              if (typeof myGame === 'function') myGame();
+            <\/script>
+          </body>
+        </html>
+      `;
+      return res.send(html);
+    }
+
+    res.status(404).send('No game content');
   } catch (err) {
-    console.error('Error in DELETE /games/:id:', err);
-    res.status(500).json({ error: err.message });
+    console.error('Launch error:', err);
+    res.status(500).send('Error launching game');
   }
 });
 
-// ─── Special game actions ──────────────────────────────
-
-// Vote
+// ─── Vote ────────────────────────────────────────────────
 router.post('/:id/vote', auth, async (req, res) => {
   try {
     const updated = await Game.vote(req.params.id);
     if (!updated) return res.status(404).json({ error: 'Game not found' });
     res.json(updated);
   } catch (err) {
-    console.error('Error in POST /games/:id/vote:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Play
-router.post('/:id/play', auth, async (req, res) => {
+// ─── Play count ──────────────────────────────────────────
+router.post('/:id/play', async (req, res) => {
   try {
     const updated = await Game.play(req.params.id);
     if (!updated) return res.status(404).json({ error: 'Game not found' });
     res.json(updated);
   } catch (err) {
-    console.error('Error in POST /games/:id/play:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─── SOCIAL ACTIONS (unified) ──────────────────────────
+// ─── Delete game ──────────────────────────────────────────
+router.delete('/:id', auth, admin, async (req, res) => {
+  try {
+    const game = await Game.delete(req.params.id);
+    if (!game) return res.status(404).json({ error: 'Not found' });
+    const folder = path.join(__dirname, '../uploads/games', String(req.params.id));
+    if (fs.existsSync(folder)) fs.rmSync(folder, { recursive: true, force: true });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Social actions ──────────────────────────────────────
 
 // Like
 router.post('/:id/like', auth, async (req, res) => {
@@ -115,7 +241,8 @@ router.post('/:id/like', auth, async (req, res) => {
     const result = await Interaction.toggleLike(req.user.id, 'game', req.params.id);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error in POST /games/:id/like:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -128,6 +255,7 @@ router.post('/:id/comment', auth, async (req, res) => {
     const comments = await Interaction.getComments('game', req.params.id);
     res.status(201).json(comments[0] || {});
   } catch (err) {
+    console.error('Error in POST /games/:id/comment:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -136,19 +264,20 @@ router.post('/:id/comment', auth, async (req, res) => {
 router.post('/:id/share', auth, async (req, res) => {
   try {
     const updated = await Interaction.incrementShare('game', req.params.id);
-    if (!updated) return res.status(404).json({ error: 'Game not found' });
     res.json(updated);
   } catch (err) {
+    console.error('Error in POST /games/:id/share:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get comments (public)
+// GET comments (public)
 router.get('/:id/comments', async (req, res) => {
   try {
     const comments = await Interaction.getComments('game', req.params.id);
     res.json(comments);
   } catch (err) {
+    console.error('Error in GET /games/:id/comments:', err);
     res.status(500).json({ error: err.message });
   }
 });
