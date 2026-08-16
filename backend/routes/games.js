@@ -73,16 +73,27 @@ router.get('/', async (req, res) => {
   try {
     const games = await Game.findAll();
     for (const g of games) {
-      g.comments = await Interaction.getComments('game', g.id);
+      try {
+        g.comments = await Interaction.getComments('game', g.id);
+      } catch (err) {
+        console.error(`Error fetching comments for game ${g.id}:`, err);
+        g.comments = [];
+      }
       if (req.user) {
-        g.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', g.id);
+        try {
+          g.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', g.id);
+        } catch (err) {
+          console.error(`Error fetching like status for game ${g.id}:`, err);
+          g.isLiked = false;
+        }
       } else {
         g.isLiked = false;
       }
     }
     res.json(games);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error in GET /games:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -91,12 +102,23 @@ router.get('/:id', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id);
     if (!game) return res.status(404).json({ error: 'Not found' });
-    game.comments = await Interaction.getComments('game', req.params.id);
+    try {
+      game.comments = await Interaction.getComments('game', req.params.id);
+    } catch (err) {
+      console.error(`Error fetching comments for game ${req.params.id}:`, err);
+      game.comments = [];
+    }
     if (req.user) {
-      game.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', req.params.id);
+      try {
+        game.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', req.params.id);
+      } catch (err) {
+        console.error(`Error fetching like status for game ${req.params.id}:`, err);
+        game.isLiked = false;
+      }
     }
     res.json(game);
   } catch (err) {
+    console.error('Error in GET /games/:id:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -171,6 +193,7 @@ router.get('/:id/launch', async (req, res) => {
 
     res.status(404).send('No game content');
   } catch (err) {
+    console.error('Launch error:', err);
     res.status(500).send('Error launching game');
   }
 });
@@ -218,7 +241,8 @@ router.post('/:id/like', auth, async (req, res) => {
     const result = await Interaction.toggleLike(req.user.id, 'game', req.params.id);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error in POST /games/:id/like:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -231,6 +255,7 @@ router.post('/:id/comment', auth, async (req, res) => {
     const comments = await Interaction.getComments('game', req.params.id);
     res.status(201).json(comments[0] || {});
   } catch (err) {
+    console.error('Error in POST /games/:id/comment:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -241,6 +266,7 @@ router.post('/:id/share', auth, async (req, res) => {
     const updated = await Interaction.incrementShare('game', req.params.id);
     res.json(updated);
   } catch (err) {
+    console.error('Error in POST /games/:id/share:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -251,6 +277,7 @@ router.get('/:id/comments', async (req, res) => {
     const comments = await Interaction.getComments('game', req.params.id);
     res.json(comments);
   } catch (err) {
+    console.error('Error in GET /games/:id/comments:', err);
     res.status(500).json({ error: err.message });
   }
 });

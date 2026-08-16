@@ -10,16 +10,27 @@ router.get('/', async (req, res) => {
   try {
     const episodes = await Episode.findAll();
     for (const ep of episodes) {
-      ep.comments = await Interaction.getComments('episode', ep.id);
+      try {
+        ep.comments = await Interaction.getComments('episode', ep.id);
+      } catch (err) {
+        console.error(`Error fetching comments for episode ${ep.id}:`, err);
+        ep.comments = [];
+      }
       if (req.user) {
-        ep.isLiked = await Interaction.getLikeStatus(req.user.id, 'episode', ep.id);
+        try {
+          ep.isLiked = await Interaction.getLikeStatus(req.user.id, 'episode', ep.id);
+        } catch (err) {
+          console.error(`Error fetching like status for episode ${ep.id}:`, err);
+          ep.isLiked = false;
+        }
       } else {
         ep.isLiked = false;
       }
     }
     res.json(episodes);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error in GET /episodes:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -28,12 +39,23 @@ router.get('/:id', async (req, res) => {
   try {
     const episode = await Episode.findById(req.params.id);
     if (!episode) return res.status(404).json({ error: 'Not found' });
-    episode.comments = await Interaction.getComments('episode', req.params.id);
+    try {
+      episode.comments = await Interaction.getComments('episode', req.params.id);
+    } catch (err) {
+      console.error(`Error fetching comments for episode ${req.params.id}:`, err);
+      episode.comments = [];
+    }
     if (req.user) {
-      episode.isLiked = await Interaction.getLikeStatus(req.user.id, 'episode', req.params.id);
+      try {
+        episode.isLiked = await Interaction.getLikeStatus(req.user.id, 'episode', req.params.id);
+      } catch (err) {
+        console.error(`Error fetching like status for episode ${req.params.id}:`, err);
+        episode.isLiked = false;
+      }
     }
     res.json(episode);
   } catch (err) {
+    console.error('Error in GET /episodes/:id:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -101,7 +123,8 @@ router.post('/:id/like', auth, async (req, res) => {
     const result = await Interaction.toggleLike(req.user.id, 'episode', req.params.id);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error in POST /episodes/:id/like:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -114,6 +137,7 @@ router.post('/:id/comment', auth, async (req, res) => {
     const comments = await Interaction.getComments('episode', req.params.id);
     res.status(201).json(comments[0] || {});
   } catch (err) {
+    console.error('Error in POST /episodes/:id/comment:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -124,6 +148,7 @@ router.post('/:id/share', auth, async (req, res) => {
     const updated = await Interaction.incrementShare('episode', req.params.id);
     res.json(updated);
   } catch (err) {
+    console.error('Error in POST /episodes/:id/share:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -134,6 +159,7 @@ router.get('/:id/comments', async (req, res) => {
     const comments = await Interaction.getComments('episode', req.params.id);
     res.json(comments);
   } catch (err) {
+    console.error('Error in GET /episodes/:id/comments:', err);
     res.status(500).json({ error: err.message });
   }
 });
