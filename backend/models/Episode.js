@@ -1,14 +1,8 @@
 const { pool } = require('../config/db');
 
 class Episode {
-  // ─── Public methods ────────────────────────────────────
   static async findAll() {
     const result = await pool.query('SELECT * FROM episodes ORDER BY id DESC');
-    return result.rows;
-  }
-
-  static async findFeatured() {
-    const result = await pool.query('SELECT * FROM episodes WHERE featured = true ORDER BY id DESC');
     return result.rows;
   }
 
@@ -17,7 +11,6 @@ class Episode {
     return result.rows[0];
   }
 
-  // ─── Admin methods ─────────────────────────────────────
   static async create({ title, youtube_id, description, thumbnail_url, episode_number, air_date, featured }) {
     const result = await pool.query(
       `INSERT INTO episodes (title, youtube_id, description, thumbnail_url, episode_number, air_date, featured)

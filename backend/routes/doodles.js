@@ -5,39 +5,24 @@ const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 
-// ─── Public routes ──────────────────────────────────────
-
 // GET all doodles with comments and like status
 router.get('/', async (req, res) => {
   try {
     const doodles = await Doodle.findAll();
     for (const d of doodles) {
-      // Get comments (will return empty array if no comments table)
-      try {
-        d.comments = await Interaction.getComments('doodle', d.id);
-      } catch (err) {
-        console.warn('Could not fetch comments for doodle', d.id, err.message);
-        d.comments = [];
-      }
-      // Get like status
+      d.comments = await Interaction.getComments('doodle', d.id);
       if (req.user) {
-        try {
-          d.isLiked = await Interaction.getLikeStatus(req.user.id, 'doodle', d.id);
-        } catch (err) {
-          d.isLiked = false;
-        }
+        d.isLiked = await Interaction.getLikeStatus(req.user.id, 'doodle', d.id);
       } else {
         d.isLiked = false;
       }
     }
     res.json(doodles);
   } catch (err) {
-    console.error('Error in GET /doodles:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET a single doodle
 router.get('/:id', async (req, res) => {
   try {
     const doodle = await Doodle.findById(req.params.id);
@@ -52,7 +37,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST new doodle (auth required)
 router.post('/', auth, async (req, res) => {
   try {
     const { title, image_url, joke_id, character_id } = req.body;
@@ -64,7 +48,6 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// DELETE doodle (admin only)
 router.delete('/:id', auth, admin, async (req, res) => {
   try {
     const doodle = await Doodle.delete(req.params.id);
@@ -77,7 +60,6 @@ router.delete('/:id', auth, admin, async (req, res) => {
 
 // ─── Social actions ─────────────────────────────────────
 
-// Like
 router.post('/:id/like', auth, async (req, res) => {
   try {
     const result = await Interaction.toggleLike(req.user.id, 'doodle', req.params.id);
@@ -87,7 +69,6 @@ router.post('/:id/like', auth, async (req, res) => {
   }
 });
 
-// Comment
 router.post('/:id/comment', auth, async (req, res) => {
   try {
     const { text } = req.body;
@@ -100,7 +81,6 @@ router.post('/:id/comment', auth, async (req, res) => {
   }
 });
 
-// Share
 router.post('/:id/share', auth, async (req, res) => {
   try {
     const updated = await Interaction.incrementShare('doodle', req.params.id);
@@ -110,7 +90,6 @@ router.post('/:id/share', auth, async (req, res) => {
   }
 });
 
-// GET comments (public)
 router.get('/:id/comments', async (req, res) => {
   try {
     const comments = await Interaction.getComments('doodle', req.params.id);

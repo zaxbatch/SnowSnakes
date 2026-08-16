@@ -10,12 +10,10 @@ const SocialActions = ({ contentType, contentId, likes = 0, comments = [], share
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Update local state when props change (e.g., after fetch)
   React.useEffect(() => {
     setLocalLikes(likes);
     setLocalShares(shares);
     setLocalComments(comments);
-    // Check if current user liked this content
     if (currentUser && comments.some(c => c.user_id === currentUser.id)) {
       setIsLiked(true);
     } else {
@@ -24,40 +22,29 @@ const SocialActions = ({ contentType, contentId, likes = 0, comments = [], share
   }, [likes, shares, comments, currentUser]);
 
   const handleLike = async () => {
-    if (!currentUser) {
-      alert('Please login to like');
-      return;
-    }
-    if (isLoading) return;
+    if (!currentUser) { alert('Please login to like'); return; }
     setIsLoading(true);
     try {
       const res = await api.post(`/${contentType}s/${contentId}/like`);
-      // res.data.liked tells us if it's now liked or not
       setIsLiked(res.data.liked);
       setLocalLikes(res.data.liked ? localLikes + 1 : localLikes - 1);
       if (onUpdate) onUpdate();
     } catch (err) {
-      console.error('Like error:', err);
-      alert('Error liking: ' + (err.response?.data?.error || err.message));
+      alert('Error liking');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleShare = async () => {
-    if (!currentUser) {
-      alert('Please login to share');
-      return;
-    }
-    if (isLoading) return;
+    if (!currentUser) { alert('Please login to share'); return; }
     setIsLoading(true);
     try {
       await api.post(`/${contentType}s/${contentId}/share`);
       setLocalShares(localShares + 1);
       if (onUpdate) onUpdate();
     } catch (err) {
-      console.error('Share error:', err);
-      alert('Error sharing: ' + (err.response?.data?.error || err.message));
+      alert('Error sharing');
     } finally {
       setIsLoading(false);
     }
@@ -65,12 +52,8 @@ const SocialActions = ({ contentType, contentId, likes = 0, comments = [], share
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
-    if (!currentUser) {
-      alert('Please login to comment');
-      return;
-    }
+    if (!currentUser) { alert('Please login to comment'); return; }
     if (!commentText.trim()) return;
-    if (isLoading) return;
     setIsLoading(true);
     try {
       const res = await api.post(`/${contentType}s/${contentId}/comment`, { text: commentText });
@@ -78,8 +61,7 @@ const SocialActions = ({ contentType, contentId, likes = 0, comments = [], share
       setCommentText('');
       if (onUpdate) onUpdate();
     } catch (err) {
-      console.error('Comment error:', err);
-      alert('Error posting comment: ' + (err.response?.data?.error || err.message));
+      alert('Error posting comment');
     } finally {
       setIsLoading(false);
     }
@@ -88,31 +70,19 @@ const SocialActions = ({ contentType, contentId, likes = 0, comments = [], share
   return (
     <div>
       <div className="social-actions">
-        <button
-          className={`btn btn-like btn-sm ${isLiked ? 'liked' : ''}`}
-          onClick={(e) => { e.stopPropagation(); handleLike(); }}
-          disabled={isLoading}
-        >
+        <button className={`btn btn-like btn-sm ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={isLoading}>
           <i className="fas fa-heart"></i> {localLikes}
         </button>
-        <button
-          className="btn btn-comment btn-sm"
-          onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}
-          disabled={isLoading}
-        >
+        <button className="btn btn-comment btn-sm" onClick={() => setShowComments(!showComments)} disabled={isLoading}>
           <i className="fas fa-comment"></i> {localComments.length}
         </button>
-        <button
-          className="btn btn-share btn-sm"
-          onClick={(e) => { e.stopPropagation(); handleShare(); }}
-          disabled={isLoading}
-        >
+        <button className="btn btn-share btn-sm" onClick={handleShare} disabled={isLoading}>
           <i className="fas fa-share"></i> {localShares}
         </button>
       </div>
 
       {showComments && (
-        <div className="comments-section open" style={{ marginTop: '8px', padding: '8px', borderTop: '2px solid #bdc3c7' }}>
+        <div className="comments-section open">
           <div className="comment-list">
             {localComments.length === 0 ? (
               <div style={{ color: '#95a5a6', fontSize: '12px' }}>No comments yet.</div>
@@ -128,12 +98,7 @@ const SocialActions = ({ contentType, contentId, likes = 0, comments = [], share
           </div>
           {currentUser ? (
             <form onSubmit={handleCommentSubmit} className="comment-input">
-              <input
-                type="text"
-                placeholder="Write a comment..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-              />
+              <input type="text" placeholder="Write a comment..." value={commentText} onChange={(e) => setCommentText(e.target.value)} />
               <button type="submit" className="btn btn-success btn-sm" disabled={isLoading}>
                 <i className="fas fa-paper-plane"></i> Post
               </button>

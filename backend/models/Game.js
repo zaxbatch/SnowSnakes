@@ -21,20 +21,11 @@ class Game {
     return result.rows[0];
   }
 
-  static async create({ title, description, icon, tags, author_id, type = 'user', code = '', files = [] }) {
+  static async create({ title, description, icon, tags, author_id, type = 'user', code = '', file_count = 0 }) {
     const result = await pool.query(
-      `INSERT INTO games (title, description, icon, tags, author_id, type, code, files, votes, plays)
+      `INSERT INTO games (title, description, icon, tags, author_id, type, code, file_count, votes, plays)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, 0) RETURNING *`,
-      [title, description, icon || '🎮', tags || [], author_id, type, code, JSON.stringify(files)]
-    );
-    return result.rows[0];
-  }
-
-  // ✅ This method was missing – adds uploaded file metadata to the game
-  static async updateFiles(id, files) {
-    const result = await pool.query(
-      `UPDATE games SET files = $1 WHERE id = $2 RETURNING *`,
-      [JSON.stringify(files), id]
+      [title, description, icon || '🎮', tags || [], author_id, type, code || '', file_count]
     );
     return result.rows[0];
   }
