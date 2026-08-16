@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Joke = require('../models/Joke');
+const Interaction = require('../services/interaction'); // ADD THIS
 const auth = require('../middleware/auth');
 
 // ─── Public routes ──────────────────────────────────────
@@ -10,9 +11,9 @@ router.get('/', async (req, res) => {
   try {
     const { search, sort } = req.query;
     const jokes = await Joke.findAll({ search, sort });
-    // For each joke, get comments
+    // For each joke, get comments using Interaction
     for (let joke of jokes) {
-      joke.comments = await Joke.getComments(joke.id);
+      joke.comments = await Interaction.getComments('joke', joke.id);
     }
     res.json(jokes);
   } catch (err) {
@@ -25,7 +26,7 @@ router.get('/:id', async (req, res) => {
   try {
     const joke = await Joke.findById(req.params.id);
     if (!joke) return res.status(404).json({ error: 'Not found' });
-    const comments = await Joke.getComments(req.params.id);
+    const comments = await Interaction.getComments('joke', req.params.id);
     res.json({ ...joke, comments });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -66,29 +67,8 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
-// ─── LIKE ────────────────────────────────────────────────
-router.post('/:id/like', auth, async (req, res) => {
-  try {
-    const updated = await Joke.toggleLike(req.params.id, req.user.id);
-    if (!updated) return res.status(404).json({ error: 'Joke not found' });
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ─── SHARE ───────────────────────────────────────────────
-router.post('/:id/share', auth, async (req, res) => {
-  try {
-    const updated = await Joke.incrementShare(req.params.id);
-    if (!updated) return res.status(404).json({ error: 'Joke not found' });
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ─── KILL (Killer Mode) ──────────────────────────────────
+// This remains unique to jokes and uses Joke model directly
 router.post('/:id/kill', auth, async (req, res) => {
   try {
     const updated = await Joke.incrementKill(req.params.id);
@@ -99,33 +79,9 @@ router.post('/:id/kill', auth, async (req, res) => {
   }
 });
 
-// ─── COMMENTS ────────────────────────────────────────────
-router.post('/:id/comment', auth, async (req, res) => {
-  try {
-    const { text } = req.body;
-    if (!text || text.trim() === '') {
-      return res.status(400).json({ error: 'Comment text is required' });
-    }
-    const comment = await Joke.addComment(req.params.id, req.user.id, text.trim());
-    // Return the comment with user info
-    const [fullComment] = await Joke.getComments(req.params.id);
-    res.status(201).json(fullComment);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// ─── SOCIAL ACTIONS (using unified Interaction service) ─
 
-// GET comments for a joke (public)
-router.get('/:id/comments', async (req, res) => {
-  try {
-    const comments = await Joke.getComments(req.params.id);
-    res.json(comments);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ─── Like ────────────────────────────────────────────────
+// Like a joke
 router.post('/:id/like', auth, async (req, res) => {
   try {
     const result = await Interaction.toggleLike(req.user.id, 'joke', req.params.id);
@@ -135,30 +91,31 @@ router.post('/:id/like', auth, async (req, res) => {
   }
 });
 
-// ─── Comment ──────────────────────────────────────────────
+// Add a comment to a joke
 router.post('/:id/comment', auth, async (req, res) => {
   try {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Text required' });
-    const comment = await Interaction.addComment(req.user.id, 'joke', req.params.id, text);
-    const [full] = await Interaction.getComments('joke', req.params.id);
-    res.status(201).json(full);
+    await Interaction.addComment(req.user.id, 'joke', req.params.id, text);
+    const comments = await Interaction.getComments('joke', req.params.id);
+    res.status(201).json(comments[0] || {});
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─── Share ────────────────────────────────────────────────
+// Share a joke
 router.post('/:id/share', auth, async (req, res) => {
   try {
     const updated = await Interaction.incrementShare('joke', req.params.id);
+    if (!updated) return res.status(404).json({ error: 'Joke not found' });
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─── GET comments (public) ──────────────────────────────
+// Get comments for a joke (public)
 router.get('/:id/comments', async (req, res) => {
   try {
     const comments = await Interaction.getComments('joke', req.params.id);

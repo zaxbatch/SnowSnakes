@@ -24,6 +24,15 @@ class Doodle {
     const result = await pool.query('DELETE FROM doodles WHERE id = $1 RETURNING *', [id]);
     return result.rows[0];
   }
+
+  // ─── NEW: Increment share count ──────────────────────────
+  static async incrementShare(id) {
+    const result = await pool.query(
+      'UPDATE doodles SET shares = shares + 1 WHERE id = $1 RETURNING shares',
+      [id]
+    );
+    return result.rows[0]; // returns { shares: newCount } or undefined if not found
+  }
 }
 
 module.exports = Doodle;
