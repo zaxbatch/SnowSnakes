@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
 const Home = () => {
-  const [stats, setStats] = useState({ jokes: 0, doodles: 0, comics: 0, episodes: 0, games: 0 });
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    jokes: 0,
+    doodles: 0,
+    comics: 0,
+    episodes: 0,
+    games: 0,
+  });
 
   useEffect(() => {
-    // Fetch counts (you can create a /stats endpoint or just fetch lists)
     const fetchStats = async () => {
       try {
-        const [jokes, doodles, comics, episodes, games] = await Promise.all([
+        const [jokesRes, doodlesRes, comicsRes, episodesRes, gamesRes] = await Promise.all([
           api.get('/jokes'),
           api.get('/doodles'),
           api.get('/comics'),
@@ -16,11 +23,11 @@ const Home = () => {
           api.get('/games'),
         ]);
         setStats({
-          jokes: jokes.data.length,
-          doodles: doodles.data.length,
-          comics: comics.data.length,
-          episodes: episodes.data.length,
-          games: games.data.length,
+          jokes: jokesRes.data.length,
+          doodles: doodlesRes.data.length,
+          comics: comicsRes.data.length,
+          episodes: episodesRes.data.length,
+          games: gamesRes.data.length,
         });
       } catch (err) {
         console.error('Failed to fetch stats:', err);
@@ -28,6 +35,14 @@ const Home = () => {
     };
     fetchStats();
   }, []);
+
+  const statItems = [
+    { key: 'jokes', label: 'Jokes', emoji: '😂', path: '/jokes', color: '#ffccff' },
+    { key: 'doodles', label: 'Doodles', emoji: '🎨', path: '/doodles', color: '#ccffcc' },
+    { key: 'comics', label: 'Comics', emoji: '📢', path: '/comics', color: '#ccccff' },
+    { key: 'episodes', label: 'Episodes', emoji: '🎬', path: '/spread', color: '#ffffcc' },
+    { key: 'games', label: 'Games', emoji: '🎮', path: '/games', color: '#ccffcc' },
+  ];
 
   return (
     <div className="panel active" id="panel-home">
@@ -39,32 +54,44 @@ const Home = () => {
         <p style={{ fontSize: '20px', color: '#003399', fontWeight: 'bold' }}>🌭 Where condiments live their best lives! 🧈</p>
 
         <div className="grid-5" style={{ maxWidth: '1200px', margin: '20px auto' }}>
-          <div className="card" style={{ textAlign: 'center', background: '#ffccff', borderColor: '#ff00ff' }}>
-            <div style={{ fontSize: '40px' }}>😂</div>
-            <h3>{stats.jokes} Jokes</h3>
-            <p style={{ color: '#003399' }}>Dad jokes that kill</p>
-          </div>
-          <div className="card" style={{ textAlign: 'center', background: '#ccffcc', borderColor: '#00ff00' }}>
-            <div style={{ fontSize: '40px' }}>🎨</div>
-            <h3>{stats.doodles} Doodles</h3>
-            <p style={{ color: '#003399' }}>Art masterpieces</p>
-          </div>
-          <div className="card" style={{ textAlign: 'center', background: '#ccccff', borderColor: '#0000ff' }}>
-            <div style={{ fontSize: '40px' }}>📢</div>
-            <h3>{stats.comics} Comics</h3>
-            <p style={{ color: '#003399' }}>User submitted</p>
-          </div>
-          <div className="card" style={{ textAlign: 'center', background: '#ffffcc', borderColor: '#ff9900' }}>
-            <div style={{ fontSize: '40px' }}>🎬</div>
-            <h3>{stats.episodes} Episodes</h3>
-            <p style={{ color: '#003399' }}>Animated series</p>
-          </div>
-          <div className="card" style={{ textAlign: 'center', background: '#ccffcc', borderColor: '#00cc66' }}>
-            <div style={{ fontSize: '40px' }}>🎮</div>
-            <h3>{stats.games} Games</h3>
-            <p style={{ color: '#003399' }}>User submitted</p>
-          </div>
+          {statItems.map((item) => (
+            <div
+              key={item.key}
+              className="card"
+              style={{
+                textAlign: 'center',
+                background: item.color,
+                borderColor: '#ff00ff',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+              }}
+              onClick={() => navigate(item.path)}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+            >
+              <div style={{ fontSize: '40px' }}>{item.emoji}</div>
+              <h3>{stats[item.key]} {item.label}</h3>
+              <p style={{ color: '#003399' }}>Click to explore</p>
+            </div>
+          ))}
         </div>
+
+        <div style={{ background: '#ffffcc', border: '3px solid #ff00ff', padding: '10px', borderRadius: '15px', margin: '15px auto', maxWidth: '500px' }}>
+          <span style={{ fontWeight: '700', color: '#003399' }}>🎮 NEW!</span>
+          <span style={{ color: '#666' }}>Submit your own mini-games and get featured!</span>
+        </div>
+
+        <marquee behavior="scroll" direction="right" scrollamount="3" style={{ color: '#ff6600', fontWeight: 'bold' }}>
+          🐍 Why don't snow snakes eat? They're cold-blooded! ❄️
+        </marquee>
+
+        <button
+          className="btn btn-primary"
+          style={{ marginTop: '20px', fontSize: '24px' }}
+          onClick={() => navigate('/randomizer')}
+        >
+          <i className="fas fa-dice"></i> FEELIN' LUCKY?
+        </button>
       </div>
     </div>
   );
