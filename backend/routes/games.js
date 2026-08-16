@@ -73,15 +73,25 @@ router.get('/', async (req, res) => {
   try {
     const games = await Game.findAll();
     for (const g of games) {
-      g.comments = await Interaction.getComments('game', g.id);
+      try {
+        g.comments = await Interaction.getComments('game', g.id);
+      } catch (err) {
+        console.warn('Could not fetch comments for game', g.id, err.message);
+        g.comments = [];
+      }
       if (req.user) {
-        g.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', g.id);
+        try {
+          g.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', g.id);
+        } catch (err) {
+          g.isLiked = false;
+        }
       } else {
         g.isLiked = false;
       }
     }
     res.json(games);
   } catch (err) {
+    console.error('Error in GET /games:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -245,7 +255,7 @@ router.post('/:id/share', auth, async (req, res) => {
   }
 });
 
-// Get comments (public)
+// GET comments (public)
 router.get('/:id/comments', async (req, res) => {
   try {
     const comments = await Interaction.getComments('game', req.params.id);
