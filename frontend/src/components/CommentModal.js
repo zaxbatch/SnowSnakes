@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 
-const CommentModal = ({ isOpen, onClose, content, contentType, currentUser, onComment }) => {
+const CommentModal = ({ isOpen, onClose, joke, content, contentType, currentUser, onComment }) => {
   const [commentText, setCommentText] = useState('');
 
-  if (!isOpen || !content) return null;
+  if (!isOpen) return null;
+
+  // Determine the actual content object
+  const actualContent = content || joke;
+  if (!actualContent) return null;
+
+  // Determine content type (fallback to 'joke' if not provided)
+  const actualContentType = contentType || 'joke';
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    onComment(content.id, commentText.trim());
+    onComment(actualContent.id, commentText.trim());
     setCommentText('');
   };
 
@@ -51,12 +58,12 @@ const CommentModal = ({ isOpen, onClose, content, contentType, currentUser, onCo
         }}
       >
         <div className="modal-header">
-          <h2>{titleMap[contentType] || '💬 Comments'}</h2>
+          <h2>{titleMap[actualContentType] || '💬 Comments'}</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', marginBottom: '15px' }}>
-          {content.comments && content.comments.length > 0 ? (
-            content.comments.map(c => (
+          {actualContent.comments && actualContent.comments.length > 0 ? (
+            actualContent.comments.map(c => (
               <div className="comment-item" key={c.id} style={{ marginBottom: '8px' }}>
                 <span className="comment-user">{c.display_name || c.username}</span>
                 <span className="comment-text">{c.text}</span>
