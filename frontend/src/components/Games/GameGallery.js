@@ -19,7 +19,6 @@ const GameGallery = ({ setShowGameModal }) => {
   const iframeRef = useRef(null);
   const containerRef = useRef(null);
 
-  // ─── Comment modal state ───
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [commentContent, setCommentContent] = useState(null);
   const [commentContentType, setCommentContentType] = useState('');
@@ -28,7 +27,8 @@ const GameGallery = ({ setShowGameModal }) => {
     setLoading(true);
     try {
       const res = await api.get('/games');
-      setGames(res.data);
+      const gamesWithLikes = res.data.map(g => ({ ...g, isLiked: false }));
+      setGames(gamesWithLikes);
     } catch (err) {
       console.error('Failed to fetch games:', err);
     } finally {
@@ -39,6 +39,83 @@ const GameGallery = ({ setShowGameModal }) => {
   useEffect(() => {
     fetchGames();
   }, []);
+
+  const updateGame = (gameId, updater) => {
+    setGames(prev =>
+      prev.map(game =>
+        game.id === gameId ? updater(game) : game
+      )
+    );
+  };
+
+  const handleLike = async (gameId) => {
+    const game = games.find(g => g.id === gameId);
+    if (!game) return;
+
+    const newLiked = !game.isLiked;
+    const newLikes = newLiked ? (game.likes || 0) + 1 : (game.likes || 0) - 1;
+
+    updateGame(gameId, (g) => ({
+      ...g,
+      isLiked: newLiked,
+      likes: newLikes,
+    }));
+
+    try {
+      await api.post(`/games/${gameId}/like`);
+    } catch (err) {
+      updateGame(gameId, (g) => ({
+        ...g,
+        isLiked: !newLiked,
+        likes: newLiked ? (g.likes || 0) - 1 : (g.likes || 0) + 1,
+      }));
+      alert('Failed to like – please try again');
+    }
+  };
+
+  const handleShare = async (gameId) => {
+    const game = games.find(g => g.id === gameId);
+    if (!game) return;
+
+    updateGame(gameId, (g) => ({
+      ...g,
+      shares: (g.shares || 0) + 1,
+    }));
+
+    try {
+      const res = await api.post(`/games/${gameId}/share`);
+      if (res.data && res.data.shares !== undefined) {
+        updateGame(gameId, (g) => ({
+          ...g,
+          shares: res.data.shares,
+        }));
+      }
+    } catch (err) {
+      updateGame(gameId, (g) => ({
+        ...g,
+        shares: (g.shares || 0) - 1,
+      }));
+      alert('Failed to share – please try again');
+    }
+  };
+
+  const handleComment = async (gameId, text) => {
+    updateGame(gameId, (g) => ({
+      ...g,
+      comments: g.comments ? [...g.comments, { text, user }] : [{ text, user }],
+    }));
+
+    try {
+      await api.post(`/games/${gameId}/comment`, { text });
+    } catch (err) {
+      updateGame(gameId, (g) => ({
+        ...g,
+        comments: g.comments ? g.comments.slice(0, -1) : [],
+      }));
+      alert('Error posting comment');
+    }
+    setCommentModalOpen(false);
+  };
 
   const handleVote = async (id) => {
     try {
@@ -99,16 +176,6 @@ const GameGallery = ({ setShowGameModal }) => {
       fetchGames();
     } catch (err) {
       alert('Failed to delete game');
-    }
-  };
-
-  const handleComment = async (contentId, text) => {
-    try {
-      await api.post(`/games/${contentId}/comment`, { text });
-      fetchGames();
-      setCommentModalOpen(false);
-    } catch (err) {
-      alert('Error posting comment');
     }
   };
 
@@ -217,16 +284,31 @@ const GameGallery = ({ setShowGameModal }) => {
                     </button>
                   )}
                 </div>
-                <SocialActions
-                  contentType="game"
-                  contentId={game.id}
-                  likes={game.likes || 0}
-                  shares={game.shares || 0}
-                  commentCount={game.comments ? game.comments.length : 0}
-                  currentUser={user}
-                  onUpdate={fetchGames}
-                  onOpenCommentModal={() => openCommentModal(game)}
-                />
+
+                {/* ─── SOCIAL ACTIONS – corrected order and classes ─── */}
+                <div className="social-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center' }}>
+                  <button
+                    className={`btn btn-sm ${game.isLiked ? 'btn-like-active' : 'btn-like'}`}
+                    onClick={() => handleLike(game.id)}
+                    disabled={!user}
+                  >
+                    <i className="fas fa-heart"></i> {game.likes || 0}
+                  </button>
+                  <button
+                    className="btn btn-sm btn-comment"
+                    onClick={() => openCommentModal(game)}
+                    disabled={!user}
+                  >
+                    <i className="fas fa-comment"></i> {game.comments ? game.comments.length : 0}
+                  </button>
+                  <button
+                    className="btn btn-sm btn-share"
+                    onClick={() => handleShare(game.id)}
+                    disabled={!user}
+                  >
+                    <i className="fas fa-share-alt"></i> {game.shares || 0}
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -239,7 +321,7 @@ const GameGallery = ({ setShowGameModal }) => {
         content={commentContent}
         contentType={commentContentType}
         currentUser={user}
-        onComment={handleComment}
+        onComment={(text) => handleComment(commentContent.id, text)}
       />
     </div>
   );
