@@ -10,6 +10,8 @@ const ComicList = () => {
   const { user } = useContext(AuthContext);
   const { deleteMode } = useDeleteMode();
   const [comics, setComics] = useState([]);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('newest');
   const [selectedComic, setSelectedComic] = useState(null);
 
   const [commentModalOpen, setCommentModalOpen] = useState(false);
@@ -18,7 +20,7 @@ const ComicList = () => {
 
   const fetchComics = async () => {
     try {
-      const res = await api.get('/comics');
+      const res = await api.get('/comics', { params: { search, sort } });
       setComics(res.data);
     } catch (err) {
       console.error('Failed to fetch comics:', err);
@@ -27,7 +29,7 @@ const ComicList = () => {
 
   useEffect(() => {
     fetchComics();
-  }, []);
+  }, [search, sort]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this comic?')) return;
@@ -62,6 +64,24 @@ const ComicList = () => {
         <h2>COMICS</h2>
         <p>User-submitted comics from the condiment universe</p>
       </div>
+
+      {/* ─── Search & Sort ─── */}
+      <div className="flex justify-between align-center mb-20" style={{ flexWrap: 'wrap', gap: '10px' }}>
+        <input
+          type="text"
+          placeholder="Search comics..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="form-control"
+          style={{ width: '200px' }}
+        />
+        <div className="flex gap-10">
+          <button className="btn btn-secondary" onClick={() => setSort('likes')}>MOST LIKED</button>
+          <button className="btn btn-secondary" onClick={() => setSort('newest')}>NEWEST</button>
+          <button className="btn btn-secondary" onClick={() => setSort('oldest')}>OLDEST</button>
+        </div>
+      </div>
+
       <div className="grid-comics">
         {comics.map(c => (
           <div className="comic-card" key={c.id}>

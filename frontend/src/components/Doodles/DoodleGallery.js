@@ -10,6 +10,8 @@ const DoodleGallery = () => {
   const { user } = useContext(AuthContext);
   const { deleteMode } = useDeleteMode();
   const [doodles, setDoodles] = useState([]);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('newest');
   const [selectedDoodle, setSelectedDoodle] = useState(null);
 
   const [commentModalOpen, setCommentModalOpen] = useState(false);
@@ -18,7 +20,7 @@ const DoodleGallery = () => {
 
   const fetchDoodles = async () => {
     try {
-      const res = await api.get('/doodles');
+      const res = await api.get('/doodles', { params: { search, sort } });
       setDoodles(res.data);
     } catch (err) {
       console.error('Failed to fetch doodles:', err);
@@ -27,7 +29,7 @@ const DoodleGallery = () => {
 
   useEffect(() => {
     fetchDoodles();
-  }, []);
+  }, [search, sort]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this doodle?')) return;
@@ -62,6 +64,24 @@ const DoodleGallery = () => {
         <h2>DOODLE GALLERY</h2>
         <p>Where art meets condiments</p>
       </div>
+
+      {/* ─── Search & Sort ─── */}
+      <div className="flex justify-between align-center mb-20" style={{ flexWrap: 'wrap', gap: '10px' }}>
+        <input
+          type="text"
+          placeholder="Search doodles..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="form-control"
+          style={{ width: '200px' }}
+        />
+        <div className="flex gap-10">
+          <button className="btn btn-secondary" onClick={() => setSort('likes')}>MOST LIKED</button>
+          <button className="btn btn-secondary" onClick={() => setSort('newest')}>NEWEST</button>
+          <button className="btn btn-secondary" onClick={() => setSort('oldest')}>OLDEST</button>
+        </div>
+      </div>
+
       <div className="grid-3">
         {doodles.map(d => (
           <div className="doodle-card" key={d.id}>

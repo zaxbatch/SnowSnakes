@@ -5,7 +5,7 @@ import { useDeleteMode } from '../../context/DeleteModeContext';
 import SocialActions from '../SocialActions';
 import CommentModal from '../CommentModal';
 
-// ─── Extract YouTube video ID from URL or return the input if it's already an ID ───
+// ─── Extract YouTube video ID ───
 const extractYouTubeId = (input) => {
   if (!input) return null;
   if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
@@ -25,18 +25,20 @@ const EpisodeList = () => {
   const { deleteMode } = useDeleteMode();
   const [episodes, setEpisodes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('newest');
   const [activeEpisode, setActiveEpisode] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
 
-  // ─── Comment modal state ───
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [commentContent, setCommentContent] = useState(null);
   const [commentContentType, setCommentContentType] = useState('');
 
   const fetchEpisodes = async () => {
+    setLoading(true);
     try {
-      const res = await api.get('/episodes');
+      const res = await api.get('/episodes', { params: { search, sort } });
       setEpisodes(res.data);
     } catch (err) {
       console.error('Failed to fetch episodes:', err);
@@ -47,7 +49,7 @@ const EpisodeList = () => {
 
   useEffect(() => {
     fetchEpisodes();
-  }, []);
+  }, [search, sort]);
 
   const playEpisode = (ep) => {
     const videoId = extractYouTubeId(ep.youtube_id);
@@ -106,7 +108,6 @@ const EpisodeList = () => {
     }
   };
 
-  // ─── Comment handlers ──────────────────────────────────────
   const handleComment = async (contentId, text) => {
     try {
       await api.post(`/episodes/${contentId}/comment`, { text });
@@ -134,6 +135,24 @@ const EpisodeList = () => {
       <div style={{ background: '#fff3cd', border: '3px solid #ff9900', padding: '12px 18px', borderRadius: '15px', marginBottom: '20px', textAlign: 'center' }}>
         <span style={{ fontWeight: 700, color: '#856404' }}>🎬 This is the official animated series!</span>
         <span style={{ display: 'block', fontSize: '13px', color: '#856404', marginTop: '4px' }}>📺 Episodes are created by the Snowsnakes team — sit back and enjoy!</span>
+      </div>
+
+      {/* ─── Search & Sort ─── */}
+      <div className="flex justify-between align-center mb-20" style={{ flexWrap: 'wrap', gap: '10px' }}>
+        <input
+          type="text"
+          placeholder="Search episodes..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="form-control"
+          style={{ width: '200px' }}
+        />
+        <div className="flex gap-10">
+          <button className="btn btn-secondary" onClick={() => setSort('likes')}>MOST LIKED</button>
+          <button className="btn btn-secondary" onClick={() => setSort('newest')}>NEWEST</button>
+          <button className="btn btn-secondary" onClick={() => setSort('oldest')}>OLDEST</button>
+          <button className="btn btn-secondary" onClick={() => setSort('title')}>A–Z</button>
+        </div>
       </div>
 
       {loading ? (
@@ -303,7 +322,6 @@ const EpisodeList = () => {
         </div>
       )}
 
-      {/* ─── Comment Modal ─── */}
       <CommentModal
         isOpen={commentModalOpen}
         onClose={() => setCommentModalOpen(false)}

@@ -68,10 +68,11 @@ const cleanupTempFiles = (files) => {
 
 // ─── Routes ──────────────────────────────────────────────
 
-// GET all games with comments and like status
+// GET all games with search & sort
 router.get('/', async (req, res) => {
   try {
-    const games = await Game.findAll();
+    const { search, sort } = req.query;
+    const games = await Game.findAll({ search, sort });
     for (const g of games) {
       try {
         g.comments = await Interaction.getComments('game', g.id);

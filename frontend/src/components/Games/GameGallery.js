@@ -12,6 +12,8 @@ const GameGallery = ({ setShowGameModal }) => {
   const { deleteMode } = useDeleteMode();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('newest');
   const [activeGame, setActiveGame] = useState(null);
   const [gameUrl, setGameUrl] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -25,7 +27,7 @@ const GameGallery = ({ setShowGameModal }) => {
   const fetchGames = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/games');
+      const res = await api.get('/games', { params: { search, sort } });
       const gamesWithLikes = res.data.map(g => ({ ...g, isLiked: false, comments: [] }));
       setGames(gamesWithLikes);
     } catch (err) {
@@ -37,7 +39,7 @@ const GameGallery = ({ setShowGameModal }) => {
 
   useEffect(() => {
     fetchGames();
-  }, []);
+  }, [search, sort]);
 
   const updateGame = (gameId, updater) => {
     setGames(prev =>
@@ -139,9 +141,6 @@ const GameGallery = ({ setShowGameModal }) => {
     setCommentModalOpen(true);
   };
 
-  // Remove the vote handler if you don't need it
-  // const handleVote = async (id) => { ... }
-
   const handlePlay = async (game) => {
     try {
       await api.post(`/games/${game.id}/play`);
@@ -225,6 +224,25 @@ const GameGallery = ({ setShowGameModal }) => {
           </button>
         </div>
 
+        {/* ─── Search & Sort ─── */}
+        <div className="flex justify-between align-center mb-20" style={{ flexWrap: 'wrap', gap: '10px' }}>
+          <input
+            type="text"
+            placeholder="Search games..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="form-control"
+            style={{ width: '200px' }}
+          />
+          <div className="flex gap-10">
+            <button className="btn btn-secondary" onClick={() => setSort('likes')}>MOST LIKED</button>
+            <button className="btn btn-secondary" onClick={() => setSort('plays')}>MOST PLAYED</button>
+            <button className="btn btn-secondary" onClick={() => setSort('votes')}>MOST VOTED</button>
+            <button className="btn btn-secondary" onClick={() => setSort('newest')}>NEWEST</button>
+            <button className="btn btn-secondary" onClick={() => setSort('oldest')}>OLDEST</button>
+          </div>
+        </div>
+
         {activeGame && gameUrl && ReactDOM.createPortal(
           <div className="game-play-modal active" style={{ display: 'flex' }}>
             <div className="modal-box">
@@ -298,7 +316,6 @@ const GameGallery = ({ setShowGameModal }) => {
                     <button className="btn btn-primary btn-sm" onClick={() => handlePlay(game)}>
                       <i className="fas fa-play"></i> PLAY
                     </button>
-                    {/* VOTE BUTTON REMOVED */}
                     {(deleteMode || (game.author_id && game.author_id === 1)) && (
                       <button className="btn btn-danger btn-sm" onClick={() => handleDelete(game.id)}>
                         <i className="fas fa-trash"></i>

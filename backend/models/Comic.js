@@ -1,16 +1,30 @@
 const { pool } = require('../config/db');
 
 class Comic {
-  static async findAll() {
-    const result = await pool.query(`
+  // ─── Find all with search & sort ─────────────────────────
+  static async findAll({ search, sort } = {}) {
+    let query = `
       SELECT c.*, u.username as author_name
       FROM comics c
       LEFT JOIN users u ON c.author_id = u.id
-      ORDER BY c.created_at DESC
-    `);
+    `;
+    const values = [];
+    const conditions = [];
+    if (search) {
+      conditions.push(`(c.title ILIKE $${values.length + 1} OR c.dialogue ILIKE $${values.length + 1})`);
+      values.push(`%${search}%`);
+    }
+    if (conditions.length) query += ' WHERE ' + conditions.join(' AND ');
+    switch (sort) {
+      case 'likes': query += ' ORDER BY c.likes DESC'; break;
+      case 'oldest': query += ' ORDER BY c.created_at ASC'; break;
+      default: query += ' ORDER BY c.created_at DESC';
+    }
+    const result = await pool.query(query, values);
     return result.rows;
   }
 
+  // ─── Find by ID ──────────────────────────────────────────
   static async findById(id) {
     const result = await pool.query(`
       SELECT c.*, u.username as author_name
@@ -21,6 +35,7 @@ class Comic {
     return result.rows[0];
   }
 
+  // ─── Create ──────────────────────────────────────────────
   static async create({ title, scene, dialogue, caption, characters, image_url, author_id }) {
     const result = await pool.query(
       `INSERT INTO comics (title, scene, dialogue, caption, characters, image_url, author_id)
@@ -30,6 +45,7 @@ class Comic {
     return result.rows[0];
   }
 
+  // ─── Delete ──────────────────────────────────────────────
   static async delete(id) {
     const result = await pool.query('DELETE FROM comics WHERE id = $1 RETURNING *', [id]);
     return result.rows[0];
