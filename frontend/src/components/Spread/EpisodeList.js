@@ -1,6 +1,34 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../../api';
 
+// ─── Extract YouTube video ID from URL or return the input if it's already an ID ───
+const extractYouTubeId = (input) => {
+  if (!input) return null;
+  // Trim whitespace
+  let str = input.trim();
+  // If it's already a clean 11‑character ID (allow dashes and underscores)
+  if (/^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
+
+  // Try to extract from common URL patterns
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/,  // standard watch and youtu.be
+    /youtube\.com\/embed\/([^?/]+)/,                     // embed
+    /youtube\.com\/v\/([^?/]+)/,                         // old v/ format
+    /youtube\.com\/shorts\/([^?/]+)/,                    // shorts
+    /youtube\.com\/live\/([^?/]+)/,                      // live
+    /(?:v=|\/)([a-zA-Z0-9_-]{11})(?:[&?/]|$)/,           // any 11‑char ID in URL
+  ];
+  for (const pattern of patterns) {
+    const match = str.match(pattern);
+    if (match) return match[1];
+  }
+  // Last attempt: try to find any 11-character alphanumeric string with - and _
+  const idMatch = str.match(/([a-zA-Z0-9_-]{11})/);
+  if (idMatch) return idMatch[1];
+
+  return null;
+};
+
 const EpisodeList = () => {
   const [episodes, setEpisodes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,8 +50,14 @@ const EpisodeList = () => {
     fetchEpisodes();
   }, []);
 
+  // ─── Play an episode – validate and extract the YouTube ID ───
   const playEpisode = (ep) => {
-    setActiveEpisode(ep);
+    const videoId = extractYouTubeId(ep.youtube_id);
+    if (!videoId) {
+      alert('Invalid YouTube ID or URL. Please check the episode.');
+      return;
+    }
+    setActiveEpisode({ ...ep, youtube_id: videoId });
   };
 
   const closeModal = () => {
@@ -57,8 +91,11 @@ const EpisodeList = () => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // ─── Get thumbnail – use custom URL or auto‑fetch from YouTube ───
   const getThumbnail = (ep) => {
-    return ep.thumbnail_url || `https://img.youtube.com/vi/${ep.youtube_id}/hqdefault.jpg`;
+    const id = extractYouTubeId(ep.youtube_id);
+    if (!id) return '';
+    return ep.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
   };
 
   return (
@@ -83,46 +120,55 @@ const EpisodeList = () => {
         </div>
       ) : (
         <div className="grid-spread">
-          {episodes.map(ep => (
-            <div className="spread-card" key={ep.id}>
-              <div className="episode-badge">{ep.episode_number || 'SPECIAL'}</div>
-              {ep.featured && <div className="episode-featured">⭐ FEATURED</div>}
-              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', marginBottom: '10px' }}>
-                <img
-                  src={getThumbnail(ep)}
-                  alt={ep.title}
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontSize: '60px',
-                    cursor: 'pointer',
-                    opacity: 0.9,
-                    transition: '0.2s',
-                    textShadow: '0 0 20px rgba(0,0,0,0.8)',
-                  }}
-                  onClick={() => playEpisode(ep)}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
-                >
-                  ▶️
+          {episodes.map((ep) => {
+            const thumb = getThumbnail(ep);
+            return (
+              <div className="spread-card" key={ep.id}>
+                <div className="episode-badge">{ep.episode_number || 'SPECIAL'}</div>
+                {ep.featured && <div className="episode-featured">⭐ FEATURED</div>}
+                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', marginBottom: '10px' }}>
+                  {thumb ? (
+                    <img
+                      src={thumb}
+                      alt={ep.title}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
+                    />
+                  ) : (
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: '3rem' }}>🎬</span>
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      fontSize: '60px',
+                      cursor: 'pointer',
+                      opacity: 0.9,
+                      transition: '0.2s',
+                      textShadow: '0 0 20px rgba(0,0,0,0.8)',
+                    }}
+                    onClick={() => playEpisode(ep)}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
+                  >
+                    ▶️
+                  </div>
                 </div>
+                <h3 style={{ fontFamily: "'Comic Sans MS', cursive", color: '#e67e22' }}>{ep.title}</h3>
+                <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>{ep.description}</p>
+                <div className="spread-meta">
+                  <span className="episode-number">{ep.episode_number || 'SPECIAL'}</span>
+                  <span className="episode-date">📅 {ep.air_date || 'TBA'}</span>
+                </div>
+                <button className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} onClick={() => playEpisode(ep)}>
+                  <i className="fas fa-play"></i> Watch Now
+                </button>
               </div>
-              <h3 style={{ fontFamily: "'Comic Sans MS', cursive", color: '#e67e22' }}>{ep.title}</h3>
-              <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>{ep.description}</p>
-              <div className="spread-meta">
-                <span className="episode-number">{ep.episode_number || 'SPECIAL'}</span>
-                <span className="episode-date">📅 {ep.air_date || 'TBA'}</span>
-              </div>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} onClick={() => playEpisode(ep)}>
-                <i className="fas fa-play"></i> Watch Now
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
