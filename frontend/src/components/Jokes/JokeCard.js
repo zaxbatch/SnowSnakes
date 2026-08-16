@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useDeleteMode } from '../../context/DeleteModeContext';
+import { useKillerMode } from '../../context/KillerModeContext';
 
 const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, currentUser }) => {
   const [flipped, setFlipped] = useState(false);
   const { deleteMode } = useDeleteMode();
+  const { killerMode } = useKillerMode();
   const isQnA = joke.punchline && joke.punchline.trim().length > 0;
-  const killerClass = joke.kill_count > 50 ? 'killer' : '';
+  const killerClass = (killerMode && joke.kill_count > 50) ? 'killer' : '';
   const noFlipClass = !isQnA ? 'no-flip' : '';
 
   const handleCardClick = () => {
@@ -21,7 +23,11 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, currentUser }) => {
       <div className="flip-card-inner">
         <div className="flip-card-front">
           <div className="flip-actions">
-            <span>💀 {joke.kill_count || 0}</span>
+            {killerMode && (
+              <span style={{ color: '#ff0000', fontWeight: '900', marginRight: '6px' }}>
+                💀 {joke.kill_count || 0}
+              </span>
+            )}
             {(deleteMode || (currentUser && currentUser.id === joke.author_id)) && (
               <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); onDelete(joke.id); }}>
                 <i className="fas fa-trash"></i>
@@ -33,7 +39,9 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, currentUser }) => {
           <div className="card-tags">
             {joke.tags && joke.tags.map(t => <span key={t} className="tag">#{t}</span>)}
           </div>
-          <div className="card-meta">👤 {joke.author?.display_name || joke.author?.username || 'anon'} • 🕐 {new Date(joke.created_at).toLocaleDateString()}</div>
+          <div className="card-meta">
+            👤 {joke.author?.display_name || joke.author?.username || 'anon'} • 🕐 {new Date(joke.created_at).toLocaleDateString()}
+          </div>
           <div className="social-actions">
             <button className="btn btn-like btn-sm" onClick={(e) => { e.stopPropagation(); onLike(joke.id); }}>
               <i className="fas fa-heart"></i> {joke.likes || 0}
@@ -44,9 +52,9 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, currentUser }) => {
             <button className="btn btn-share btn-sm" onClick={(e) => { e.stopPropagation(); onShare(joke.id); }}>
               <i className="fas fa-share"></i> {joke.shares || 0}
             </button>
-            {currentUser && (
+            {(killerMode || currentUser) && (
               <button className="btn btn-warning btn-sm" onClick={(e) => { e.stopPropagation(); onKill(joke.id); }}>
-                <i className="fas fa-bomb"></i>
+                <i className="fas fa-bomb"></i> {killerMode ? 'KILL' : 'KILL'}
               </button>
             )}
           </div>

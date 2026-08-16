@@ -2,11 +2,13 @@ import React, { useContext, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useDeleteMode } from '../context/DeleteModeContext';
+import { useKillerMode } from '../context/KillerModeContext';
 import api from '../api';
 
 const Header = ({ showGameModal, setShowGameModal }) => {
   const { user, logout, login, register } = useContext(AuthContext);
   const { deleteMode, setDeleteMode } = useDeleteMode();
+  const { killerMode, setKillerMode } = useKillerMode();
 
   // ─── Auth modal state ───
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -290,9 +292,16 @@ const Header = ({ showGameModal, setShowGameModal }) => {
               </button>
             )}
           </div>
-          <button className="btn btn-warning">
-            <i className="fas fa-skull"></i> KILLER MODE
+
+          {/* KILLER MODE BUTTON */}
+          <button
+            className={`btn btn-warning ${killerMode ? 'killer-active' : ''}`}
+            onClick={() => setKillerMode(!killerMode)}
+          >
+            <i className="fas fa-skull"></i> {killerMode ? 'KILLER ON' : 'KILLER MODE'}
           </button>
+
+          {/* DELETE MODE BUTTON (admin only) */}
           {user && user.is_admin && (
             <button
               className={`btn btn-danger ${deleteMode ? 'active' : ''}`}
@@ -302,6 +311,7 @@ const Header = ({ showGameModal, setShowGameModal }) => {
               <i className="fas fa-trash"></i> {deleteMode ? 'DELETE MODE ON' : 'DELETE MODE'}
             </button>
           )}
+
           <button className="btn btn-success" onClick={() => setShowJokeModal(true)}>
             <i className="fas fa-plus"></i> ADD JOKE
           </button>
@@ -549,7 +559,6 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                 <button className="modal-close" onClick={() => setShowGameModal(false)}>×</button>
               </div>
               <form onSubmit={handleAddGame}>
-                {/* ... form content (same as before) ... */}
                 <div className="form-group">
                   <label>GAME TITLE <span style={{ color: '#ff0000' }}>*</span></label>
                   <input className="form-control" value={gameTitle} onChange={(e) => setGameTitle(e.target.value)} required />
