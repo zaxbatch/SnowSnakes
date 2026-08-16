@@ -164,6 +164,7 @@ router.get('/:id/launch', async (req, res) => {
     const game = await Game.findById(req.params.id);
     if (!game) return res.status(404).send('Game not found');
 
+    // 1️⃣ If there are uploaded local files, serve index.html
     const gameFolder = path.join(__dirname, '../uploads/games', String(game.id));
     if (game.file_count > 0 && fs.existsSync(gameFolder)) {
       const files = fs.readdirSync(gameFolder);
@@ -174,27 +175,100 @@ router.get('/:id/launch', async (req, res) => {
       }
     }
 
-    if (game.code) {
-      const html = `
-        <!DOCTYPE html>
-        <html>
-          <head><meta charset="UTF-8"><title>${game.title}</title></head>
-          <body>
-            <div id="game-container"></div>
-            <script>
-              ${game.code}
-              if (typeof myGame === 'function') myGame();
-            <\/script>
-          </body>
-        </html>
-      `;
+    // 2️⃣ If there's pasted code, serve it with improved handling
+    if (game.code && game.code.trim()) {
+      const trimmed = game.code.trim();
+      let html;
+
+      // 2a. If it looks like HTML (starts with '<'), inject it directly
+      if (trimmed.startsWith('<')) {
+        html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${game.title}</title>
+  <style>
+    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a2a3a; font-family: sans-serif; }
+    #game-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    ${trimmed}
+  </div>
+</body>
+</html>
+        `;
+      } else {
+        // 2b. Otherwise treat as JavaScript with auto‑execution
+        html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${game.title}</title>
+  <style>
+    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a2a3a; color: #fff; font-family: sans-serif; }
+    #game-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+    .error-msg { color: #ff6b6b; background: #2d2d2d; padding: 20px; border-radius: 8px; max-width: 80%; }
+    .info-msg { color: #ffcc00; background: #2d2d2d; padding: 20px; border-radius: 8px; max-width: 80%; }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+
+  <script>
+    // --- USER PASTED CODE STARTS ---
+    ${trimmed}
+    // --- USER PASTED CODE ENDS ---
+
+    // --- AUTO‑EXECUTION WRAPPER ---
+    (function() {
+      const entryFunctions = ['myGame', 'start', 'init', 'main'];
+      let called = false;
+      for (const fnName of entryFunctions) {
+        if (typeof window[fnName] === 'function') {
+          try {
+            window[fnName]();
+            called = true;
+            break;
+          } catch (e) {
+            console.error('Error calling ' + fnName + ':', e);
+            const container = document.getElementById('game-container');
+            if (container) {
+              container.innerHTML = '<div class="error-msg">⚠️ Error in game code: ' + e.message + '</div>';
+            }
+            called = true;
+            break;
+          }
+        }
+      }
+      if (!called) {
+        setTimeout(() => {
+          const container = document.getElementById('game-container');
+          if (container && container.children.length === 0) {
+            container.innerHTML = '<div class="info-msg">✅ Game loaded. If nothing appears, your code may not create UI. Use <code>myGame()</code> or append to <code>#game-container</code>.</div>';
+          }
+        }, 500);
+      }
+    })();
+  </script>
+</body>
+</html>
+        `;
+      }
+
+      // ✅ Explicitly set content type to HTML
+      res.set('Content-Type', 'text/html');
       return res.send(html);
     }
 
-    res.status(404).send('No game content');
+    // 3️⃣ No content at all
+    res.status(404).send('No game content found (no files and no code).');
   } catch (err) {
     console.error('Launch error:', err);
-    res.status(500).send('Error launching game');
+    res.status(500).send('Error launching game: ' + err.message);
   }
 });
 

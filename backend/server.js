@@ -5,7 +5,6 @@ console.log('🔑 HUBSPOT_ACCESS_TOKEN:', process.env.HUBSPOT_ACCESS_TOKEN ? '�
 require('http').globalAgent.maxSockets = Infinity;
 process.env.UV_THREADPOOL_SIZE = 128;
 
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -36,8 +35,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// ─── Serve uploaded files statically ──────────────────
-//app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// ─── Serve uploaded files statically (optional) ──────
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ─── Routes ──────────────────────────────────────────
 app.use('/api/auth', require('./routes/auth'));

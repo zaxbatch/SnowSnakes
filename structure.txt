@@ -1,0 +1,60 @@
+.
+├── backend
+│   ├── config
+│   │   └── db.js
+│   ├── middleware
+│   │   ├── admin.js
+│   │   └── auth.js
+│   ├── models
+│   │   ├── Character.js
+│   │   ├── Comic.js
+│   │   ├── Doodle.js
+│   │   ├── Episode.js
+│   │   ├── Fridge.js
+│   │   ├── Game.js
+│   │   ├── Joke.js
+│   │   └── User.js
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── routes
+│   │   ├── admin.js
+│   │   ├── auth.js
+│   │   ├── characters.js
+│   │   ├── comics.js
+│   │   ├── doodles.js
+│   │   ├── episodes.js
+│   │   ├── fridge.js
+│   │   ├── games.js
+│   │   ├── jokes.js
+│   │   ├── random.js
+│   │   └── upload.js
+│   ├── server.js
+│   ├── services
+│   │   ├── hubspot.js
+│   │   └── interaction.js
+│   └── uploads
+│       └── games
+├── frontend
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── public
+│   │   ├── favicon.ico
+│   │   ├── index.html
+│   │   ├── logo192.png
+│   │   ├── logo512.png
+│   │   ├── manifest.json
+│   │   └── robots.txt
+│   ├── README.md
+│   └── src
+│       ├── api.js
+│       ├── App.js
+│       ├── components
+│       ├── context
+│       ├── index.js
+│       ├── styles
+│       └── utils
+├── package.json
+├── package-lock.json
+└── structure.txt
+
+16 directories, 42 files

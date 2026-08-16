@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>resonance · explore sounds</title>
+  <!-- Font Awesome 6 (free) for icons with a tech/audio vibe -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Combined CSS (homepage + explore) -->
+  <style>
+    /* ========== GLOBAL / RESET ========== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: #0b0d10;
+      color: #e0e4e9;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* main container */
+    .site-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 2rem;
+      width: 100%;
+    }
+
+    /* ========== SHARED MENU (music tech) ========== */
+    .top-panel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 3rem;
+      background: rgba(18, 22, 28, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid #2c353d;
+      border-radius: 60px;
+      padding: 0.5rem 1.8rem 0.5rem 1.2rem;
+      box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.06);
+    }
+
+    .logo-unit {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .logo-icon {
+      font-size: 2rem;
+      color: #56e0c2;
+      filter: drop-shadow(0 0 6px #3fe0c080);
+      transform: rotate(-2deg);
+    }
+    .logo-text {
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      font-size: 1.4rem;
+      background: linear-gradient(130deg, #c0e0ff, #b3ffe0);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      border-right: 2px solid #3d4b5a;
+      padding-right: 1.2rem;
+    }
+    .logo-text span {
+      font-weight: 300;
+      color: #9fb0c0;
+      background: none;
+      -webkit-background-clip: unset;
+      background-clip: unset;
+      font-size: 0.9rem;
+      margin-left: 4px;
+    }
+
+    .nav-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem 1.8rem;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      cursor: default;
+      transition: transform 0.1s ease;
+      min-width: 64px;
+    }
+    .nav-item:hover {
+      transform: translateY(-2px);
+    }
+    .nav-item[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: -28px;
+      background: #1f333f;
+      color: #b3f0e0;
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      border: 1px solid #3b5e70;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .nav-button {
+      background: #1f282f;
+      width: 70px;
+      height: 70px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      border: 1px solid #38434d;
+      border-bottom: 4px solid #10161a;
+      box-shadow: inset 0 -2px 3px rgba(0,0,0,0.7), inset 0 2px 2px rgba(255,255,255,0.05), 0 6px 10px rgba(0, 0, 0, 0.5);
+      transition: all 0.08s linear;
+    }
+    .nav-item:hover .nav-button {
+      border-bottom-width: 2px;
+      background: #26313a;
+      border-color: #4f6372;
+      box-shadow: inset 0 -1px 2px #00000099, 0 8px 12px rgba(86, 224, 194, 0.15);
+    }
+
+    .led {
+      width: 8px;
+      height: 8px;
+      border-radius: 10px;
+      background: #2e4a3e;
+      box-shadow: inset 0 0 3px black;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .nav-item:hover .led {
+      background: #56e0c2;
+      box-shadow: 0 0 10px #30e0b0;
+    }
+
+    .nav-icon {
+      font-size: 1.8rem;
+      color: #b7cdde;
+      line-height: 1;
+      filter: drop-shadow(0 2px 2px black);
+    }
+    .nav-item:hover .nav-icon {
+      color: #ffffff;
+    }
+
+    .nav-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #99aebb;
+      margin-top: 6px;
+      border-top: 1px dashed #3e4d5a;
+      padding-top: 4px;
+    }
+    .nav-item:hover .nav-label {
+      color: #d3eaff;
+    }
+
+    .control-strip {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      margin-left: 0.5rem;
+      padding-left: 1.2rem;
+      border-left: 2px solid #2a3540;
+    }
+
+    .mini-encoder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .knob {
+      width: 38px;
+      height: 38px;
+      background: radial-gradient(circle at 35% 35%, #5a6b7a, #1f2a33);
+      border-radius: 50%;
+      border: 2px solid #3a4a57;
+      box-shadow: inset 0 -4px 4px #0b0f12, 0 4px 6px black;
+      position: relative;
+      transition: transform 0.05s ease;
+      cursor: grab;
+    }
+    .knob:active {
+      cursor: grabbing;
+    }
+    .knob::after {
+      content: "";
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 10px;
+      background: #d0e6ff;
+      border-radius: 2px;
+      box-shadow: 0 0 8px cyan;
+    }
+    .knob-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      margin-top: 5px;
+      color: #96aaba;
+    }
+
+    .fader-bank {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .fader-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 28px;
+    }
+    .fader-cap {
+      width: 18px;
+      height: 40px;
+      background: linear-gradient(145deg, #445560, #1d2b33);
+      border-radius: 20px;
+      border: 1px solid #5a707f;
+      box-shadow: inset 0 -2px 5px #0c1015, 0 5px 8px black;
+      margin-bottom: 4px;
+      cursor: grab;
+      transition: height 0.1s, background 0.1s;
+    }
+    .fader-cap:active {
+      cursor: grabbing;
+    }
+    .fader-unit .led {
+      width: 6px;
+      height: 6px;
+      background: #3d584b;
+    }
+
+    .user-gear {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: #131c24;
+      padding: 0.3rem 0.8rem 0.3rem 1.5rem;
+      border-radius: 40px;
+      border: 1px solid #2f404e;
+      margin-left: 0.5rem;
+      cursor: default;
+    }
+    .user-gear i {
+      font-size: 1.2rem;
+      color: #9ef0da;
+    }
+    .user-gear .profile-pic {
+      background: #1e2e36;
+      border-radius: 30px;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid #4a6a7c;
+      box-shadow: inset 0 0 5px #25343d;
+      letter-spacing: 1px;
+    }
+
+    /* ========== HOMEPAGE SPECIFIC STYLES (kept for reference, not used on explore) ========== */
+    .hero-section {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 2rem;
+      margin: 2.5rem 0 3rem;
+    }
+    .hero-left {
+      background: #151e26;
+      border-radius: 36px;
+      padding: 2rem 2rem 2.2rem;
+      border: 1px solid #2e3e48;
+      box-shadow: 0 30px 40px -20px black;
+    }
+    .hero-left h1 {
+      font-size: 3.2rem;
+      font-weight: 500;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(125deg, #ffffff, #b0e0ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 1rem;
+    }
+    .hero-left .highlight {
+      color: #7cf0da;
+      font-weight: 400;
+    }
+    .hero-left p {
+      font-size: 1.2rem;
+      color: #b6ccda;
+      max-width: 90%;
+      margin: 1.2rem 0 2rem;
+    }
+    .creator-cta {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .big-pad {
+      background: #273c49;
+      border: none;
+      border-bottom: 6px solid #1b2b33;
+      padding: 1.2rem 2.5rem;
+      border-radius: 60px;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #ebf5ff;
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 20px 25px -10px #00000080, inset 0 2px 8px #ffffff1a;
+      transition: 0.08s linear;
+      cursor: pointer;
+    }
+    .big-pad i {
+      font-size: 1.8rem;
+      color: #5af1d0;
+    }
+    .big-pad:hover {
+      background: #2d4657;
+      border-bottom-width: 3px;
+      transform: translateY(-2px);
+    }
+    .big-pad:active {
+      transform: translateY(2px);
+      border-bottom-width: 2px;
+    }
+    .hero-right {
+      background: #111a21;
+      border-radius: 36px;
+      border: 1px solid #2f3f48;
+      padding: 1.8rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: inset 0 0 30px #05080a;
+    }
+    .waveform-viz {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 140px;
+      margin-bottom: 2rem;
+    }
+    .wave-bar {
+      flex: 1;
+      background: linear-gradient(to top, #62cbb7, #b7ffe0);
+      height: calc(30% + 20px);
+      border-radius: 20px 20px 6px 6px;
+      box-shadow: 0 0 16px #4fe6bf;
+      transition: height 0.2s ease;
+    }
+    .wave-bar:nth-child(odd) { height: 70px; }
+    .wave-bar:nth-child(2) { height: 110px; }
+    .wave-bar:nth-child(4) { height: 130px; }
+    .wave-bar:nth-child(6) { height: 90px; }
+    .hero-right .loop-station {
+      font-size: 1.1rem;
+      background: #1b2b34;
+      border-radius: 60px;
+      padding: 0.8rem 1.8rem;
+      display: inline-block;
+      border: 1px solid #38586b;
+      color: #d0ecff;
+    }
+
+    .cat-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin: 3rem 0;
+    }
+    .cat-item {
+      background: #131f28;
+      border-radius: 30px;
+      border: 1px solid #2b3f4c;
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex: 1 1 200px;
+      box-shadow: 0 10px 15px black;
+      transition: all 0.1s ease;
+      cursor: pointer;
+    }
+    .cat-item:hover {
+      background: #1a2c38;
+      border-color: #3f6377;
+      transform: scale(1.02);
+    }
+    .cat-icon {
+      background: #1b2f3b;
+      border-radius: 20px;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      border-bottom: 4px solid #2e4d5a;
+      color: #9df5e0;
+    }
+    .cat-text h3 {
+      font-size: 1.3rem;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+    .cat-text p {
+      color: #8ba2b2;
+      font-size: 0.9rem;
+    }
+
+    .recent-tracks {
+      transition: border-color 0.2s;
+    }
+
+    /* ========== EXPLORE PAGE SPECIFIC STYLES ========== */
+    .explore-hero {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 2rem;
+      margin: 2rem 0 3rem;
+    }
+
+    .explore-card {
+      background: #131f29;
+      border-radius: 36px;
+      border: 1px solid #2d404e;
+      padding: 2rem;
+      box-shadow: 0 20px 30px -15px black;
+    }
+
+    .explore-search-panel {
+      background: #101b23;
+      border-radius: 48px;
+      padding: 1.2rem 1.8rem;
+      border: 1px solid #304652;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2.5rem;
+    }
+
+    .explore-search-input {
+      background: #1b2b35;
+      border: none;
+      border-radius: 60px;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      color: #e0f0fa;
+      flex: 1 1 250px;
+      border: 1px solid #2f4d60;
+      box-shadow: inset 0 2px 8px #0a1219;
+    }
+    .explore-search-input::placeholder {
+      color: #5f859b;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+    }
+
+    .explore-filter-knobs {
+      display: flex;
+      gap: 1.2rem;
+      align-items: center;
+    }
+
+    .explore-knob-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .explore-mini-knob {
+      width: 32px;
+      height: 32px;
+      background: radial-gradient(circle at 30% 30%, #708494, #1e2e3a);
+      border-radius: 50%;
+      border: 2px solid #3e5667;
+      box-shadow: inset 0 -3px 4px #0c141b, 0 3px 6px black;
+      position: relative;
+      cursor: grab;
+      transition: transform 0.1s ease;
+    }
+    .explore-mini-knob::after {
+      content: "";
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 3px;
+      height: 8px;
+      background: #c6ecff;
+      border-radius: 2px;
+    }
+    .explore-knob-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      color: #83a5ba;
+      margin-top: 4px;
+    }
+
+    .explore-section-title {
+      font-size: 1.8rem;
+      font-weight: 400;
+      letter-spacing: -0.5px;
+      margin: 2.5rem 0 1.5rem;
+      border-left: 6px solid #56e0c2;
+      padding-left: 1.2rem;
+      background: linear-gradient(90deg, #1f333f, transparent);
+    }
+
+    .explore-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.8rem;
+      margin-bottom: 3rem;
+    }
+
+    .explore-item {
+      background: #121e27;
+      border-radius: 28px;
+      border: 1px solid #2a3e4b;
+      padding: 1.5rem 1.2rem;
+      transition: all 0.1s ease;
+      box-shadow: 0 12px 18px -12px black;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .explore-item:hover {
+      background: #1b2e3b;
+      border-color: #4790aa;
+      transform: translateY(-3px);
+      box-shadow: 0 22px 25px -15px #000000dd;
+    }
+
+    .explore-item-icon {
+      font-size: 2.2rem;
+      color: #6ae6cd;
+      filter: drop-shadow(0 0 6px #47e0c0);
+    }
+    .explore-item-title {
+      font-size: 1.5rem;
+      font-weight: 400;
+    }
+    .explore-item-meta {
+      color: #81a3b5;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px dashed #2b4a58;
+      padding-top: 0.7rem;
+      margin-top: 0.4rem;
+    }
+
+    .explore-wave-tile {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #0f1a22;
+      border-radius: 60px;
+      padding: 0.6rem 1.2rem;
+      border: 1px solid #2d4655;
+      cursor: default;
+      transition: border-color 0.1s;
+    }
+    .explore-wave-tile:hover {
+      border-color: #56e0c2;
+    }
+
+    .explore-mini-wave {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 30px;
+    }
+    .explore-mini-wave span {
+      width: 4px;
+      background: #5fe8c0;
+      border-radius: 2px;
+      height: calc(8px + 12px * var(--h, 0.5));
+      box-shadow: 0 0 10px #44e0b0;
+    }
+
+    .explore-activity-feed {
+      background: #101d26;
+      border-radius: 40px;
+      padding: 1.8rem;
+      border: 1px solid #28424f;
+    }
+    .explore-activity-item {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      border-bottom: 1px solid #1f3540;
+      padding: 1rem 0;
+    }
+    .explore-activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .explore-user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 30px;
+      background: #264956;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 3px solid #327a8a;
+      font-weight: 600;
+    }
+
+    .explore-tag {
+      background: #1b3a48;
+      border-radius: 30px;
+      padding: 0.3rem 1rem;
+      font-size: 0.75rem;
+      color: #9de0ff;
+      border: 1px solid #3f748b;
+      display: inline-block;
+    }
+
+    /* ========== SHARED FOOTER ========== */
+    .tech-footer {
+      margin-top: 4rem;
+      border-top: 2px solid #1f2d35;
+      padding: 1.5rem 0.5rem 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      color: #657e8f;
+      font-size: 0.85rem;
+    }
+    .midi-indicator {
+      display: flex;
+      gap: 12px;
+    }
+    .midi-dot {
+      width: 10px;
+      height: 10px;
+      background: #51cfb2;
+      border-radius: 0;
+      clip-path: polygon(0% 0%, 100% 0%, 60% 100%, 0% 100%);
+      box-shadow: 0 0 10px cyan;
+    }
+
+    /* subtle grid overlay */
+    .grid-overlay {
+      position: fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, rgba(0,255,200,0.02) 0px, transparent 2px, transparent 8px);
+      z-index: -1;
+    }
+
+    /* interactive states (shared) */
+    .knob.active-knob {
+      transform: rotate(15deg);
+    }
+    .fader-cap.active-fader {
+      background: #5f7e94;
+    }
+  </style>
+</head>
+<body>
+<div class="site-wrapper">
+  <!-- === SHARED MENU (music tech) === -->
+  <header class="top-panel">
+    <div class="logo-unit">
+      <i class="fas fa-wave-square logo-icon"></i>
+      <div class="logo-text">resonance<span>· studio</span></div>
+    </div>
+
+    <!-- primary nav – like a drum machine / groovebox -->
+    <nav class="nav-row">
+      <!-- Explore pad (active state) -->
+      <div class="nav-item" data-tooltip="Discover new sounds">
+        <div class="nav-button" style="background: #2c404f; border-color: #5f8aa0;">
+          <i class="fas fa-compass nav-icon" style="color: white;"></i>
+          <div class="led" style="background: #56e0c2; box-shadow: 0 0 12px #2ee0b0;"></div>
+        </div>
+        <span class="nav-label" style="color: #d3f0ff;">Explore</span>
+      </div>
+      <!-- Create pad -->
+      <div class="nav-item" data-tooltip="Start a new project">
+        <div class="nav-button">
+          <i class="fas fa-sliders-h nav-icon"></i>
+          <div class="led"></div>
+        </div>
+        <span class="nav-label">Create</span>
+      </div>
+      <!-- Collaborate pad -->
+      <div class="nav-item" data-tooltip="Connect with creators">
+        <div class="nav-button">
+          <i class="fas fa-users nav-icon"></i>
+          <div class="led"></div>
+        </div>
+        <span class="nav-label">Connect</span>
+      </div>
+      <!-- Library pad -->
+      <div class="nav-item" data-tooltip="Your samples & projects">
+        <div class="nav-button">
+          <i class="fas fa-book-open nav-icon"></i>
+          <div class="led"></div>
+        </div>
+        <span class="nav-label">Library</span>
+      </div>
+    </nav>
+
+    <!-- right side tech controllers (knobs/faders) -->
+    <div class="control-strip">
+      <div class="mini-encoder">
+        <div class="knob" id="tuneKnob"></div>
+        <span class="knob-label">tune</span>
+      </div>
+      <div class="fader-bank">
+        <div class="fader-unit">
+          <div class="fader-cap" id="fader1"></div>
+          <div class="led"></div>
+        </div>
+        <div class="fader-unit">
+          <div class="fader-cap" id="fader2"></div>
+          <div class="led"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- user/profile element with input gain style -->
+    <div class="user-gear" id="userMenu">
+      <i class="fas fa-headphones"></i>
+      <div class="profile-pic">MK</div>
+      <i class="fas fa-volume-up" id="volumeIcon"></i>
+    </div>
+  </header>
+
+  <!-- === EXPLORE PAGE CONTENT (all new, scoped) === -->
+  <main>
+    <!-- search / filter bar – music tech style -->
+    <div class="explore-search-panel">
+      <i class="fas fa-search" style="color: #68dac5; font-size: 1.4rem;"></i>
+      <input type="text" class="explore-search-input" placeholder="Search sounds, creators, packs..." id="exploreSearch">
+      <div class="explore-filter-knobs">
+        <div class="explore-knob-unit">
+          <div class="explore-mini-knob" data-knob="type"></div>
+          <span class="explore-knob-label">type</span>
+        </div>
+        <div class="explore-knob-unit">
+          <div class="explore-mini-knob" data-knob="bpm"></div>
+          <span class="explore-knob-label">bpm</span>
+        </div>
+        <div class="explore-knob-unit">
+          <div class="explore-mini-knob" data-knob="key"></div>
+          <span class="explore-knob-label">key</span>
+        </div>
+        <span class="explore-tag" id="resetFilters" style="margin-left: 0.5rem; cursor: pointer;">reset</span>
+      </div>
+    </div>
+
+    <!-- hero area: featured sound pack + activity feed -->
+    <div class="explore-hero">
+      <!-- left: featured card -->
+      <div class="explore-card" id="featuredPack">
+        <span class="explore-tag" style="background:#1d4b5e;"><i class="fas fa-star"></i> featured pack</span>
+        <h2 style="font-size: 2.4rem; font-weight: 400; margin: 1rem 0 0.5rem;">analog textures vol.3</h2>
+        <p style="color: #b0d4e6; margin-bottom: 1.5rem;">tape saturation, warm pads, lo-fi drums — 124 samples</p>
+        <div style="display: flex; gap: 2rem; align-items: center;">
+          <div class="big-pad" style="padding: 0.8rem 2rem; font-size: 1rem;" id="previewPackBtn">
+            <i class="fas fa-headphones"></i> preview
+          </div>
+          <div><i class="fas fa-download"></i> 2.4k</div>
+        </div>
+        <!-- tiny waveform preview -->
+        <div class="explore-mini-wave" style="margin-top: 2rem; gap: 5px;">
+          <span style="--h:0.9; height:24px;"></span><span style="--h:0.5; height:12px;"></span><span style="--h:1.2; height:32px;"></span><span style="--h:0.7; height:18px;"></span><span style="--h:1.1; height:28px;"></span><span style="--h:0.4; height:10px;"></span><span style="--h:0.8; height:22px;"></span>
+        </div>
+      </div>
+
+      <!-- right: activity feed / what's hot -->
+      <div class="explore-activity-feed">
+        <h3 style="font-weight: 400; display: flex; gap: 10px; margin-bottom: 1rem;"><i class="fas fa-rss" style="color: #6cf0b5;"></i> community activity</h3>
+        <div class="explore-activity-item">
+          <div class="explore-user-avatar">JD</div>
+          <div><span style="color:white;">jade_d </span> uploaded a kit: 'dusty breaks'<br><span style="font-size:0.7rem; color:#6b93a5;">2 min ago</span></div>
+        </div>
+        <div class="explore-activity-item">
+          <div class="explore-user-avatar">KY</div>
+          <div><span style="color:white;">kyle_synth </span> looped 'ambient pad C'<br><span style="font-size:0.7rem; color:#6b93a5;">15 min ago</span></div>
+        </div>
+        <div class="explore-activity-item">
+          <div class="explore-user-avatar">MX</div>
+          <div><span style="color:white;">mixmaster </span> commented on your track<br><span style="font-size:0.7rem; color:#6b93a5;">1 hour ago</span></div>
+        </div>
+        <div style="margin-top: 1rem;"><span class="explore-tag"><i class="fas fa-wave-square"></i>  live now: 43 creators</span></div>
+      </div>
+    </div>
+
+    <!-- browse categories (sound packs / creators / gear) -->
+    <div class="explore-section-title"><i class="fas fa-compass" style="margin-right: 12px;"></i> explore by category</div>
+    <div class="explore-grid-4">
+      <div class="explore-item" data-category="drums">
+        <i class="fas fa-drum explore-item-icon"></i>
+        <div class="explore-item-title">drums & breaks</div>
+        <div class="explore-item-meta"><span>432 kits</span> <span><i class="fas fa-headphones"></i> 1.2k</span></div>
+      </div>
+      <div class="explore-item" data-category="synth">
+        <i class="fas fa-wave-square explore-item-icon"></i>
+        <div class="explore-item-title">synth patches</div>
+        <div class="explore-item-meta"><span>289 presets</span> <span><i class="fas fa-download"></i> 848</span></div>
+      </div>
+      <div class="explore-item" data-category="acoustic">
+        <i class="fas fa-microphone-alt explore-item-icon"></i>
+        <div class="explore-item-title">acoustic sources</div>
+        <div class="explore-item-meta"><span>176 recordings</span> <span>new</span></div>
+      </div>
+      <div class="explore-item" data-category="bass">
+        <i class="fas fa-guitar explore-item-icon"></i>
+        <div class="explore-item-title">bass & guitar</div>
+        <div class="explore-item-meta"><span>210 loops</span> <span>🔥</span></div>
+      </div>
+    </div>
+
+    <!-- popular sounds right now (horizontal scrollers feel) -->
+    <div class="explore-section-title" style="margin-top: 1rem;"><i class="fas fa-chart-line" style="margin-right: 10px;"></i> trending sounds</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 1.2rem; margin-bottom: 2.5rem;" id="trendingContainer">
+      <div class="explore-wave-tile"><i class="fas fa-play" style="color:#6ae6cd;"></i>  vinyl_crackle.wav <span style="color:#4f8aa0;">· 1.2k plays</span></div>
+      <div class="explore-wave-tile"><i class="fas fa-play" style="color:#6ae6cd;"></i>  deep_sub_110.wav <span style="color:#4f8aa0;">· 843 plays</span></div>
+      <div class="explore-wave-tile"><i class="fas fa-play" style="color:#6ae6cd;"></i>  rezz_clap_01.wav <span style="color:#4f8aa0;">· 2.1k plays</span></div>
+      <div class="explore-wave-tile"><i class="fas fa-play" style="color:#6ae6cd;"></i>  ambient_pad_aif <span style="color:#4f8aa0;">· 625 plays</span></div>
+    </div>
+
+    <!-- creator spotlight (two column) -->
+    <div style="display: grid; grid-template-columns: 1fr 1
