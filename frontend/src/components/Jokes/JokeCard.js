@@ -4,9 +4,20 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, currentUser }) => {
   const [flipped, setFlipped] = useState(false);
   const isQnA = joke.punchline && joke.punchline.trim().length > 0;
   const killerClass = joke.kill_count > 50 ? 'killer' : '';
+  const noFlipClass = !isQnA ? 'no-flip' : '';
+
+  const handleCardClick = () => {
+    if (isQnA) {
+      setFlipped(!flipped);
+    }
+  };
 
   return (
-    <div className={`flip-card ${killerClass} ${flipped ? 'flipped' : ''}`} onClick={() => setFlipped(!flipped)}>
+    <div
+      className={`flip-card ${killerClass} ${noFlipClass} ${flipped ? 'flipped' : ''}`}
+      onClick={handleCardClick}
+      style={{ cursor: isQnA ? 'pointer' : 'default' }}
+    >
       <div className="flip-card-inner">
         <div className="flip-card-front">
           <div className="flip-actions">

@@ -1462,3 +1462,22 @@ textarea.form-control {
 @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Non‑flip jokes (no punchline) – sharp corners */
+.flip-card.no-flip .flip-card-front {
+  border-radius: 0px !important;
+  border: 4px solid #003399; /* keep consistent border */
+}
+
+.flip-card.no-flip .flip-card-inner {
+  transform: none !important; /* prevent any accidental rotation */
+}
+
+.flip-card.no-flip .flip-card-back {
+  display: none !important; /* hide the empty back */
+}
+
+.flip-card.no-flip {
+  cursor: default;
+  perspective: none; /* remove 3D space */
+}
