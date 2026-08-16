@@ -19,8 +19,12 @@ const JokeList = () => {
   }, [search, sort]);
 
   const handleLike = async (id) => {
-    await api.post(`/jokes/${id}/like`);
-    fetchJokes();
+    try {
+      await api.post(`/jokes/${id}/like`);
+      fetchJokes();
+    } catch (err) {
+      alert('Please login to like jokes');
+    }
   };
 
   const handleShare = async (id) => {
@@ -34,9 +38,18 @@ const JokeList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Delete?')) {
+    if (window.confirm('Delete this joke?')) {
       await api.delete(`/jokes/${id}`);
       fetchJokes();
+    }
+  };
+
+  const handleComment = async (id, text) => {
+    try {
+      await api.post(`/jokes/${id}/comment`, { text });
+      fetchJokes();
+    } catch (err) {
+      alert('Please login to comment');
     }
   };
 
@@ -66,6 +79,7 @@ const JokeList = () => {
             onShare={handleShare}
             onKill={handleKill}
             onDelete={handleDelete}
+            onComment={handleComment}
             currentUser={user}
           />
         ))}
