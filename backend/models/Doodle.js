@@ -1,7 +1,6 @@
 const { pool } = require('../config/db');
 
 class Doodle {
-  // Get all doodles
   static async findAll() {
     const result = await pool.query(`
       SELECT d.*, 
@@ -17,7 +16,6 @@ class Doodle {
     return result.rows;
   }
 
-  // Get doodle by id
   static async findById(id) {
     const result = await pool.query(`
       SELECT d.*, 
@@ -33,17 +31,15 @@ class Doodle {
     return result.rows[0];
   }
 
-  // Create a new doodle
   static async create({ title, image_url, joke_id, character_id }) {
     const result = await pool.query(
-      `INSERT INTO doodles (title, image_url, joke_id, character_id)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
+      `INSERT INTO doodles (title, image_url, joke_id, character_id, likes, shares)
+       VALUES ($1, $2, $3, $4, 0, 0) RETURNING *`,
       [title, image_url, joke_id || null, character_id || null]
     );
     return result.rows[0];
   }
 
-  // Delete a doodle
   static async delete(id) {
     const result = await pool.query('DELETE FROM doodles WHERE id = $1 RETURNING *', [id]);
     return result.rows[0];

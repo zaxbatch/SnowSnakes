@@ -1,15 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import api from '../../api';
+import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
+import SocialActions from '../SocialActions';
 
-// ─── Robust YouTube ID extractor ──────────────────────────
 const extractYouTubeId = (input) => {
   if (!input) return null;
-
-  // If it's already a clean 11‑character ID
   if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
-
-  // Try common YouTube URL patterns
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&?/]+)/,
   ];
@@ -17,15 +14,12 @@ const extractYouTubeId = (input) => {
     const match = input.match(pattern);
     if (match) return match[1];
   }
-
-  // As a last resort, search for an 11‑character ID anywhere in the string
   const fallbackMatch = input.match(/[a-zA-Z0-9_-]{11}/);
-  if (fallbackMatch) return fallbackMatch[0];
-
-  return null;
+  return fallbackMatch ? fallbackMatch[0] : null;
 };
 
 const EpisodeList = () => {
+  const { user } = useContext(AuthContext);
   const { deleteMode } = useDeleteMode();
   const [episodes, setEpisodes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -180,6 +174,15 @@ const EpisodeList = () => {
                     </button>
                   )}
                 </div>
+                <SocialActions
+                  contentType="episode"
+                  contentId={ep.id}
+                  likes={ep.likes || 0}
+                  comments={ep.comments || []}
+                  shares={ep.shares || 0}
+                  currentUser={user}
+                  onUpdate={fetchEpisodes}
+                />
               </div>
             );
           })}

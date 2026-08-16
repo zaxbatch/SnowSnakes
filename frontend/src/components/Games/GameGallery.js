@@ -1,11 +1,14 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import api from '../../api';
+import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
+import SocialActions from '../SocialActions';
 
 const BACKEND_URL = api.defaults.baseURL.replace(/\/api$/, '');
 
 const GameGallery = ({ setShowGameModal }) => {
+  const { user } = useContext(AuthContext);
   const { deleteMode } = useDeleteMode();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -192,6 +195,15 @@ const GameGallery = ({ setShowGameModal }) => {
                     </button>
                   )}
                 </div>
+                <SocialActions
+                  contentType="game"
+                  contentId={game.id}
+                  likes={game.likes || 0}
+                  comments={game.comments || []}
+                  shares={game.shares || 0}
+                  currentUser={user}
+                  onUpdate={fetchGames}
+                />
               </div>
             ))
           )}

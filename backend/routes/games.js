@@ -1,68 +1,114 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const { Readable } = require('stream');
+const path = require('path');
+const fs = require('fs');
 const Game = require('../models/Game');
+const Interaction = require('../services/interaction');
+const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+// ─── File upload config ──────────────────────────────────
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '../uploads/games/temp');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'game-' + unique + ext);
+  }
 });
 
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  limits: { fileSize: 50 * 1024 * 1024, files: 2000 },
-});
-
-const uploadToCloudinary = (buffer, folder, publicId) => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: folder,
-        public_id: publicId,
-        use_filename: false,
-        unique_filename: false,
-        resource_type: 'auto',
-        overwrite: true,
-      },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }
-    );
-    const readable = Readable.from(buffer);
-    readable.pipe(uploadStream);
-  });
+const fileFilter = (req, file, cb) => {
+  const allowedExts = [
+    '.html', '.htm', '.js', '.css', '.json', '.txt',
+    '.png', '.jpg', '.jpeg', '.gif', '.webp',
+    '.mp3', '.wav', '.mp4', '.webm', '.wasm', '.zip'
+  ];
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedExts.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('File type not allowed: ' + file.originalname));
+  }
 };
 
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 50 * 1024 * 1024, files: 100 }
+});
+
+// ─── Helpers ──────────────────────────────────────────────
+const moveFilesToGameFolder = (gameId, files) => {
+  const tempFolder = path.join(__dirname, '../uploads/games/temp');
+  const gameFolder = path.join(__dirname, '../uploads/games', String(gameId));
+  if (!fs.existsSync(gameFolder)) fs.mkdirSync(gameFolder, { recursive: true });
+  const moved = [];
+  for (const file of files) {
+    const src = path.join(tempFolder, file.filename);
+    const dest = path.join(gameFolder, file.filename);
+    if (fs.existsSync(src)) { fs.renameSync(src, dest); moved.push(file.filename); }
+  }
+  return moved;
+};
+
+const cleanupTempFiles = (files) => {
+  if (!files) return;
+  for (const f of files) {
+    const filePath = path.join(__dirname, '../uploads/games/temp', f.filename);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+};
+
+// ─── Routes ──────────────────────────────────────────────
+
+// GET all games (with comments & like status)
 router.get('/', async (req, res) => {
   try {
     const games = await Game.findAll();
+    for (const g of games) {
+      g.comments = await Interaction.getComments('game', g.id);
+      if (req.user) {
+        g.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', g.id);
+      } else {
+        g.isLiked = false;
+      }
+    }
     res.json(games);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// GET a single game
 router.get('/:id', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id);
     if (!game) return res.status(404).json({ error: 'Not found' });
+    game.comments = await Interaction.getComments('game', req.params.id);
+    if (req.user) {
+      game.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', req.params.id);
+    }
     res.json(game);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.post('/', upload.array('files', 2000), async (req, res) => {
+// POST a new game (with file upload)
+router.post('/', upload.array('files', 100), async (req, res) => {
   try {
     const { title, description, icon, tags, type, code } = req.body;
     const author_id = req.user ? req.user.id : null;
 
     if (!title || !description) {
+      cleanupTempFiles(req.files);
       return res.status(400).json({ error: 'Title and description are required' });
     }
 
@@ -74,156 +120,63 @@ router.post('/', upload.array('files', 2000), async (req, res) => {
       author_id,
       type: type || 'user',
       code: code || '',
-      files: [],
+      file_count: req.files ? req.files.length : 0,
     });
 
-    const gameId = game.id;
-    const cloudinaryFolder = `games/${gameId}`;
-    const uploadedFiles = [];
-
-    // ── CASE 1: Files uploaded ──────────────────────────
+    let movedFiles = [];
     if (req.files && req.files.length > 0) {
-      let paths = req.body.paths;
-      if (!Array.isArray(paths)) paths = paths ? [paths] : [];
-
-      for (let i = 0; i < req.files.length; i++) {
-        const file = req.files[i];
-        const relativePath = paths[i] || file.originalname;
-        let publicId = relativePath.replace(/^\.?\/+/, '').replace(/\.\.\//g, '');
-
-        try {
-          const result = await uploadToCloudinary(file.buffer, cloudinaryFolder, publicId);
-          uploadedFiles.push({
-            name: file.originalname,
-            path: publicId,
-            url: result.secure_url,
-            public_id: result.public_id,
-            size: file.size,
-            mimetype: file.mimetype,
-          });
-        } catch (err) {
-          console.error(`Failed to upload ${file.originalname}:`, err.message);
-        }
-      }
+      movedFiles = moveFilesToGameFolder(game.id, req.files);
     }
 
-    // ── CASE 2: No files, but code provided ──────────────
-    else if (code && code.trim() !== '') {
-      const trimmed = code.trim();
-      const isHtml = /<!DOCTYPE\s+html/i.test(trimmed) || /<html\b/i.test(trimmed);
-
-      let contentToUpload;
-      if (isHtml) {
-        // Raw HTML – upload directly
-        contentToUpload = Buffer.from(trimmed, 'utf-8');
-        console.log(`📄 Uploading raw HTML for game ${gameId}`);
-      } else {
-        // JavaScript – wrap in our template
-        const escapedCode = JSON.stringify(trimmed).replace(/<\/script>/gi, '<\\/script>');
-        const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>${title}</title>
-<style>
-  body { font-family: monospace; padding: 2rem; background: #f5f5f5; }
-  #game-container { margin-top: 1rem; }
-  .error { color: red; }
-</style>
-</head>
-<body>
-  <h1>${icon || '🎮'} ${title}</h1>
-  <div id="game-container"></div>
-  <script>
-    (function() {
-      const container = document.getElementById('game-container');
-      try {
-        const userCode = ${escapedCode};
-        const func = new Function(userCode + '\\n if (typeof myGame === "function") myGame();');
-        func();
-      } catch (e) {
-        container.innerHTML = '<p class="error">Error: ' + e.message + '</p>';
-        console.error(e);
-      }
-    })();
-  <\/script>
-</body>
-</html>
-        `;
-        contentToUpload = Buffer.from(htmlContent, 'utf-8');
-        console.log(`📦 Wrapped JavaScript for game ${gameId}`);
-      }
-
-      try {
-        const result = await uploadToCloudinary(contentToUpload, cloudinaryFolder, 'index.html');
-        uploadedFiles.push({
-          name: 'index.html',
-          path: 'index.html',
-          url: result.secure_url,
-          public_id: result.public_id,
-          size: contentToUpload.length,
-          mimetype: 'text/html',
-        });
-      } catch (err) {
-        console.error('Failed to upload code‑based game:', err.message);
-      }
-    }
-
-    const updatedGame = await Game.updateFiles(gameId, uploadedFiles);
-    res.status(201).json(updatedGame);
+    res.status(201).json({ ...game, uploadedFiles: movedFiles });
   } catch (err) {
     console.error('Game creation error:', err);
+    cleanupTempFiles(req.files);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─── Launch game – proxy Cloudinary HTML ────────────────
+// ─── Launch game ──────────────────────────────────────────
 router.get('/:id/launch', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id);
     if (!game) return res.status(404).send('Game not found');
 
-    if (game.files && game.files.length > 0) {
-      const indexFile = game.files.find(f => f.path === 'index.html') ||
-                        game.files.find(f => f.path.endsWith('.html') || f.path.endsWith('.htm'));
-      if (indexFile) {
-        try {
-          const response = await fetch(indexFile.url);
-          if (!response.ok) throw new Error(`Cloudinary returned ${response.status}`);
-          let html = await response.text();
-          const baseUrl = indexFile.url.replace(/\/[^/]+$/, '/');
-          html = html.replace(/<head>/i, `<head><base href="${baseUrl}">`);
-          res.setHeader('Content-Type', 'text/html');
-          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-          return res.send(html);
-        } catch (fetchErr) {
-          console.error('Error fetching HTML from Cloudinary:', fetchErr);
-          return res.redirect(indexFile.url);
-        }
-      } else {
-        const fileList = game.files.map(f => `<li><a href="${f.url}" target="_blank">${f.path}</a></li>`).join('');
-        return res.send(`
-          <html><body style="font-family:monospace;padding:2rem;">
-            <h1>${game.icon} ${game.title}</h1>
-            <p>No HTML file found. Uploaded files:</p>
-            <ul>${fileList}</ul>
-          </body></html>
-        `);
+    const gameFolder = path.join(__dirname, '../uploads/games', String(game.id));
+    if (game.file_count > 0 && fs.existsSync(gameFolder)) {
+      const files = fs.readdirSync(gameFolder);
+      let htmlFile = files.find(f => f.toLowerCase() === 'index.html') ||
+                     files.find(f => f.endsWith('.html') || f.endsWith('.htm'));
+      if (htmlFile) {
+        return res.sendFile(path.join(gameFolder, htmlFile));
       }
     }
 
-    res.status(404).send(`
-      <html><body style="font-family:monospace;padding:2rem;">
-        <h1>${game.icon} ${game.title}</h1>
-        <p>No game content available.</p>
-      </body></html>
-    `);
+    if (game.code) {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head><meta charset="UTF-8"><title>${game.title}</title></head>
+          <body>
+            <div id="game-container"></div>
+            <script>
+              ${game.code}
+              if (typeof myGame === 'function') myGame();
+            <\/script>
+          </body>
+        </html>
+      `;
+      return res.send(html);
+    }
+
+    res.status(404).send('No game content');
   } catch (err) {
-    console.error('Launch error:', err);
     res.status(500).send('Error launching game');
   }
 });
 
-router.post('/:id/vote', async (req, res) => {
+// ─── Vote ────────────────────────────────────────────────
+router.post('/:id/vote', auth, async (req, res) => {
   try {
     const updated = await Game.vote(req.params.id);
     if (!updated) return res.status(404).json({ error: 'Game not found' });
@@ -233,6 +186,7 @@ router.post('/:id/vote', async (req, res) => {
   }
 });
 
+// ─── Play count ──────────────────────────────────────────
 router.post('/:id/play', async (req, res) => {
   try {
     const updated = await Game.play(req.params.id);
@@ -243,11 +197,59 @@ router.post('/:id/play', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+// ─── Delete game ──────────────────────────────────────────
+router.delete('/:id', auth, admin, async (req, res) => {
   try {
     const game = await Game.delete(req.params.id);
     if (!game) return res.status(404).json({ error: 'Not found' });
+    const folder = path.join(__dirname, '../uploads/games', String(req.params.id));
+    if (fs.existsSync(folder)) fs.rmSync(folder, { recursive: true, force: true });
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Social actions ──────────────────────────────────────
+
+// Like
+router.post('/:id/like', auth, async (req, res) => {
+  try {
+    const result = await Interaction.toggleLike(req.user.id, 'game', req.params.id);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Comment
+router.post('/:id/comment', auth, async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ error: 'Text required' });
+    await Interaction.addComment(req.user.id, 'game', req.params.id, text);
+    const comments = await Interaction.getComments('game', req.params.id);
+    res.status(201).json(comments[0] || {});
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Share
+router.post('/:id/share', auth, async (req, res) => {
+  try {
+    const updated = await Interaction.incrementShare('game', req.params.id);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get comments (public)
+router.get('/:id/comments', async (req, res) => {
+  try {
+    const comments = await Interaction.getComments('game', req.params.id);
+    res.json(comments);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

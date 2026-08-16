@@ -125,4 +125,47 @@ router.get('/:id/comments', async (req, res) => {
   }
 });
 
+// ─── Like ────────────────────────────────────────────────
+router.post('/:id/like', auth, async (req, res) => {
+  try {
+    const result = await Interaction.toggleLike(req.user.id, 'joke', req.params.id);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Comment ──────────────────────────────────────────────
+router.post('/:id/comment', auth, async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ error: 'Text required' });
+    const comment = await Interaction.addComment(req.user.id, 'joke', req.params.id, text);
+    const [full] = await Interaction.getComments('joke', req.params.id);
+    res.status(201).json(full);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Share ────────────────────────────────────────────────
+router.post('/:id/share', auth, async (req, res) => {
+  try {
+    const updated = await Interaction.incrementShare('joke', req.params.id);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── GET comments (public) ──────────────────────────────
+router.get('/:id/comments', async (req, res) => {
+  try {
+    const comments = await Interaction.getComments('joke', req.params.id);
+    res.json(comments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

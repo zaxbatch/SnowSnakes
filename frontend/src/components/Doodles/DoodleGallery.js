@@ -1,19 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import api from '../../api';
+import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
+import SocialActions from '../SocialActions';
 import FullscreenMediaModal from '../FullscreenMediaModal';
 
 const DoodleGallery = () => {
+  const { user } = useContext(AuthContext);
+  const { deleteMode } = useDeleteMode();
   const [doodles, setDoodles] = useState([]);
   const [selectedDoodle, setSelectedDoodle] = useState(null);
-  const { deleteMode } = useDeleteMode();
 
   const fetchDoodles = async () => {
     try {
       const res = await api.get('/doodles');
       setDoodles(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch doodles:', err);
     }
   };
 
@@ -62,6 +65,15 @@ const DoodleGallery = () => {
             <button className="btn btn-primary btn-sm" onClick={() => setSelectedDoodle(d)}>
               <i className="fas fa-expand"></i> Expand
             </button>
+            <SocialActions
+              contentType="doodle"
+              contentId={d.id}
+              likes={d.likes || 0}
+              comments={d.comments || []}
+              shares={d.shares || 0}
+              currentUser={user}
+              onUpdate={fetchDoodles}
+            />
           </div>
         ))}
         {doodles.length === 0 && <p>No doodles yet.</p>}

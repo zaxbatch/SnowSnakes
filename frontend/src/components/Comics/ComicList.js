@@ -1,19 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import api from '../../api';
+import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
+import SocialActions from '../SocialActions';
 import FullscreenMediaModal from '../FullscreenMediaModal';
 
 const ComicList = () => {
+  const { user } = useContext(AuthContext);
+  const { deleteMode } = useDeleteMode();
   const [comics, setComics] = useState([]);
   const [selectedComic, setSelectedComic] = useState(null);
-  const { deleteMode } = useDeleteMode();
 
   const fetchComics = async () => {
     try {
       const res = await api.get('/comics');
       setComics(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch comics:', err);
     }
   };
 
@@ -65,6 +68,15 @@ const ComicList = () => {
             <button className="btn btn-primary btn-sm" onClick={() => setSelectedComic(c)}>
               <i className="fas fa-expand"></i> Expand
             </button>
+            <SocialActions
+              contentType="comic"
+              contentId={c.id}
+              likes={c.likes || 0}
+              comments={c.comments || []}
+              shares={c.shares || 0}
+              currentUser={user}
+              onUpdate={fetchComics}
+            />
           </div>
         ))}
         {comics.length === 0 && <p>No comics yet.</p>}
