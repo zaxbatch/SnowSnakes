@@ -47,7 +47,6 @@ const GameGallery = ({ setShowGameModal }) => {
     );
   };
 
-  // ─── Fetch comments for a specific game ────────────────
   const fetchGameComments = async (gameId) => {
     try {
       const res = await api.get(`/games/${gameId}/comments`);
@@ -58,7 +57,6 @@ const GameGallery = ({ setShowGameModal }) => {
     }
   };
 
-  // ─── Like ──────────────────────────────────────────────
   const handleLike = async (gameId) => {
     const game = games.find(g => g.id === gameId);
     if (!game) return;
@@ -84,7 +82,6 @@ const GameGallery = ({ setShowGameModal }) => {
     }
   };
 
-  // ─── Share ──────────────────────────────────────────────
   const handleShare = async (gameId) => {
     const game = games.find(g => g.id === gameId);
     if (!game) return;
@@ -111,9 +108,7 @@ const GameGallery = ({ setShowGameModal }) => {
     }
   };
 
-  // ─── Comment ─────────────────────────────────────────────
   const handleComment = async (gameId, text) => {
-    // Optimistically add a temporary comment
     updateGame(gameId, (g) => ({
       ...g,
       comments: g.comments ? [...g.comments, { id: Date.now(), text, user, created_at: new Date() }] : [{ id: Date.now(), text, user, created_at: new Date() }],
@@ -121,14 +116,12 @@ const GameGallery = ({ setShowGameModal }) => {
 
     try {
       await api.post(`/games/${gameId}/comment`, { text });
-      // Refetch comments to get actual data (with user info)
       const comments = await fetchGameComments(gameId);
       updateGame(gameId, (g) => ({
         ...g,
         comments,
       }));
     } catch (err) {
-      // Revert
       updateGame(gameId, (g) => ({
         ...g,
         comments: g.comments ? g.comments.slice(0, -1) : [],
@@ -138,7 +131,6 @@ const GameGallery = ({ setShowGameModal }) => {
     setCommentModalOpen(false);
   };
 
-  // ─── Open Comment Modal ─────────────────────────────────
   const openCommentModal = async (game) => {
     const comments = await fetchGameComments(game.id);
     const gameWithComments = { ...game, comments };
@@ -147,15 +139,8 @@ const GameGallery = ({ setShowGameModal }) => {
     setCommentModalOpen(true);
   };
 
-  // ─── Other handlers ──────────────────────────────────────
-  const handleVote = async (id) => {
-    try {
-      await api.post(`/games/${id}/vote`);
-      fetchGames();
-    } catch (err) {
-      alert('Please login to vote');
-    }
-  };
+  // Remove the vote handler if you don't need it
+  // const handleVote = async (id) => { ... }
 
   const handlePlay = async (game) => {
     try {
@@ -211,143 +196,155 @@ const GameGallery = ({ setShowGameModal }) => {
   };
 
   return (
-    <div className="panel active">
-      <div className="section-header" style={{ background: 'linear-gradient(135deg, #00cc66, #00ff99)' }}>
-        <span className="section-icon">🎮</span>
-        <h2>MINI GAMES</h2>
-        <p>Play user-submitted games — or submit your own!</p>
-      </div>
-
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        <button className="btn btn-success" onClick={() => setShowGameModal(true)}>
-          <i className="fas fa-upload"></i> SUBMIT GAME
-        </button>
-        <button className="btn btn-secondary" onClick={fetchGames}>
-          <i className="fas fa-sync"></i> REFRESH
-        </button>
-      </div>
-
-      {activeGame && gameUrl && ReactDOM.createPortal(
-        <div className="game-play-modal active" style={{ display: 'flex' }}>
-          <div className="modal-box">
-            <div className="game-header">
-              <span style={{ fontSize: '1.2rem' }}>
-                {activeGame.icon && activeGame.icon.startsWith('http') ? (
-                  <img src={activeGame.icon} alt={activeGame.title} style={{ width: '32px', height: '32px', objectFit: 'contain', marginRight: '8px', verticalAlign: 'middle' }} />
-                ) : (
-                  activeGame.icon || '🎮'
-                )}
-                {activeGame.title}
-              </span>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button className="btn btn-warning btn-sm" onClick={toggleFullscreen} style={{ background: '#ffcc00', color: '#000' }}>
-                  <i className="fas fa-expand"></i> {isFullscreen ? 'EXIT' : 'FULLSCREEN'}
-                </button>
-                <button className="btn btn-danger btn-sm" onClick={closeGame} style={{ background: '#ff4444', color: '#fff' }}>
-                  <i className="fas fa-times"></i> CLOSE
-                </button>
-              </div>
-            </div>
-            <div className="game-body" ref={containerRef}>
-              <iframe
-                ref={iframeRef}
-                src={gameUrl}
-                title={activeGame.title}
-                sandbox="allow-scripts allow-same-origin allow-modals allow-popups"
-              />
-            </div>
-          </div>
-        </div>,
-        document.getElementById('modal-root')
-      )}
-
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px' }}>Loading games...</div>
-      ) : (
-        <div className="grid-games">
-          {games.length === 0 ? (
-            <div className="empty-state" style={{ gridColumn: '1/-1' }}>
-              <span className="empty-icon">🎮</span>
-              <p>No games submitted yet. Be the first!</p>
-            </div>
-          ) : (
-            games.map(game => (
-              <div className="game-card" key={game.id}>
-                {game.type === 'user' ? (
-                  <div className="game-badge" style={{ background: '#ff6b6b', color: '#fff' }}>👤 USER</div>
-                ) : (
-                  <div className="game-badge" style={{ background: '#ffcc00', color: '#000' }}>⭐ BUILT-IN</div>
-                )}
-                {game.files && game.files.length > 0 && (
-                  <div className="game-badge" style={{ right: '80px', background: '#00cc66', color: '#fff' }}>
-                    📁 {game.files.length}
-                  </div>
-                )}
-                <span className="game-icon" style={{ display: 'block', textAlign: 'center' }}>
-                  {game.icon && game.icon.startsWith('http') ? (
-                    <img src={game.icon} alt={game.title} style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
-                  ) : (
-                    game.icon || '🎮'
-                  )}
-                </span>
-                <div className="game-title">{game.title}</div>
-                <div className="game-description">{game.description}</div>
-                <div className="game-meta">
-                  👤 {game.author_name || 'Anonymous'} • 👍 {game.votes || 0} • 🎮 {game.plays || 0}<br />
-                  {game.tags && game.tags.map(t => <span key={t} className="tag" style={{ fontSize: '9px' }}>#{t}</span>)}
-                </div>
-                <div className="game-actions">
-                  <button className="btn btn-primary btn-sm" onClick={() => handlePlay(game)}>
-                    <i className="fas fa-play"></i> PLAY
-                  </button>
-                  <button className="btn btn-like btn-sm" onClick={() => handleVote(game.id)}>
-                    <i className="fas fa-thumbs-up"></i> {game.votes || 0}
-                  </button>
-                  {(deleteMode || (game.author_id && game.author_id === 1)) && (
-                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(game.id)}>
-                      <i className="fas fa-trash"></i>
-                    </button>
-                  )}
-                </div>
-
-                <div className="social-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center' }}>
-                  <button
-                    className={`btn btn-sm ${game.isLiked ? 'btn-like-active' : 'btn-like'}`}
-                    onClick={() => handleLike(game.id)}
-                    disabled={!user}
-                  >
-                    <i className="fas fa-heart"></i> {game.likes || 0}
-                  </button>
-                  <button
-                    className="btn btn-sm btn-comment"
-                    onClick={() => openCommentModal(game)}
-                    disabled={!user}
-                  >
-                    <i className="fas fa-comment"></i> {game.comments ? game.comments.length : 0}
-                  </button>
-                  <button
-                    className="btn btn-sm btn-share"
-                    onClick={() => handleShare(game.id)}
-                    disabled={!user}
-                  >
-                    <i className="fas fa-share-alt"></i> {game.shares || 0}
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
+    <>
+      <style>
+        {`
+          .btn-like-active {
+            background: #b30000 !important;
+            color: #fff !important;
+          }
+          .btn-like {
+            background: #e74c3c !important;
+            color: #fff !important;
+          }
+        `}
+      </style>
+      <div className="panel active">
+        <div className="section-header" style={{ background: 'linear-gradient(135deg, #00cc66, #00ff99)' }}>
+          <span className="section-icon">🎮</span>
+          <h2>MINI GAMES</h2>
+          <p>Play user-submitted games — or submit your own!</p>
         </div>
-      )}
 
-      <CommentModal
-        isOpen={commentModalOpen}
-        onClose={() => setCommentModalOpen(false)}
-        content={commentContent}
-        contentType={commentContentType}
-        currentUser={user}
-        onComment={(text) => handleComment(commentContent.id, text)}
-      />
-    </div>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <button className="btn btn-success" onClick={() => setShowGameModal(true)}>
+            <i className="fas fa-upload"></i> SUBMIT GAME
+          </button>
+          <button className="btn btn-secondary" onClick={fetchGames}>
+            <i className="fas fa-sync"></i> REFRESH
+          </button>
+        </div>
+
+        {activeGame && gameUrl && ReactDOM.createPortal(
+          <div className="game-play-modal active" style={{ display: 'flex' }}>
+            <div className="modal-box">
+              <div className="game-header">
+                <span style={{ fontSize: '1.2rem' }}>
+                  {activeGame.icon && activeGame.icon.startsWith('http') ? (
+                    <img src={activeGame.icon} alt={activeGame.title} style={{ width: '32px', height: '32px', objectFit: 'contain', marginRight: '8px', verticalAlign: 'middle' }} />
+                  ) : (
+                    activeGame.icon || '🎮'
+                  )}
+                  {activeGame.title}
+                </span>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button className="btn btn-warning btn-sm" onClick={toggleFullscreen} style={{ background: '#ffcc00', color: '#000' }}>
+                    <i className="fas fa-expand"></i> {isFullscreen ? 'EXIT' : 'FULLSCREEN'}
+                  </button>
+                  <button className="btn btn-danger btn-sm" onClick={closeGame} style={{ background: '#ff4444', color: '#fff' }}>
+                    <i className="fas fa-times"></i> CLOSE
+                  </button>
+                </div>
+              </div>
+              <div className="game-body" ref={containerRef}>
+                <iframe
+                  ref={iframeRef}
+                  src={gameUrl}
+                  title={activeGame.title}
+                  sandbox="allow-scripts allow-same-origin allow-modals allow-popups"
+                />
+              </div>
+            </div>
+          </div>,
+          document.getElementById('modal-root')
+        )}
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>Loading games...</div>
+        ) : (
+          <div className="grid-games">
+            {games.length === 0 ? (
+              <div className="empty-state" style={{ gridColumn: '1/-1' }}>
+                <span className="empty-icon">🎮</span>
+                <p>No games submitted yet. Be the first!</p>
+              </div>
+            ) : (
+              games.map(game => (
+                <div className="game-card" key={game.id}>
+                  {game.type === 'user' ? (
+                    <div className="game-badge" style={{ background: '#ff6b6b', color: '#fff' }}>👤 USER</div>
+                  ) : (
+                    <div className="game-badge" style={{ background: '#ffcc00', color: '#000' }}>⭐ BUILT-IN</div>
+                  )}
+                  {game.files && game.files.length > 0 && (
+                    <div className="game-badge" style={{ right: '80px', background: '#00cc66', color: '#fff' }}>
+                      📁 {game.files.length}
+                    </div>
+                  )}
+                  <span className="game-icon" style={{ display: 'block', textAlign: 'center' }}>
+                    {game.icon && game.icon.startsWith('http') ? (
+                      <img src={game.icon} alt={game.title} style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
+                    ) : (
+                      game.icon || '🎮'
+                    )}
+                  </span>
+                  <div className="game-title">{game.title}</div>
+                  <div className="game-description">{game.description}</div>
+                  <div className="game-meta">
+                    👤 {game.author_name || 'Anonymous'} • 👍 {game.votes || 0} • 🎮 {game.plays || 0}<br />
+                    {game.tags && game.tags.map(t => <span key={t} className="tag" style={{ fontSize: '9px' }}>#{t}</span>)}
+                  </div>
+                  <div className="game-actions">
+                    <button className="btn btn-primary btn-sm" onClick={() => handlePlay(game)}>
+                      <i className="fas fa-play"></i> PLAY
+                    </button>
+                    {/* VOTE BUTTON REMOVED */}
+                    {(deleteMode || (game.author_id && game.author_id === 1)) && (
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(game.id)}>
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="social-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center' }}>
+                    <button
+                      className={`btn btn-sm ${game.isLiked ? 'btn-like-active' : 'btn-like'}`}
+                      onClick={() => handleLike(game.id)}
+                      disabled={!user}
+                    >
+                      <i className="fas fa-heart"></i> {game.likes || 0}
+                    </button>
+                    <button
+                      className="btn btn-sm btn-comment"
+                      onClick={() => openCommentModal(game)}
+                      disabled={!user}
+                    >
+                      <i className="fas fa-comment"></i> {game.comments ? game.comments.length : 0}
+                    </button>
+                    <button
+                      className="btn btn-sm btn-share"
+                      onClick={() => handleShare(game.id)}
+                      disabled={!user}
+                    >
+                      <i className="fas fa-share-alt"></i> {game.shares || 0}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        <CommentModal
+          isOpen={commentModalOpen}
+          onClose={() => setCommentModalOpen(false)}
+          content={commentContent}
+          contentType={commentContentType}
+          currentUser={user}
+          onComment={(text) => handleComment(commentContent.id, text)}
+        />
+      </div>
+    </>
   );
 };
 
