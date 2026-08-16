@@ -9,6 +9,19 @@ const AdminPanel = () => {
   const [episodes, setEpisodes] = useState([]);
   const [episodeLoading, setEpisodeLoading] = useState(false);
 
+  // ─── Episode form state ───
+  const [editingEpisode, setEditingEpisode] = useState(null);
+  const [episodeForm, setEpisodeForm] = useState({
+    title: '',
+    youtube_id: '',
+    description: '',
+    thumbnail_url: '',
+    episode_number: '',
+    air_date: '',
+    featured: false,
+  });
+  const [showEpisodeForm, setShowEpisodeForm] = useState(false);
+
   // ─── Fetch all users ───
   const fetchUsers = async () => {
     setLoading(true);
@@ -17,13 +30,12 @@ const AdminPanel = () => {
       setUsers(res.data);
     } catch (err) {
       console.error('Failed to fetch users:', err);
-      alert('Error fetching users: ' + (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
     }
   };
 
-  // ─── Fetch episodes (for future management) ───
+  // ─── Fetch episodes ───
   const fetchEpisodes = async () => {
     setEpisodeLoading(true);
     try {
@@ -41,7 +53,7 @@ const AdminPanel = () => {
     fetchEpisodes();
   }, []);
 
-  // ─── Promote user to admin ───
+  // ─── User management ───
   const promote = async (id) => {
     if (!window.confirm('Promote this user to admin?')) return;
     try {
@@ -52,7 +64,6 @@ const AdminPanel = () => {
     }
   };
 
-  // ─── Demote user from admin ───
   const demote = async (id) => {
     if (!window.confirm('Demote this user from admin?')) return;
     try {
@@ -63,7 +74,63 @@ const AdminPanel = () => {
     }
   };
 
-  // ─── If not admin, show forbidden message ───
+  // ─── Episode CRUD ───
+  const resetEpisodeForm = () => {
+    setEpisodeForm({
+      title: '',
+      youtube_id: '',
+      description: '',
+      thumbnail_url: '',
+      episode_number: '',
+      air_date: '',
+      featured: false,
+    });
+    setEditingEpisode(null);
+  };
+
+  const handleEpisodeSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingEpisode) {
+        await api.put(`/episodes/${editingEpisode.id}`, episodeForm);
+        alert('✅ Episode updated!');
+      } else {
+        await api.post('/episodes', episodeForm);
+        alert('✅ Episode created!');
+      }
+      setShowEpisodeForm(false);
+      resetEpisodeForm();
+      fetchEpisodes();
+    } catch (err) {
+      alert('Error saving episode: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const deleteEpisode = async (id) => {
+    if (!window.confirm('Delete this episode?')) return;
+    try {
+      await api.delete(`/episodes/${id}`);
+      fetchEpisodes();
+    } catch (err) {
+      alert('Error deleting episode: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const editEpisode = (ep) => {
+    setEditingEpisode(ep);
+    setEpisodeForm({
+      title: ep.title || '',
+      youtube_id: ep.youtube_id || '',
+      description: ep.description || '',
+      thumbnail_url: ep.thumbnail_url || '',
+      episode_number: ep.episode_number || '',
+      air_date: ep.air_date || '',
+      featured: ep.featured || false,
+    });
+    setShowEpisodeForm(true);
+  };
+
+  // ─── If not admin ───
   if (!user || !user.is_admin) {
     return (
       <div className="panel active">
@@ -95,7 +162,6 @@ const AdminPanel = () => {
               <tr style={{ background: '#f0f0f0' }}>
                 <th style={{ padding: '8px', border: '1px solid #ccc' }}>ID</th>
                 <th style={{ padding: '8px', border: '1px solid #ccc' }}>Username</th>
-                <th style={{ padding: '8px', border: '1px solid #ccc' }}>Display Name</th>
                 <th style={{ padding: '8px', border: '1px solid #ccc' }}>Admin</th>
                 <th style={{ padding: '8px', border: '1px solid #ccc' }}>Actions</th>
               </tr>
@@ -105,7 +171,6 @@ const AdminPanel = () => {
                 <tr key={u.id}>
                   <td style={{ padding: '8px', border: '1px solid #ccc' }}>{u.id}</td>
                   <td style={{ padding: '8px', border: '1px solid #ccc' }}>{u.username}</td>
-                  <td style={{ padding: '8px', border: '1px solid #ccc' }}>{u.display_name}</td>
                   <td style={{ padding: '8px', border: '1px solid #ccc' }}>{u.is_admin ? '✅' : '❌'}</td>
                   <td style={{ padding: '8px', border: '1px solid #ccc' }}>
                     {u.id !== user?.id ? (
@@ -129,13 +194,113 @@ const AdminPanel = () => {
 
       {/* ─── Spread da Word Management ─── */}
       <h3 style={{ marginTop: '30px' }}>🎬 Spread da Word – Episodes</h3>
-      <p style={{ color: '#666' }}>Add, edit, or remove episodes (YouTube videos).</p>
 
       <div style={{ marginTop: '15px' }}>
-        <button className="btn btn-success" onClick={() => alert('Add Episode form coming soon!')}>
+        <button
+          className="btn btn-success"
+          onClick={() => {
+            resetEpisodeForm();
+            setShowEpisodeForm(true);
+          }}
+        >
           <i className="fas fa-plus"></i> Add New Episode
         </button>
       </div>
+
+      {showEpisodeForm && (
+        <div style={{ marginTop: '20px', background: '#f8f9fa', padding: '20px', borderRadius: '12px', border: '2px solid #003399' }}>
+          <h4>{editingEpisode ? '✏️ Edit Episode' : '📝 New Episode'}</h4>
+          <form onSubmit={handleEpisodeSubmit}>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Title <span style={{ color: '#ff0000' }}>*</span></label>
+                <input
+                  className="form-control"
+                  value={episodeForm.title}
+                  onChange={(e) => setEpisodeForm({ ...episodeForm, title: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>YouTube ID <span style={{ color: '#ff0000' }}>*</span></label>
+                <input
+                  className="form-control"
+                  value={episodeForm.youtube_id}
+                  onChange={(e) => setEpisodeForm({ ...episodeForm, youtube_id: e.target.value })}
+                  placeholder="e.g. dQw4w9WgXcQ"
+                  required
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Description</label>
+              <textarea
+                className="form-control"
+                value={episodeForm.description}
+                onChange={(e) => setEpisodeForm({ ...episodeForm, description: e.target.value })}
+                rows="3"
+              />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Thumbnail URL</label>
+                <input
+                  className="form-control"
+                  value={episodeForm.thumbnail_url}
+                  onChange={(e) => setEpisodeForm({ ...episodeForm, thumbnail_url: e.target.value })}
+                  placeholder="https://img.youtube.com/vi/ID/hqdefault.jpg (auto-fetched if empty)"
+                />
+                <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
+                  Leave blank to auto‑fetch from YouTube.
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Episode Number</label>
+                <input
+                  className="form-control"
+                  value={episodeForm.episode_number}
+                  onChange={(e) => setEpisodeForm({ ...episodeForm, episode_number: e.target.value })}
+                  placeholder="S1E01"
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Air Date</label>
+                <input
+                  className="form-control"
+                  value={episodeForm.air_date}
+                  onChange={(e) => setEpisodeForm({ ...episodeForm, air_date: e.target.value })}
+                  placeholder="January 15, 2026"
+                />
+              </div>
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label style={{ margin: 0 }}>Featured</label>
+                <input
+                  type="checkbox"
+                  checked={episodeForm.featured}
+                  onChange={(e) => setEpisodeForm({ ...episodeForm, featured: e.target.checked })}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <button type="submit" className="btn btn-primary">
+                {editingEpisode ? 'Update Episode' : 'Create Episode'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowEpisodeForm(false);
+                  resetEpisodeForm();
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {episodeLoading ? (
         <p style={{ marginTop: '15px' }}>Loading episodes...</p>
@@ -149,6 +314,7 @@ const AdminPanel = () => {
                 <tr style={{ background: '#f0f0f0' }}>
                   <th style={{ padding: '8px', border: '1px solid #ccc' }}>ID</th>
                   <th style={{ padding: '8px', border: '1px solid #ccc' }}>Title</th>
+                  <th style={{ padding: '8px', border: '1px solid #ccc' }}>YouTube ID</th>
                   <th style={{ padding: '8px', border: '1px solid #ccc' }}>Episode</th>
                   <th style={{ padding: '8px', border: '1px solid #ccc' }}>Actions</th>
                 </tr>
@@ -158,10 +324,11 @@ const AdminPanel = () => {
                   <tr key={ep.id}>
                     <td style={{ padding: '8px', border: '1px solid #ccc' }}>{ep.id}</td>
                     <td style={{ padding: '8px', border: '1px solid #ccc' }}>{ep.title}</td>
+                    <td style={{ padding: '8px', border: '1px solid #ccc' }}>{ep.youtube_id}</td>
                     <td style={{ padding: '8px', border: '1px solid #ccc' }}>{ep.episode_number || '—'}</td>
                     <td style={{ padding: '8px', border: '1px solid #ccc' }}>
-                      <button className="btn btn-primary btn-sm" onClick={() => alert('Edit episode coming soon!')}>Edit</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => alert('Delete episode coming soon!')}>Delete</button>
+                      <button className="btn btn-primary btn-sm" onClick={() => editEpisode(ep)}>Edit</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => deleteEpisode(ep.id)}>Delete</button>
                     </td>
                   </tr>
                 ))}

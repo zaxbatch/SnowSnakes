@@ -1,3 +1,6 @@
+require('dotenv').config({ path: __dirname + '/.env' });
+console.log('🔑 HUBSPOT_ACCESS_TOKEN:', process.env.HUBSPOT_ACCESS_TOKEN ? '✅ Set' : '❌ Missing');
+
 // Increase Node's default timeout and thread pool size
 require('http').globalAgent.maxSockets = Infinity;
 process.env.UV_THREADPOOL_SIZE = 128;
