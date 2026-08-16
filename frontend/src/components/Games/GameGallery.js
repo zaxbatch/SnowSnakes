@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../../api';
 
-const GameGallery = () => {
+// Get the backend base URL (without the /api suffix)
+const BACKEND_URL = api.defaults.baseURL.replace(/\/api$/, '');
+
+const GameGallery = ({ setShowGameModal }) => {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeGame, setActiveGame] = useState(null);
@@ -42,7 +45,8 @@ const GameGallery = () => {
       console.error('Play count error:', err);
     }
 
-    const url = `/api/games/${game.id}/launch?_=${Date.now()}`;
+    // ✅ Use absolute backend URL
+    const url = `${BACKEND_URL}/api/games/${game.id}/launch?_=${Date.now()}`;
     setGameUrl(url);
     setActiveGame(game);
   };
@@ -88,7 +92,7 @@ const GameGallery = () => {
       </div>
 
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        <button className="btn btn-success" onClick={() => document.querySelector('[data-game-modal]')?.click()}>
+        <button className="btn btn-success" onClick={() => setShowGameModal(true)}>
           <i className="fas fa-upload"></i> SUBMIT GAME
         </button>
         <button className="btn btn-secondary" onClick={fetchGames}>
@@ -189,9 +193,9 @@ const GameGallery = () => {
                 ) : (
                   <div className="game-badge" style={{ background: '#ffcc00', color: '#000' }}>⭐ BUILT-IN</div>
                 )}
-                {game.file_count > 0 && (
+                {game.files && game.files.length > 0 && (
                   <div className="game-badge" style={{ right: '80px', background: '#00cc66', color: '#fff' }}>
-                    📁 {game.file_count}
+                    📁 {game.files.length}
                   </div>
                 )}
                 <span className="game-icon" style={{ display: 'block', textAlign: 'center' }}>

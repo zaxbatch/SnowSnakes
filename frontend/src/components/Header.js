@@ -2,14 +2,13 @@ import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api';
 
-const Header = () => {
+const Header = ({ showGameModal, setShowGameModal }) => {
   const { user, logout } = useContext(AuthContext);
 
-  // ─── Modal visibility ───
+  // ─── Other modals (keep local state) ───
   const [showJokeModal, setShowJokeModal] = useState(false);
   const [showDoodleModal, setShowDoodleModal] = useState(false);
   const [showComicModal, setShowComicModal] = useState(false);
-  const [showGameModal, setShowGameModal] = useState(false);
 
   // ─── Joke form state ───
   const [jokeContent, setJokeContent] = useState('');
@@ -36,7 +35,6 @@ const Header = () => {
   // ─── Game form state ───
   const [gameTitle, setGameTitle] = useState('');
   const [gameDescription, setGameDescription] = useState('');
-  // Icon: emoji OR uploaded image URL
   const [gameIconEmoji, setGameIconEmoji] = useState('🎮');
   const [gameIconImageUrl, setGameIconImageUrl] = useState('');
   const [gameIconImagePreview, setGameIconImagePreview] = useState('');
@@ -169,7 +167,6 @@ const Header = () => {
     setGameFilesList(files.map(f => f.name));
   };
 
-  // Reset game form
   const resetGameForm = () => {
     setGameTitle('');
     setGameDescription('');
@@ -197,7 +194,6 @@ const Header = () => {
       const formData = new FormData();
       formData.append('title', gameTitle);
       formData.append('description', gameDescription);
-      // icon: use uploaded image URL if present, else emoji
       formData.append('icon', gameIconImageUrl || gameIconEmoji);
       formData.append('tags', gameTags);
       formData.append('code', gameCode);
@@ -330,7 +326,6 @@ const Header = () => {
               <button className="modal-close" onClick={() => setShowDoodleModal(false)}>×</button>
             </div>
             <form onSubmit={handleAddDoodle}>
-              {/* same as before */ }
               <div className="form-group">
                 <label>TITLE <span style={{ color: '#ff0000' }}>*</span></label>
                 <input className="form-control" value={doodleTitle} onChange={(e) => setDoodleTitle(e.target.value)} required />
@@ -407,7 +402,6 @@ const Header = () => {
               <button className="modal-close" onClick={() => setShowComicModal(false)}>×</button>
             </div>
             <form onSubmit={handleAddComic}>
-              {/* same as before */ }
               <div className="form-group">
                 <label>TITLE <span style={{ color: '#ff0000' }}>*</span></label>
                 <input className="form-control" value={comicTitle} onChange={(e) => setComicTitle(e.target.value)} required />
