@@ -1,16 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api';
+import { useDeleteMode } from '../../context/DeleteModeContext';
 import FullscreenMediaModal from '../FullscreenMediaModal';
 
 const DoodleGallery = () => {
   const [doodles, setDoodles] = useState([]);
   const [selectedDoodle, setSelectedDoodle] = useState(null);
+  const { deleteMode } = useDeleteMode();
+
+  const fetchDoodles = async () => {
+    try {
+      const res = await api.get('/doodles');
+      setDoodles(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
-    api.get('/doodles')
-      .then(res => setDoodles(res.data))
-      .catch(err => console.error(err));
+    fetchDoodles();
   }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this doodle?')) return;
+    try {
+      await api.delete(`/doodles/${id}`);
+      fetchDoodles();
+    } catch (err) {
+      alert('Failed to delete doodle');
+    }
+  };
 
   return (
     <div className="panel active">
@@ -35,6 +54,11 @@ const DoodleGallery = () => {
               </span>
             )}
             <div className="card-title">{d.title}</div>
+            {deleteMode && (
+              <button className="btn btn-danger btn-sm mt-20" onClick={() => handleDelete(d.id)}>
+                <i className="fas fa-trash"></i> DELETE
+              </button>
+            )}
             <button className="btn btn-primary btn-sm" onClick={() => setSelectedDoodle(d)}>
               <i className="fas fa-expand"></i> Expand
             </button>

@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import api from '../../api';
+import { useDeleteMode } from '../../context/DeleteModeContext';
 
-// Get the backend base URL (without the /api suffix)
 const BACKEND_URL = api.defaults.baseURL.replace(/\/api$/, '');
 
 const GameGallery = ({ setShowGameModal }) => {
-  // ─── State declarations ───
+  const { deleteMode } = useDeleteMode();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeGame, setActiveGame] = useState(null);   // ✅ activeGame is here
+  const [activeGame, setActiveGame] = useState(null);
   const [gameUrl, setGameUrl] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef = useRef(null);
@@ -46,7 +46,6 @@ const GameGallery = ({ setShowGameModal }) => {
     } catch (err) {
       console.error('Play count error:', err);
     }
-
     const url = `${BACKEND_URL}/api/games/${game.id}/launch?_=${Date.now()}`;
     setGameUrl(url);
     setActiveGame(game);
@@ -84,6 +83,16 @@ const GameGallery = ({ setShowGameModal }) => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this game?')) return;
+    try {
+      await api.delete(`/games/${id}`);
+      fetchGames();
+    } catch (err) {
+      alert('Failed to delete game');
+    }
+  };
+
   return (
     <div className="panel active">
       <div className="section-header" style={{ background: 'linear-gradient(135deg, #00cc66, #00ff99)' }}>
@@ -101,43 +110,40 @@ const GameGallery = ({ setShowGameModal }) => {
         </button>
       </div>
 
-      {/* ─── Game Play Modal – rendered via Portal ─── */}
-      {activeGame && gameUrl &&
-        ReactDOM.createPortal(
-          <div className="game-play-modal active" style={{ display: 'flex' }}>
-            <div className="modal-box">
-              <div className="game-header">
-                <span style={{ fontSize: '1.2rem' }}>
-                  {activeGame.icon && activeGame.icon.startsWith('http') ? (
-                    <img src={activeGame.icon} alt={activeGame.title} style={{ width: '32px', height: '32px', objectFit: 'contain', marginRight: '8px', verticalAlign: 'middle' }} />
-                  ) : (
-                    activeGame.icon || '🎮'
-                  )}
-                  {activeGame.title}
-                </span>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button className="btn btn-warning btn-sm" onClick={toggleFullscreen} style={{ background: '#ffcc00', color: '#000' }}>
-                    <i className="fas fa-expand"></i> {isFullscreen ? 'EXIT' : 'FULLSCREEN'}
-                  </button>
-                  <button className="btn btn-danger btn-sm" onClick={closeGame} style={{ background: '#ff4444', color: '#fff' }}>
-                    <i className="fas fa-times"></i> CLOSE
-                  </button>
-                </div>
-              </div>
-              <div className="game-body" ref={containerRef}>
-                <iframe
-                  ref={iframeRef}
-                  src={gameUrl}
-                  title={activeGame.title}
-                  sandbox="allow-scripts allow-same-origin allow-modals allow-popups"
-                />
+      {activeGame && gameUrl && ReactDOM.createPortal(
+        <div className="game-play-modal active" style={{ display: 'flex' }}>
+          <div className="modal-box">
+            <div className="game-header">
+              <span style={{ fontSize: '1.2rem' }}>
+                {activeGame.icon && activeGame.icon.startsWith('http') ? (
+                  <img src={activeGame.icon} alt={activeGame.title} style={{ width: '32px', height: '32px', objectFit: 'contain', marginRight: '8px', verticalAlign: 'middle' }} />
+                ) : (
+                  activeGame.icon || '🎮'
+                )}
+                {activeGame.title}
+              </span>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button className="btn btn-warning btn-sm" onClick={toggleFullscreen} style={{ background: '#ffcc00', color: '#000' }}>
+                  <i className="fas fa-expand"></i> {isFullscreen ? 'EXIT' : 'FULLSCREEN'}
+                </button>
+                <button className="btn btn-danger btn-sm" onClick={closeGame} style={{ background: '#ff4444', color: '#fff' }}>
+                  <i className="fas fa-times"></i> CLOSE
+                </button>
               </div>
             </div>
-          </div>,
-          document.getElementById('modal-root')
-        )}
+            <div className="game-body" ref={containerRef}>
+              <iframe
+                ref={iframeRef}
+                src={gameUrl}
+                title={activeGame.title}
+                sandbox="allow-scripts allow-same-origin allow-modals allow-popups"
+              />
+            </div>
+          </div>
+        </div>,
+        document.getElementById('modal-root')
+      )}
 
-      {/* ─── Game List ─── */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px' }}>Loading games...</div>
       ) : (
@@ -171,26 +177,17 @@ const GameGallery = ({ setShowGameModal }) => {
                 <div className="game-description">{game.description}</div>
                 <div className="game-meta">
                   👤 {game.author_name || 'Anonymous'} • 👍 {game.votes || 0} • 🎮 {game.plays || 0}<br />
-                  {game.tags && game.tags.map(t => (
-                    <span key={t} className="tag" style={{ fontSize: '9px' }}>#{t}</span>
-                  ))}
+                  {game.tags && game.tags.map(t => <span key={t} className="tag" style={{ fontSize: '9px' }}>#{t}</span>)}
                 </div>
                 <div className="game-actions">
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => handlePlay(game)}
-                  >
+                  <button className="btn btn-primary btn-sm" onClick={() => handlePlay(game)}>
                     <i className="fas fa-play"></i> PLAY
                   </button>
                   <button className="btn btn-like btn-sm" onClick={() => handleVote(game.id)}>
                     <i className="fas fa-thumbs-up"></i> {game.votes || 0}
                   </button>
-                  {game.author_id && game.author_id === 1 && (
-                    <button className="btn btn-danger btn-sm" onClick={() => {
-                      if (window.confirm('Delete this game?')) {
-                        api.delete(`/games/${game.id}`).then(fetchGames);
-                      }
-                    }}>
+                  {(deleteMode || (game.author_id && game.author_id === 1)) && (
+                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(game.id)}>
                       <i className="fas fa-trash"></i>
                     </button>
                   )}

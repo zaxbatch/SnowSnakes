@@ -1,16 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api';
+import { useDeleteMode } from '../../context/DeleteModeContext';
 import FullscreenMediaModal from '../FullscreenMediaModal';
 
 const ComicList = () => {
   const [comics, setComics] = useState([]);
   const [selectedComic, setSelectedComic] = useState(null);
+  const { deleteMode } = useDeleteMode();
+
+  const fetchComics = async () => {
+    try {
+      const res = await api.get('/comics');
+      setComics(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
-    api.get('/comics')
-      .then(res => setComics(res.data))
-      .catch(err => console.error(err));
+    fetchComics();
   }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this comic?')) return;
+    try {
+      await api.delete(`/comics/${id}`);
+      fetchComics();
+    } catch (err) {
+      alert('Failed to delete comic');
+    }
+  };
 
   return (
     <div className="panel active">
@@ -38,6 +57,11 @@ const ComicList = () => {
             )}
             <h3 style={{ fontFamily: "'Comic Sans MS', cursive", color: '#660099' }}>{c.title}</h3>
             <div style={{ fontSize: 12, color: '#666', marginTop: 8 }}>✏️ By {c.author_name || 'anonymous'}</div>
+            {deleteMode && (
+              <button className="btn btn-danger btn-sm" onClick={() => handleDelete(c.id)}>
+                <i className="fas fa-trash"></i> DELETE
+              </button>
+            )}
             <button className="btn btn-primary btn-sm" onClick={() => setSelectedComic(c)}>
               <i className="fas fa-expand"></i> Expand
             </button>

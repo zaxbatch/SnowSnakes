@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
+import { useDeleteMode } from '../../context/DeleteModeContext';
 
 const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, currentUser }) => {
   const [flipped, setFlipped] = useState(false);
+  const { deleteMode } = useDeleteMode();
   const isQnA = joke.punchline && joke.punchline.trim().length > 0;
   const killerClass = joke.kill_count > 50 ? 'killer' : '';
   const noFlipClass = !isQnA ? 'no-flip' : '';
 
   const handleCardClick = () => {
-    if (isQnA) {
-      setFlipped(!flipped);
-    }
+    if (isQnA) setFlipped(!flipped);
   };
 
   return (
@@ -22,7 +22,7 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, currentUser }) => {
         <div className="flip-card-front">
           <div className="flip-actions">
             <span>💀 {joke.kill_count || 0}</span>
-            {currentUser && currentUser.id === joke.author_id && (
+            {(deleteMode || (currentUser && currentUser.id === joke.author_id)) && (
               <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); onDelete(joke.id); }}>
                 <i className="fas fa-trash"></i>
               </button>
@@ -33,7 +33,7 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, currentUser }) => {
           <div className="card-tags">
             {joke.tags && joke.tags.map(t => <span key={t} className="tag">#{t}</span>)}
           </div>
-          <div className="card-meta">👤 {joke.author?.display_name || 'anon'} • 🕐 {new Date(joke.created_at).toLocaleDateString()}</div>
+          <div className="card-meta">👤 {joke.author?.display_name || joke.author?.username || 'anon'} • 🕐 {new Date(joke.created_at).toLocaleDateString()}</div>
           <div className="social-actions">
             <button className="btn btn-like btn-sm" onClick={(e) => { e.stopPropagation(); onLike(joke.id); }}>
               <i className="fas fa-heart"></i> {joke.likes || 0}
