@@ -6,11 +6,10 @@ const CommentModal = ({ isOpen, onClose, joke, content, contentType, currentUser
 
   if (!isOpen) return null;
 
-  // Determine the actual content object
+  // Determine the actual content object (fallback to `joke` for backward compatibility)
   const actualContent = content || joke;
   if (!actualContent) return null;
 
-  // Determine content type (fallback to 'joke' if not provided)
   const actualContentType = contentType || 'joke';
 
   const handleSubmit = (e) => {

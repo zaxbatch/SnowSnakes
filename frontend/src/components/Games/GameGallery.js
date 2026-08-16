@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import api from '../../api';
 import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
-import SocialActions from '../SocialActions';
 import CommentModal from '../CommentModal';
 
 const BACKEND_URL = api.defaults.baseURL.replace(/\/api$/, '');
@@ -27,7 +26,7 @@ const GameGallery = ({ setShowGameModal }) => {
     setLoading(true);
     try {
       const res = await api.get('/games');
-      const gamesWithLikes = res.data.map(g => ({ ...g, isLiked: false }));
+      const gamesWithLikes = res.data.map(g => ({ ...g, isLiked: false, comments: [] }));
       setGames(gamesWithLikes);
     } catch (err) {
       console.error('Failed to fetch games:', err);
@@ -48,6 +47,18 @@ const GameGallery = ({ setShowGameModal }) => {
     );
   };
 
+  // ─── Fetch comments for a specific game ────────────────
+  const fetchGameComments = async (gameId) => {
+    try {
+      const res = await api.get(`/games/${gameId}/comments`);
+      return res.data;
+    } catch (err) {
+      console.error('Failed to fetch comments:', err);
+      return [];
+    }
+  };
+
+  // ─── Like ──────────────────────────────────────────────
   const handleLike = async (gameId) => {
     const game = games.find(g => g.id === gameId);
     if (!game) return;
@@ -73,6 +84,7 @@ const GameGallery = ({ setShowGameModal }) => {
     }
   };
 
+  // ─── Share ──────────────────────────────────────────────
   const handleShare = async (gameId) => {
     const game = games.find(g => g.id === gameId);
     if (!game) return;
@@ -99,15 +111,24 @@ const GameGallery = ({ setShowGameModal }) => {
     }
   };
 
+  // ─── Comment ─────────────────────────────────────────────
   const handleComment = async (gameId, text) => {
+    // Optimistically add a temporary comment
     updateGame(gameId, (g) => ({
       ...g,
-      comments: g.comments ? [...g.comments, { text, user }] : [{ text, user }],
+      comments: g.comments ? [...g.comments, { id: Date.now(), text, user, created_at: new Date() }] : [{ id: Date.now(), text, user, created_at: new Date() }],
     }));
 
     try {
       await api.post(`/games/${gameId}/comment`, { text });
+      // Refetch comments to get actual data (with user info)
+      const comments = await fetchGameComments(gameId);
+      updateGame(gameId, (g) => ({
+        ...g,
+        comments,
+      }));
     } catch (err) {
+      // Revert
       updateGame(gameId, (g) => ({
         ...g,
         comments: g.comments ? g.comments.slice(0, -1) : [],
@@ -117,6 +138,16 @@ const GameGallery = ({ setShowGameModal }) => {
     setCommentModalOpen(false);
   };
 
+  // ─── Open Comment Modal ─────────────────────────────────
+  const openCommentModal = async (game) => {
+    const comments = await fetchGameComments(game.id);
+    const gameWithComments = { ...game, comments };
+    setCommentContent(gameWithComments);
+    setCommentContentType('game');
+    setCommentModalOpen(true);
+  };
+
+  // ─── Other handlers ──────────────────────────────────────
   const handleVote = async (id) => {
     try {
       await api.post(`/games/${id}/vote`);
@@ -177,12 +208,6 @@ const GameGallery = ({ setShowGameModal }) => {
     } catch (err) {
       alert('Failed to delete game');
     }
-  };
-
-  const openCommentModal = (item) => {
-    setCommentContent(item);
-    setCommentContentType('game');
-    setCommentModalOpen(true);
   };
 
   return (
@@ -285,7 +310,6 @@ const GameGallery = ({ setShowGameModal }) => {
                   )}
                 </div>
 
-                {/* ─── SOCIAL ACTIONS – corrected order and classes ─── */}
                 <div className="social-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center' }}>
                   <button
                     className={`btn btn-sm ${game.isLiked ? 'btn-like-active' : 'btn-like'}`}
