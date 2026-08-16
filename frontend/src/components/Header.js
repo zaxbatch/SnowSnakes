@@ -36,14 +36,17 @@ const Header = () => {
   // ─── Game form state ───
   const [gameTitle, setGameTitle] = useState('');
   const [gameDescription, setGameDescription] = useState('');
-  const [gameIcon, setGameIcon] = useState('🎮');
+  // Icon: emoji OR uploaded image URL
+  const [gameIconEmoji, setGameIconEmoji] = useState('🎮');
+  const [gameIconImageUrl, setGameIconImageUrl] = useState('');
+  const [gameIconImagePreview, setGameIconImagePreview] = useState('');
   const [gameTags, setGameTags] = useState('');
   const [gameCode, setGameCode] = useState('');
   const [gameFiles, setGameFiles] = useState([]);
   const [gameFilesList, setGameFilesList] = useState([]);
   const [isUploadingGame, setIsUploadingGame] = useState(false);
 
-  // ─── Prevent default drag behavior (stops browser from opening dropped files) ───
+  // ─── Prevent default drag behavior ───
   useEffect(() => {
     const preventDefault = (e) => e.preventDefault();
     document.addEventListener('dragover', preventDefault);
@@ -166,6 +169,19 @@ const Header = () => {
     setGameFilesList(files.map(f => f.name));
   };
 
+  // Reset game form
+  const resetGameForm = () => {
+    setGameTitle('');
+    setGameDescription('');
+    setGameIconEmoji('🎮');
+    setGameIconImageUrl('');
+    setGameIconImagePreview('');
+    setGameTags('');
+    setGameCode('');
+    setGameFiles([]);
+    setGameFilesList([]);
+  };
+
   const handleAddGame = async (e) => {
     e.preventDefault();
     if (!gameTitle || !gameDescription) {
@@ -181,16 +197,14 @@ const Header = () => {
       const formData = new FormData();
       formData.append('title', gameTitle);
       formData.append('description', gameDescription);
-      formData.append('icon', gameIcon || '🎮');
+      // icon: use uploaded image URL if present, else emoji
+      formData.append('icon', gameIconImageUrl || gameIconEmoji);
       formData.append('tags', gameTags);
       formData.append('code', gameCode);
 
-      // Append each file with its relative path
       for (let i = 0; i < gameFiles.length; i++) {
-        const file = gameFiles[i];
-        formData.append('files', file);
-        // webkitRelativePath is set when using webkitdirectory or drag‑and‑drop
-        const path = file.webkitRelativePath || file.name;
+        formData.append('files', gameFiles[i]);
+        const path = gameFiles[i].webkitRelativePath || gameFiles[i].name;
         formData.append('paths', path);
       }
 
@@ -211,13 +225,7 @@ const Header = () => {
       console.log('✅ Game submitted:', data);
 
       setShowGameModal(false);
-      setGameTitle('');
-      setGameDescription('');
-      setGameIcon('🎮');
-      setGameTags('');
-      setGameCode('');
-      setGameFiles([]);
-      setGameFilesList([]);
+      resetGameForm();
       alert('🎮 Game submitted successfully!');
       window.location.reload();
     } catch (err) {
@@ -322,6 +330,7 @@ const Header = () => {
               <button className="modal-close" onClick={() => setShowDoodleModal(false)}>×</button>
             </div>
             <form onSubmit={handleAddDoodle}>
+              {/* same as before */ }
               <div className="form-group">
                 <label>TITLE <span style={{ color: '#ff0000' }}>*</span></label>
                 <input className="form-control" value={doodleTitle} onChange={(e) => setDoodleTitle(e.target.value)} required />
@@ -398,6 +407,7 @@ const Header = () => {
               <button className="modal-close" onClick={() => setShowComicModal(false)}>×</button>
             </div>
             <form onSubmit={handleAddComic}>
+              {/* same as before */ }
               <div className="form-group">
                 <label>TITLE <span style={{ color: '#ff0000' }}>*</span></label>
                 <input className="form-control" value={comicTitle} onChange={(e) => setComicTitle(e.target.value)} required />
@@ -509,13 +519,54 @@ const Header = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>🎨 ICON EMOJI</label>
-                  <input
-                    className="form-control"
-                    value={gameIcon}
-                    onChange={(e) => setGameIcon(e.target.value)}
-                    maxLength={2}
-                  />
+                  <label>🎨 GAME ICON</label>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input
+                      className="form-control"
+                      style={{ width: '80px' }}
+                      value={gameIconEmoji}
+                      onChange={(e) => setGameIconEmoji(e.target.value)}
+                      maxLength={2}
+                      placeholder="🎮"
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => openWidget(setGameIconImageUrl, setGameIconImagePreview)}
+                    >
+                      <i className="fas fa-upload"></i> Upload Image
+                    </button>
+                    {gameIconImagePreview && (
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <img src={gameIconImagePreview} alt="Icon" style={{ maxWidth: '50px', maxHeight: '50px', border: '2px solid #003399' }} />
+                        <button
+                          type="button"
+                          style={{
+                            position: 'absolute',
+                            top: '-8px',
+                            right: '-8px',
+                            background: '#ff0000',
+                            color: '#fff',
+                            border: '2px solid #000',
+                            borderRadius: '50%',
+                            width: '20px',
+                            height: '20px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            fontSize: '12px',
+                            lineHeight: '20px',
+                            textAlign: 'center',
+                          }}
+                          onClick={() => { setGameIconImageUrl(''); setGameIconImagePreview(''); }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
+                    Choose an emoji or upload an image (max 10MB). Image will be displayed if uploaded.
+                  </div>
                 </div>
                 <div className="form-group">
                   <label>🏷️ TAGS (comma separated)</label>
@@ -610,7 +661,7 @@ const Header = () => {
                   className="form-control"
                   value={gameCode}
                   onChange={(e) => setGameCode(e.target.value)}
-                  placeholder="function myGame() { // Your game code here }"
+                  placeholder="Paste HTML or JavaScript code here (or upload files above)"
                   style={{ minHeight: '80px', fontFamily: 'monospace' }}
                 />
               </div>

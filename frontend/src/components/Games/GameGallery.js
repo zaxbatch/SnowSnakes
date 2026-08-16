@@ -42,8 +42,7 @@ const GameGallery = () => {
       console.error('Play count error:', err);
     }
 
-    // Add cache‑busting query parameter
-    const url = `http://localhost:5000/api/games/${game.id}/launch?_=${Date.now()}`;
+    const url = `/api/games/${game.id}/launch?_=${Date.now()}`;
     setGameUrl(url);
     setActiveGame(game);
   };
@@ -134,7 +133,12 @@ const GameGallery = () => {
               padding: '10px 20px',
             }}>
               <span style={{ fontSize: '1.2rem' }}>
-                {activeGame.icon} {activeGame.title}
+                {activeGame.icon && activeGame.icon.startsWith('http') ? (
+                  <img src={activeGame.icon} alt={activeGame.title} style={{ width: '32px', height: '32px', objectFit: 'contain', marginRight: '8px', verticalAlign: 'middle' }} />
+                ) : (
+                  activeGame.icon || '🎮'
+                )}
+                {activeGame.title}
               </span>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button className="btn btn-warning btn-sm" onClick={toggleFullscreen} style={{ background: '#ffcc00', color: '#000' }}>
@@ -190,7 +194,13 @@ const GameGallery = () => {
                     📁 {game.file_count}
                   </div>
                 )}
-                <span className="game-icon">{game.icon || '🎮'}</span>
+                <span className="game-icon" style={{ display: 'block', textAlign: 'center' }}>
+                  {game.icon && game.icon.startsWith('http') ? (
+                    <img src={game.icon} alt={game.title} style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
+                  ) : (
+                    game.icon || '🎮'
+                  )}
+                </span>
                 <div className="game-title">{game.title}</div>
                 <div className="game-description">{game.description}</div>
                 <div className="game-meta">
