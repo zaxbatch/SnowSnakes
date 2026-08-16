@@ -8,11 +8,16 @@ class User {
     return result.rows[0];
   }
 
+  static async findById(id) {
+    const result = await pool.query('SELECT id, username, display_name, avatar, is_admin FROM users WHERE id = $1', [id]);
+    return result.rows[0];
+  }
+
   static async create({ username, password, displayName, avatar }) {
     const hashed = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      `INSERT INTO users (username, password_hash, display_name, avatar)
-       VALUES ($1, $2, $3, $4) RETURNING id, username, display_name, avatar`,
+      `INSERT INTO users (username, password_hash, display_name, avatar, is_admin)
+       VALUES ($1, $2, $3, $4, false) RETURNING id, username, display_name, avatar, is_admin`,
       [username, hashed, displayName || username, avatar || '👤']
     );
     return result.rows[0];
@@ -24,7 +29,7 @@ class User {
 
   static generateToken(user) {
     return jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, username: user.username, isAdmin: user.is_admin },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -37,6 +42,8 @@ class User {
       return null;
     }
   }
+
+  // Admin methods...
 }
 
 module.exports = User;

@@ -10,6 +10,7 @@ import ComicList from './components/Comics/ComicList';
 import GameGallery from './components/Games/GameGallery';
 import EpisodeList from './components/Spread/EpisodeList';
 import Randomizer from './components/Randomizer/Randomizer';
+import AdminPanel from './components/Admin/AdminPanel';  // ✅ Import Admin Panel
 import './styles/App.css';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             <Route path="/games" element={<GameGallery setShowGameModal={setShowGameModal} />} />
             <Route path="/spread" element={<EpisodeList />} />
             <Route path="/randomizer" element={<Randomizer />} />
+            <Route path="/admin" element={<AdminPanel />} />  {/* ✅ Admin route */}
           </Routes>
         </div>
       </BrowserRouter>

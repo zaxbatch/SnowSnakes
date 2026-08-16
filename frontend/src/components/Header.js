@@ -4,9 +4,17 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../api';
 
 const Header = ({ showGameModal, setShowGameModal }) => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, login, register } = useContext(AuthContext);
 
-  // ─── Modal visibility ───
+  // ─── Auth modal state ───
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
+  const [authUsername, setAuthUsername] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authDisplayName, setAuthDisplayName] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
+
+  // ─── Other modals ───
   const [showJokeModal, setShowJokeModal] = useState(false);
   const [showDoodleModal, setShowDoodleModal] = useState(false);
   const [showComicModal, setShowComicModal] = useState(false);
@@ -72,6 +80,27 @@ const Header = ({ showGameModal, setShowGameModal }) => {
       }
     );
     widget.open();
+  };
+
+  // ─── Auth handler ─────────────────────────────────────
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (authMode === 'login') {
+        await login(authUsername, authPassword);
+      } else {
+        await register(authUsername, authPassword, authDisplayName, authEmail);
+      }
+      setShowAuthModal(false);
+      setAuthUsername('');
+      setAuthPassword('');
+      setAuthDisplayName('');
+      setAuthEmail('');
+      alert('✅ Success!');
+      window.location.reload(); // Refresh to update UI
+    } catch (err) {
+      alert('Authentication failed: ' + err.message);
+    }
   };
 
   // ─── Form Handlers ──────────────────────────────────────
@@ -252,7 +281,7 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                 </button>
               </div>
             ) : (
-              <button className="btn btn-secondary" onClick={() => setShowJokeModal(true)}>
+              <button className="btn btn-secondary" onClick={() => setShowAuthModal(true)}>
                 <i className="fas fa-sign-in-alt"></i> LOGIN
               </button>
             )}
@@ -275,7 +304,83 @@ const Header = ({ showGameModal, setShowGameModal }) => {
         </div>
       </header>
 
-      {/* ─── Portals for Modals ─── */}
+      {/* ─── AUTH MODAL ─── */}
+      {showAuthModal &&
+        ReactDOM.createPortal(
+          <div className="modal-overlay active" onClick={() => setShowAuthModal(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>{authMode === 'login' ? '🔐 Login' : '📝 Register'}</h2>
+                <button className="modal-close" onClick={() => setShowAuthModal(false)}>×</button>
+              </div>
+              <form onSubmit={handleAuthSubmit}>
+                <div className="form-group">
+                  <label>Username</label>
+                  <input
+                    className="form-control"
+                    value={authUsername}
+                    onChange={(e) => setAuthUsername(e.target.value)}
+                    required
+                  />
+                </div>
+                {authMode === 'register' && (
+                  <>
+                    <div className="form-group">
+                      <label>Display Name</label>
+                      <input
+                        className="form-control"
+                        value={authDisplayName}
+                        onChange={(e) => setAuthDisplayName(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Email (for HubSpot)</label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+                <div className="form-group">
+                  <label>Password</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+                  {authMode === 'login' ? 'Login' : 'Register'}
+                </button>
+              </form>
+              <p style={{ marginTop: '10px', textAlign: 'center' }}>
+                {authMode === 'login' ? (
+                  <>
+                    Don't have an account?{' '}
+                    <a href="#" onClick={() => setAuthMode('register')}>
+                      Register
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{' '}
+                    <a href="#" onClick={() => setAuthMode('login')}>
+                      Login
+                    </a>
+                  </>
+                )}
+              </p>
+            </div>
+          </div>,
+          document.getElementById('modal-root')
+        )}
+
+      {/* ─── JOKE MODAL ─── */}
       {showJokeModal &&
         ReactDOM.createPortal(
           <div className="modal-overlay active" onClick={() => closeModal(setShowJokeModal)}>
@@ -312,6 +417,7 @@ const Header = ({ showGameModal, setShowGameModal }) => {
           document.getElementById('modal-root')
         )}
 
+      {/* ─── DOODLE MODAL ─── */}
       {showDoodleModal &&
         ReactDOM.createPortal(
           <div className="modal-overlay active" onClick={() => closeModal(setShowDoodleModal)}>
@@ -359,6 +465,7 @@ const Header = ({ showGameModal, setShowGameModal }) => {
           document.getElementById('modal-root')
         )}
 
+      {/* ─── COMIC MODAL ─── */}
       {showComicModal &&
         ReactDOM.createPortal(
           <div className="modal-overlay active" onClick={() => closeModal(setShowComicModal)}>
@@ -412,6 +519,7 @@ const Header = ({ showGameModal, setShowGameModal }) => {
           document.getElementById('modal-root')
         )}
 
+      {/* ─── GAME MODAL ─── */}
       {showGameModal &&
         ReactDOM.createPortal(
           <div className="modal-overlay active" onClick={(e) => { if (e.target === e.currentTarget) setShowGameModal(false); }}>
@@ -421,7 +529,6 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                 <button className="modal-close" onClick={() => setShowGameModal(false)}>×</button>
               </div>
               <form onSubmit={handleAddGame}>
-                {/* ... rest of form ... */}
                 <div className="form-group">
                   <label>GAME TITLE <span style={{ color: '#ff0000' }}>*</span></label>
                   <input className="form-control" value={gameTitle} onChange={(e) => setGameTitle(e.target.value)} required />
@@ -453,7 +560,6 @@ const Header = ({ showGameModal, setShowGameModal }) => {
                   </div>
                 </div>
 
-                {/* ─── Game Files – DnD DISABLED ─── */}
                 <div className="form-group">
                   <label>📁 GAME FILES (click to select)</label>
                   <div
