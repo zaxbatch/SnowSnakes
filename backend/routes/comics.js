@@ -3,55 +3,36 @@ const router = express.Router();
 const Comic = require('../models/Comic');
 const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
-const admin = require('../middleware/admin');
 
-// ─── GET all comics with comments and like status ──────
+// ─── Public routes ──────────────────────────────────────
+
 router.get('/', async (req, res) => {
   try {
     const comics = await Comic.findAll();
-    for (const c of comics) {
-      try {
-        c.comments = await Interaction.getComments('comic', c.id);
-      } catch (err) {
-        console.error(`Error fetching comments for comic ${c.id}:`, err);
-        c.comments = [];
-      }
+    for (let comic of comics) {
+      comic.comments = await Interaction.getComments('comic', comic.id);
       if (req.user) {
-        try {
-          c.isLiked = await Interaction.getLikeStatus(req.user.id, 'comic', c.id);
-        } catch (err) {
-          console.error(`Error fetching like status for comic ${c.id}:`, err);
-          c.isLiked = false;
-        }
+        comic.isLiked = await Interaction.getLikeStatus(req.user.id, 'comic', comic.id);
       } else {
-        c.isLiked = false;
+        comic.isLiked = false;
       }
     }
     res.json(comics);
   } catch (err) {
     console.error('Error in GET /comics:', err);
-    res.status(500).json({ error: err.message, stack: err.stack });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// ─── GET a single comic ────────────────────────────────
 router.get('/:id', async (req, res) => {
   try {
     const comic = await Comic.findById(req.params.id);
     if (!comic) return res.status(404).json({ error: 'Not found' });
-    try {
-      comic.comments = await Interaction.getComments('comic', req.params.id);
-    } catch (err) {
-      console.error(`Error fetching comments for comic ${req.params.id}:`, err);
-      comic.comments = [];
-    }
+    comic.comments = await Interaction.getComments('comic', req.params.id);
     if (req.user) {
-      try {
-        comic.isLiked = await Interaction.getLikeStatus(req.user.id, 'comic', req.params.id);
-      } catch (err) {
-        console.error(`Error fetching like status for comic ${req.params.id}:`, err);
-        comic.isLiked = false;
-      }
+      comic.isLiked = await Interaction.getLikeStatus(req.user.id, 'comic', req.params.id);
+    } else {
+      comic.isLiked = false;
     }
     res.json(comic);
   } catch (err) {
@@ -60,7 +41,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ─── POST new comic ─────────────────────────────────────
 router.post('/', auth, async (req, res) => {
   try {
     const { title, scene, dialogue, caption, characters, image_url } = req.body;
@@ -72,7 +52,7 @@ router.post('/', auth, async (req, res) => {
       caption,
       characters,
       image_url,
-      author_id: req.user.id,
+      author_id: req.user.id
     });
     res.status(201).json(comic);
   } catch (err) {
@@ -81,11 +61,14 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// ─── DELETE comic (admin only) ─────────────────────────
-router.delete('/:id', auth, admin, async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
-    const comic = await Comic.delete(req.params.id);
+    const comic = await Comic.findById(req.params.id);
     if (!comic) return res.status(404).json({ error: 'Not found' });
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    await Comic.delete(req.params.id);
     res.json({ success: true });
   } catch (err) {
     console.error('Error in DELETE /comics/:id:', err);
@@ -93,20 +76,17 @@ router.delete('/:id', auth, admin, async (req, res) => {
   }
 });
 
-// ─── Social actions ──────────────────────────────────────
+// ─── SOCIAL ACTIONS ──────────────────────────────────────
 
-// Like
 router.post('/:id/like', auth, async (req, res) => {
   try {
     const result = await Interaction.toggleLike(req.user.id, 'comic', req.params.id);
     res.json(result);
   } catch (err) {
-    console.error('Error in POST /comics/:id/like:', err);
-    res.status(500).json({ error: err.message, stack: err.stack });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Comment
 router.post('/:id/comment', auth, async (req, res) => {
   try {
     const { text } = req.body;
@@ -115,29 +95,25 @@ router.post('/:id/comment', auth, async (req, res) => {
     const comments = await Interaction.getComments('comic', req.params.id);
     res.status(201).json(comments[0] || {});
   } catch (err) {
-    console.error('Error in POST /comics/:id/comment:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Share
 router.post('/:id/share', auth, async (req, res) => {
   try {
     const updated = await Interaction.incrementShare('comic', req.params.id);
+    if (!updated) return res.status(404).json({ error: 'Comic not found' });
     res.json(updated);
   } catch (err) {
-    console.error('Error in POST /comics/:id/share:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET comments (public)
 router.get('/:id/comments', async (req, res) => {
   try {
     const comments = await Interaction.getComments('comic', req.params.id);
     res.json(comments);
   } catch (err) {
-    console.error('Error in GET /comics/:id/comments:', err);
     res.status(500).json({ error: err.message });
   }
 });

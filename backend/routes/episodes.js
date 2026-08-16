@@ -5,24 +5,15 @@ const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 
-// ─── GET all episodes with comments and like status ──────
+// ─── Public routes ──────────────────────────────────────
+
 router.get('/', async (req, res) => {
   try {
     const episodes = await Episode.findAll();
-    for (const ep of episodes) {
-      try {
-        ep.comments = await Interaction.getComments('episode', ep.id);
-      } catch (err) {
-        console.error(`Error fetching comments for episode ${ep.id}:`, err);
-        ep.comments = [];
-      }
+    for (let ep of episodes) {
+      ep.comments = await Interaction.getComments('episode', ep.id);
       if (req.user) {
-        try {
-          ep.isLiked = await Interaction.getLikeStatus(req.user.id, 'episode', ep.id);
-        } catch (err) {
-          console.error(`Error fetching like status for episode ${ep.id}:`, err);
-          ep.isLiked = false;
-        }
+        ep.isLiked = await Interaction.getLikeStatus(req.user.id, 'episode', ep.id);
       } else {
         ep.isLiked = false;
       }
@@ -30,28 +21,19 @@ router.get('/', async (req, res) => {
     res.json(episodes);
   } catch (err) {
     console.error('Error in GET /episodes:', err);
-    res.status(500).json({ error: err.message, stack: err.stack });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// ─── GET a single episode ────────────────────────────────
 router.get('/:id', async (req, res) => {
   try {
     const episode = await Episode.findById(req.params.id);
     if (!episode) return res.status(404).json({ error: 'Not found' });
-    try {
-      episode.comments = await Interaction.getComments('episode', req.params.id);
-    } catch (err) {
-      console.error(`Error fetching comments for episode ${req.params.id}:`, err);
-      episode.comments = [];
-    }
+    episode.comments = await Interaction.getComments('episode', req.params.id);
     if (req.user) {
-      try {
-        episode.isLiked = await Interaction.getLikeStatus(req.user.id, 'episode', req.params.id);
-      } catch (err) {
-        console.error(`Error fetching like status for episode ${req.params.id}:`, err);
-        episode.isLiked = false;
-      }
+      episode.isLiked = await Interaction.getLikeStatus(req.user.id, 'episode', req.params.id);
+    } else {
+      episode.isLiked = false;
     }
     res.json(episode);
   } catch (err) {
@@ -60,13 +42,11 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ─── POST new episode (admin only) ──────────────────────
+// Admin-only create/update/delete
 router.post('/', auth, admin, async (req, res) => {
   try {
     const { title, youtube_id, description, thumbnail_url, episode_number, air_date, featured } = req.body;
-    if (!title || !youtube_id) {
-      return res.status(400).json({ error: 'Title and YouTube ID are required' });
-    }
+    if (!title) return res.status(400).json({ error: 'Title required' });
     const episode = await Episode.create({
       title,
       youtube_id,
@@ -78,12 +58,11 @@ router.post('/', auth, admin, async (req, res) => {
     });
     res.status(201).json(episode);
   } catch (err) {
-    console.error('Episode creation error:', err);
+    console.error('Error in POST /episodes:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─── PUT / update episode (admin only) ──────────────────
 router.put('/:id', auth, admin, async (req, res) => {
   try {
     const { title, youtube_id, description, thumbnail_url, episode_number, air_date, featured } = req.body;
@@ -99,36 +78,33 @@ router.put('/:id', auth, admin, async (req, res) => {
     if (!episode) return res.status(404).json({ error: 'Not found' });
     res.json(episode);
   } catch (err) {
-    console.error('Episode update error:', err);
+    console.error('Error in PUT /episodes/:id:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─── DELETE episode (admin only) ────────────────────────
 router.delete('/:id', auth, admin, async (req, res) => {
   try {
     const episode = await Episode.delete(req.params.id);
     if (!episode) return res.status(404).json({ error: 'Not found' });
     res.json({ success: true });
   } catch (err) {
+    console.error('Error in DELETE /episodes/:id:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─── Social actions ──────────────────────────────────────
+// ─── SOCIAL ACTIONS ──────────────────────────────────────
 
-// Like
 router.post('/:id/like', auth, async (req, res) => {
   try {
     const result = await Interaction.toggleLike(req.user.id, 'episode', req.params.id);
     res.json(result);
   } catch (err) {
-    console.error('Error in POST /episodes/:id/like:', err);
-    res.status(500).json({ error: err.message, stack: err.stack });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Comment
 router.post('/:id/comment', auth, async (req, res) => {
   try {
     const { text } = req.body;
@@ -137,29 +113,25 @@ router.post('/:id/comment', auth, async (req, res) => {
     const comments = await Interaction.getComments('episode', req.params.id);
     res.status(201).json(comments[0] || {});
   } catch (err) {
-    console.error('Error in POST /episodes/:id/comment:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Share
 router.post('/:id/share', auth, async (req, res) => {
   try {
     const updated = await Interaction.incrementShare('episode', req.params.id);
+    if (!updated) return res.status(404).json({ error: 'Episode not found' });
     res.json(updated);
   } catch (err) {
-    console.error('Error in POST /episodes/:id/share:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET comments (public)
 router.get('/:id/comments', async (req, res) => {
   try {
     const comments = await Interaction.getComments('episode', req.params.id);
     res.json(comments);
   } catch (err) {
-    console.error('Error in GET /episodes/:id/comments:', err);
     res.status(500).json({ error: err.message });
   }
 });
