@@ -10,6 +10,10 @@ const Header = ({ showGameModal, setShowGameModal }) => {
   const { deleteMode, setDeleteMode } = useDeleteMode();
   const { killerMode, setKillerMode } = useKillerMode();
 
+  // ─── State for Killer Mode info modal ──────────────────
+  const [showKillerInfo, setShowKillerInfo] = useState(false);
+  const [dontShowKillerInfo, setDontShowKillerInfo] = useState(false);
+
   // ─── Auth modal state ───
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
@@ -107,6 +111,29 @@ const Header = ({ showGameModal, setShowGameModal }) => {
     } catch (err) {
       alert('Authentication failed: ' + err.message);
     }
+  };
+
+  // ─── Killer Mode toggle handler ──────────────────────
+  const handleKillerToggle = () => {
+    // Check if the info has been shown before
+    const infoShown = localStorage.getItem('killerModeInfoShown');
+    if (!infoShown) {
+      // Show the info modal
+      setShowKillerInfo(true);
+      // Don't toggle killer mode yet – wait for modal close
+    } else {
+      // Toggle directly
+      setKillerMode(!killerMode);
+    }
+  };
+
+  const closeKillerInfo = () => {
+    if (dontShowKillerInfo) {
+      localStorage.setItem('killerModeInfoShown', 'true');
+    }
+    setShowKillerInfo(false);
+    // Now toggle killer mode (activate it)
+    setKillerMode(!killerMode);
   };
 
   // ─── Form Handlers ──────────────────────────────────────
@@ -296,7 +323,7 @@ const Header = ({ showGameModal, setShowGameModal }) => {
           {/* KILLER MODE BUTTON */}
           <button
             className={`btn btn-warning ${killerMode ? 'killer-active' : ''}`}
-            onClick={() => setKillerMode(!killerMode)}
+            onClick={handleKillerToggle}
           >
             <i className="fas fa-skull"></i> {killerMode ? 'KILLER ON' : 'KILLER MODE'}
           </button>
@@ -326,6 +353,51 @@ const Header = ({ showGameModal, setShowGameModal }) => {
           </button>
         </div>
       </header>
+
+      {/* ─── KILLER MODE INFO MODAL ─── */}
+      {showKillerInfo &&
+        ReactDOM.createPortal(
+          <div className="modal-overlay active" onClick={() => {}}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>💀 Killer Mode</h2>
+                <button className="modal-close" onClick={closeKillerInfo}>×</button>
+              </div>
+              <div style={{ padding: '10px 0' }}>
+                <p style={{ marginBottom: '12px', fontSize: '16px' }}>
+                  <strong>Killer Mode</strong> adds a <strong>💀 kill count</strong> to every joke.
+                </p>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '12px 0' }}>
+                  <li style={{ padding: '6px 0', borderBottom: '1px solid #eee' }}>
+                    ✅ Jokes with <strong>50+ kills</strong> get a special <span style={{ color: '#ff0000' }}>killer style</span>.
+                  </li>
+                  <li style={{ padding: '6px 0', borderBottom: '1px solid #eee' }}>
+                    💣 Click the <strong>KILL</strong> button on any joke to increase its kill count.
+                  </li>
+                  <li style={{ padding: '6px 0' }}>
+                    🔥 Turn it on/off anytime – the kill counts are permanent.
+                  </li>
+                </ul>
+                <div style={{ marginTop: '15px' }}>
+                  <label style={{ cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={dontShowKillerInfo}
+                      onChange={(e) => setDontShowKillerInfo(e.target.checked)}
+                    />
+                    Don't show this again
+                  </label>
+                </div>
+                <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                  <button className="btn btn-primary" onClick={closeKillerInfo}>
+                    Got it!
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.getElementById('modal-root')
+        )}
 
       {/* ─── AUTH MODAL ─── */}
       {showAuthModal &&
