@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>GoalForge — Smart Goal Tracker • Editable Prizes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f4f6fa;
+      font-family: 'Inter', sans-serif;
+      padding: 32px 24px 56px;
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .app-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Premium header */
+    .premium-header {
+      background: #ffffff;
+      border-radius: 32px;
+      padding: 20px 32px;
+      margin-bottom: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      border: 1px solid #e9edf2;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-icon {
+      font-size: 32px;
+    }
+    .logo-text h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      background: linear-gradient(135deg, #1e293b, #3b4b62);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .points-module {
+      background: #f0f4f9;
+      padding: 8px 28px;
+      border-radius: 60px;
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: #2c3e50;
+    }
+    .points-module span {
+      color: #e67e22;
+      font-size: 1.7rem;
+    }
+
+    /* Stats cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 28px;
+      padding: 20px 16px;
+      text-align: center;
+      border: 1px solid #eef2f6;
+    }
+    .stat-number {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #e67e22;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      background: white;
+      padding: 6px 16px;
+      border-radius: 80px;
+      border: 1px solid #eef2f6;
+      width: fit-content;
+    }
+    .tab-btn {
+      padding: 10px 28px;
+      border: none;
+      background: transparent;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #5c6f87;
+    }
+    .tab-btn.active {
+      background: #2c3e50;
+      color: white;
+    }
+
+    /* Panels */
+    .panel {
+      display: none;
+      background: white;
+      border-radius: 36px;
+      padding: 32px;
+      border: 1px solid #eef2f6;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.04);
+    }
+    .panel.active-panel {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+
+    /* Goal cards */
+    .goal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+    .goal-card {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 24px;
+      border: 1px solid #edf2f7;
+      transition: all 0.2s;
+    }
+    .goal-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 12px 24px -12px rgba(0,0,0,0.1);
+    }
+    .goal-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      margin-bottom: 8px;
+    }
+    .progress-bar {
+      background: #eef2f6;
+      border-radius: 40px;
+      height: 8px;
+      margin: 18px 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      background: #e67e22;
+      height: 100%;
+      width: 0%;
+      border-radius: 40px;
+      transition: width 0.3s;
+    }
+    .incentive-tag {
+      background: #fef9f0;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-block;
+      margin: 12px 0;
+      color: #c2410c;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: 0.1s;
+      color: #334155;
+    }
+    .btn-primary-outline {
+      background: #e67e22;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-danger-light {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .btn-primary-grad {
+      background: #2c3e50;
+      color: white;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 60px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .btn-icon {
+      background: transparent;
+      border: 1px solid #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 40px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    /* Enhanced Form */
+    .form-section {
+      background: #f8fafc;
+      border-radius: 28px;
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .form-section-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #334155;
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .input-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .input-field {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 12px 16px;
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: white;
+      transition: 0.2s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #e67e22;
+      box-shadow: 0 0 0 3px rgba(230,126,34,0.1);
+    }
+    .input-hint {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    select.input-field {
+      cursor: pointer;
+    }
+    .difficulty-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    /* Rewards grid */
+    .rewards-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .rewards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 24px;
+      margin-top: 16px;
+    }
+    .reward-card {
+      background: #fafcff;
+      border-radius: 28px;
+      padding: 22px;
+      text-align: center;
+      border: 1px solid #edf2f7;
+      transition: 0.2s;
+    }
+    .reward-card:hover {
+      border-color: #e67e22;
+    }
+    .reward-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    /* Quote footer */
+    .quote-footer {
+      margin-top: 56px;
+      text-align: center;
+      padding: 28px 20px 16px;
+      border-top: 1px solid #e2e8f0;
+      color: #5a6e85;
+    }
+    .quote-text {
+      font-size: 1rem;
+      font-weight: 450;
+      font-style: italic;
+      max-width: 700px;
+      margin: 0 auto 12px;
+    }
+    .refresh-quote {
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      margin-top: 12px;
+      color: #e67e22;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 32px;
+      padding: 32px;
+      width: 90%;
+      max-width: 450px;
+    }
+    .toast-message {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: white;
+      padding: 12px 28px;
+      border-radius: 60px;
+      font-weight: 500;
+      z-index: 1000;
+      animation: fadeToast 2.2s forwards;
+    }
+    @keyframes fadeToast {
+      0% { opacity: 0; transform: translateX(-50%) translateY(20px);}
+      15% { opacity: 1; transform: translateX(-50%) translateY(0);}
+      85% { opacity: 1; }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-20px);}
+    }
+    @media (max-width: 700px) {
+      body { padding: 20px 16px; }
+      .premium-header { flex-direction: column; align-items: stretch; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  
+  <div class="premium-header">
+    <div class="logo-area">
+      <div class="logo-icon">⚙️</div>
+      <div class="logo-text"><h1>GoalForge</h1><p style="font-size: 0.7rem;">build • track • ascend</p></div>
+    </div>
+    <div class="points-module">
+      🪙 <span id="totalPoints">0</span> forge points
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-number" id="activeGoals">0</div><div>active</div></div>
+    <div class="stat-card"><div class="stat-number" id="completedGoals">0</div><div>completed</div></div>
+    <div class="stat-card"><div class="stat-number" id="streakCount">0</div><div>day streak 🔥</div></div>
+    <div class="stat-card"><div class="stat-number" id="incentivesEarned">0</div><div>rewards earned</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="goals">🎯 my goals</button>
+    <button class="tab-btn" data-tab="new-goal">✨ new goal</button>
+    <button class="tab-btn" data-tab="rewards">🏆 prize shop</button>
+    <button class="tab-btn" data-tab="achievements">📜 milestones</button>
+  </div>
+
+  <!-- GOALS PANEL -->
+  <div id="goalsPanel" class="panel active-panel">
+    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+      <h2 style="font-weight: 700;">current objectives</h2>
+      <select id="goalFilter" style="border-radius: 40px; padding: 6px 18px; border:1px solid #e2e8f0;">
+        <option value="all">all goals</option><option value="active">active only</option><option value="completed">completed</option>
+      </select>
+    </div>
+    <div id="goalsContainer" class="goal-grid"></div>
+  </div>
+
+  <!-- NEW GOAL PANEL - Enhanced realistic parameters -->
+  <div id="newGoalPanel" class="panel">
+    <h2 style="font-weight: 700; margin-bottom: 24px;">✨ define your new goal</h2>
+    
+    <div class="form-section">
+      <div class="form-section-title">📋 what do you want to achieve?</div>
+      <div class="input-group" style="margin-bottom: 20px;">
+        <label>GOAL TITLE *</label>
+        <input type="text" id="goalTitle" class="input-field" placeholder="e.g., Run a half marathon, Launch my portfolio, Learn Spanish">
+        <div class="input-hint">Be specific and meaningful — this is your north star</div>
+      </div>
+      
+      <div class="form-grid">
+        <div class="input-group">
+          <label>TARGET QUANTITY</label>
+          <input type="number" id="goalTarget" class="input-field" placeholder="e.g., 42, 10, 1" value="1">
+          <div class="input-hint">Total units to complete (km, books, sessions, etc.)</div>
+        </div>
+        <div class="input-group">
+          <label>CURRENT PROGRESS</label>
+          <input type="number" id="goalProgress" class="input-field" placeholder="Already done" value="0">
+          <div class="input-hint">Where are you starting from?</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">⏰ timeline & accountability</div>
+      <div class="form-grid">
+        <div class="input-group">
+          <label>START DATE</label>
+          <input type="date" id="goalStartDate" class="input-field">
+          <div class="input-hint">When you begin (optional)</div>
+        </div>
+        <div class="input-group">
+          <label>TARGET DEADLINE</label>
+          <input type="date" id="goalDeadline" class="input-field">
+          <div class="input-hint">Create urgency — set a realistic finish date</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🎁 motivation & rewards</div>
+      <div class="form-grid">
+        <div class="input-group">
+          <label>PERSONAL INCENTIVE</label>
+          <input type="text" id="goalIncentive" class="input-field" placeholder="e.g., New running shoes, Spa day, Gaming gear">
+          <div class="input-hint">What will you reward yourself with upon completion?</div>
+        </div>
+        <div class="input-group">
+          <label>DIFFICULTY LEVEL</label>
+          <select id="goalDifficulty" class="input-field">
+            <option value="easy">🌱 Easy — +50 points (low effort, quick win)</option>
+            <option value="medium" selected>⚡ Medium — +100 points (moderate challenge)</option>
+            <option value="hard">🔥 Hard — +200 points (significant effort)</option>
+            <option value="epic">🏆 Epic — +500 points (major life achievement)</option>
+          </select>
+          <div class="input-hint">Harder goals earn more forge points</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">📝 notes & commitment</div>
+      <div class="input-group">
+        <label>WHY IS THIS GOAL IMPORTANT? (OPTIONAL)</label>
+        <textarea id="goalWhy" class="input-field" rows="2" placeholder="I want to achieve this because..."></textarea>
+        <div class="input-hint">Writing your 'why' increases follow-through by 42%</div>
+      </div>
+    </div>
+
+    <button class="btn-primary-grad" id="createGoalBtn" style="width: 100%;">🚀 commit to this goal</button>
+  </div>
+
+  <!-- REWARDS SHOP -->
+  <div id="rewardsPanel" class="panel">
+    <div class="rewards-header">
+      <h2 style="font-weight: 700;">🪙 prize shop</h2>
+      <button class="btn-secondary" id="addRewardBtn">+ add new prize</button>
+    </div>
+    <div id="rewardsContainer" class="rewards-grid"></div>
+  </div>
+
+  <!-- ACHIEVEMENTS -->
+  <div id="achievementsPanel" class="panel">
+    <h2 style="font-weight: 700;">milestones unlocked</h2>
+    <div id="achievementsContainer" style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px;"></div>
+  </div>
+
+  <!-- QUOTE FOOTER -->
+  <div class="quote-footer">
+    <div class="quote-text" id="quoteText">"The secret of getting ahead is getting started."</div>
+    <div class="quote-author" id="quoteAuthor">— Mark Twain</div>
+    <button class="refresh-quote" id="refreshQuoteBtn">⟳ new insight</button>
+  </div>
+</div>
+
+<script>
+  // ---------- GOALFORGE WITH REALISTIC GOAL PARAMETERS ----------
+  let goals = [];
+  let userPoints = 350;
+  let redeemedRewards = [];
+  let achievementsUnlocked = [];
+  let dailyStreak = 0;
+  let lastCheckinDate = null;
+
+  let rewardsShop = [
+    { id: "rw1", name: "☕ Premium Coffee", cost: 150, icon: "☕", desc: "Treat yourself to a great brew" },
+    { id: "rw2", name: "🎬 Movie Night", cost: 250, icon: "🎬", desc: "Streaming rental + snacks" },
+    { id: "rw3", name: "📖 Bestseller Book", cost: 400, icon: "📚", desc: "Paperback or ebook" },
+    { id: "rw4", name: "🎧 Wireless Earbuds", cost: 650, icon: "🎧", desc: "Budget-friendly audio" },
+    { id: "rw5", name: "💻 Ergonomic Kit", cost: 550, icon: "💻", desc: "Wrist rest + pad" },
+    { id: "rw6", name: "🏋️‍♂️ Gym Pass", cost: 300, icon: "🏋️", desc: "Local day pass" }
+  ];
+
+  const quoteLibrary = [
+    { text: "It does not matter how slowly you go as long as you do not stop.", author: "— Confucius" },
+    { text: "Discipline is the bridge between goals and accomplishment.", author: "— Jim Rohn" },
+    { text: "You don't have to be great to start, but you have to start to be great.", author: "— Zig Ziglar" },
+    { text: "The future depends on what you do today.", author: "— Mahatma Gandhi" },
+    { text: "Small daily improvements are the key to staggering long-term results.", author: "— Robin Sharma" }
+  ];
+
+  function loadData() {
+    const storedGoals = localStorage.getItem('goalforge_data');
+    if (storedGoals) goals = JSON.parse(storedGoals);
+    else {
+      goals = [
+        { id: 201, title: "Complete Frontend Portfolio", target: 1, currentProgress: 0, deadline: "2026-07-20", startDate: "2026-06-01", why: "Career transition", incentive: "New ergonomic chair", difficulty: "hard", status: "active" },
+        { id: 202, title: "Read 3 Industry Books", target: 3, currentProgress: 1, deadline: "2026-07-10", startDate: "2026-06-05", why: "Stay competitive", incentive: "Annual subscription", difficulty: "medium", status: "active" }
+      ];
+    }
+    const pts = localStorage.getItem('forge_points');
+    if (pts !== null) userPoints = parseInt(pts);
+    const redeemed = localStorage.getItem('forge_redeemed');
+    if (redeemed) redeemedRewards = JSON.parse(redeemed);
+    const ach = localStorage.getItem('forge_achievements');
+    if (ach) achievementsUnlocked = JSON.parse(ach);
+    const streak = localStorage.getItem('forge_streak');
+    if (streak) dailyStreak = parseInt(streak);
+    const last = localStorage.getItem('forge_lastcheck');
+    if (last) lastCheckinDate = last;
+    const storedRewards = localStorage.getItem('forge_rewards');
+    if (storedRewards) rewardsShop = JSON.parse(storedRewards);
+    
+    checkDailyStreak();
+    updateUI();
+    renderRandomQuote();
+  }
+
+  function checkDailyStreak() {
+    const today = new Date().toDateString();
+    if (lastCheckinDate === today) return;
+    if (lastCheckinDate) {
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      if (lastCheckinDate === yesterday.toDateString()) { dailyStreak++; addPoints(15, "streak persistence"); }
+      else dailyStreak = 1;
+    } else dailyStreak = 1;
+    lastCheckinDate = today;
+    localStorage.setItem('forge_lastcheck', lastCheckinDate);
+    localStorage.setItem('forge_streak', dailyStreak);
+    addPoints(15, "daily check-in");
+  }
+
+  function addPoints(amount, reason) {
+    userPoints += amount;
+    localStorage.setItem('forge_points', userPoints);
+    updateUI();
+    checkAchievements();
+    showToast(`+${amount} points · ${reason}`);
+  }
+
+  function saveGoals() { localStorage.setItem('goalforge_data', JSON.stringify(goals)); }
+  function saveRedeemed() { localStorage.setItem('forge_redeemed', JSON.stringify(redeemedRewards)); }
+  function saveAchievements() { localStorage.setItem('forge_achievements', JSON.stringify(achievementsUnlocked)); }
+  function saveRewards() { localStorage.setItem('forge_rewards', JSON.stringify(rewardsShop)); }
+
+  function updateUI() {
+    document.getElementById('totalPoints').innerText = userPoints;
+    const active = goals.filter(g => g.status === 'active').length;
+    const completed = goals.filter(g => g.status === 'completed').length;
+    document.getElementById('activeGoals').innerText = active;
+    document.getElementById('completedGoals').innerText = completed;
+    document.getElementById('streakCount').innerText = dailyStreak;
+    document.getElementById('incentivesEarned').innerText = completed;
+    renderGoals();
+    renderRewards();
+    renderAchievementsUI();
+  }
+
+  function getPointsForDiff(diff) { return { easy:50, medium:100, hard:200, epic:500 }[diff] || 100; }
+
+  function completeGoal(id) {
+    const g = goals.find(g => g.id === id);
+    if (!g || g.status === 'completed') return;
+    g.status = 'completed';
+    const earned = getPointsForDiff(g.difficulty);
+    addPoints(earned, `"${g.title}" completed!`);
+    if (g.incentive) showToast(`🎁 incentive unlocked: ${g.incentive}`);
+    saveGoals();
+    updateUI();
+  }
+
+  function updateProgress(id, inc) {
+    const g = goals.find(g => g.id === id);
+    if (!g || g.status === 'completed') return;
+    let newVal = g.currentProgress + inc;
+    if (newVal > g.target) newVal = g.target;
+    g.currentProgress = newVal;
+    if (g.target > 0 && g.currentProgress >= g.target) completeGoal(id);
+    else { saveGoals(); updateUI(); showToast(`+${inc} · ${g.currentProgress}/${g.target}`); }
+  }
+
+  function createGoal(title, target, cur, startDate, deadline, why, incentive, diff) {
+    goals.push({
+      id: Date.now(),
+      title, target: parseInt(target)||0, currentProgress: parseInt(cur)||0,
+      startDate: startDate||null, deadline: deadline||null,
+      why: why||null, incentive: incentive||null,
+      difficulty: diff, status: "active", createdAt: Date.now()
+    });
+    saveGoals(); updateUI(); showToast(`✨ "${title}" committed — you've got this!`);
+  }
+
+  function deleteGoal(id) { if(confirm("Remove this goal?")) { goals = goals.filter(g => g.id !== id); saveGoals(); updateUI(); showToast("goal archived"); } }
+
+  function renderGoals() {
+    const filter = document.getElementById('goalFilter')?.value || 'all';
+    let filtered = goals;
+    if (filter === 'active') filtered = goals.filter(g => g.status === 'active');
+    if (filter === 'completed') filtered = goals.filter(g => g.status === 'completed');
+    const container = document.getElementById('goalsContainer');
+    if (!container) return;
+    if (!filtered.length) { container.innerHTML = `<div style="padding:40px; text-align:center;">⚙️ no goals yet. forge a new one.</div>`; return; }
+    container.innerHTML = filtered.map(g => {
+      const percent = g.target > 0 ? (g.currentProgress / g.target) * 100 : 0;
+      const done = g.status === 'completed';
+      return `
+        <div class="goal-card">
+          <div class="goal-title">${escapeHtml(g.title)} ${done ? '✓' : ''}</div>
+          <div style="font-weight:500; margin:8px 0;">progress: ${g.currentProgress} / ${g.target}</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${percent}%;"></div></div>
+          ${g.startDate ? `<div style="font-size:0.7rem;">📅 started: ${g.startDate}</div>` : ''}
+          ${g.deadline ? `<div style="font-size:0.7rem;">⏰ deadline: ${g.deadline}</div>` : ''}
+          ${g.why ? `<div style="font-size:0.75rem; margin-top:8px; color:#5a6e85;">💭 "${escapeHtml(g.why)}"</div>` : ''}
+          ${g.incentive ? `<div class="incentive-tag">🎁 reward: ${escapeHtml(g.incentive)}</div>` : ''}
+          <div class="btn-group">
+            ${!done ? `<button class="btn-secondary" onclick="progressH(${g.id},1)">+1</button>` : ''}
+            ${!done && g.target > 3 ? `<button class="btn-secondary" onclick="progressH(${g.id},5)">+5</button>` : ''}
+            ${!done ? `<button class="btn-primary-outline" onclick="completeH(${g.id})">complete ✓</button>` : ''}
+            <button class="btn-secondary btn-danger-light" onclick="deleteH(${g.id})">delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.progressH = (id,inc) => updateProgress(id,inc);
+  window.completeH = (id) => completeGoal(id);
+  window.deleteH = (id) => deleteGoal(id);
+  window.redeemReward = (id, cost, name) => {
+    if(userPoints >= cost && !redeemedRewards.includes(id)){
+      userPoints -= cost; redeemedRewards.push(id);
+      localStorage.setItem('forge_points', userPoints);
+      saveRedeemed(); updateUI();
+      showToast(`redeemed: ${name} — enjoy!`);
+    } else if(redeemedRewards.includes(id)) showToast("already claimed");
+    else showToast(`need ${cost - userPoints} more points`);
+  };
+
+  function openEditRewardModal(rewardId) {
+    const reward = rewardsShop.find(r => r.id === rewardId);
+    if (!reward) return;
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3 style="margin-bottom: 20px;">✏️ edit prize</h3>
+        <input type="text" id="editName" class="input-field" placeholder="Name" value="${escapeHtml(reward.name)}" style="margin-bottom:12px;">
+        <input type="number" id="editCost" class="input-field" placeholder="Points" value="${reward.cost}" style="margin-bottom:12px;">
+        <input type="text" id="editIcon" class="input-field" placeholder="Icon" value="${reward.icon}" style="margin-bottom:12px;">
+        <input type="text" id="editDesc" class="input-field" placeholder="Description" value="${escapeHtml(reward.desc)}" style="margin-bottom:20px;">
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="btn-secondary" id="cancelEdit">cancel</button>
+          <button class="btn-primary-outline" id="saveEdit">save</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('cancelEdit').onclick = () => modal.remove();
+    document.getElementById('saveEdit').onclick = () => {
+      reward.name = document.getElementById('editName').value.trim() || reward.name;
+      reward.cost = parseInt(document.getElementById('editCost').value) || 100;
+      reward.icon = document.getElementById('editIcon').value.trim() || "🎁";
+      reward.desc = document.getElementById('editDesc').value.trim() || "";
+      saveRewards();
+      updateUI();
+      modal.remove();
+      showToast("prize updated");
+    };
+  }
+
+  function openAddRewardModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3 style="margin-bottom: 20px;">➕ add prize</h3>
+        <input type="text" id="newName" class="input-field" placeholder="Prize name" style="margin-bottom:12px;">
+        <input type="number" id="newCost" class="input-field" placeholder="Points cost" value="300" style="margin-bottom:12px;">
+        <input type="text" id="newIcon" class="input-field" placeholder="Icon emoji" value="🏆" style="margin-bottom:12px;">
+        <input type="text" id="newDesc" class="input-field" placeholder="Description" style="margin-bottom:20px;">
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="btn-secondary" id="cancelAdd">cancel</button>
+          <button class="btn-primary-outline" id="confirmAdd">add</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('cancelAdd').onclick = () => modal.remove();
+    document.getElementById('confirmAdd').onclick = () => {
+      const name = document.getElementById('newName').value.trim();
+      if (!name) { alert("enter a prize name"); return; }
+      rewardsShop.push({
+        id: "reward_" + Date.now(),
+        name: name,
+        cost: parseInt(document.getElementById('newCost').value) || 300,
+        icon: document.getElementById('newIcon').value.trim() || "🎁",
+        desc: document.getElementById('newDesc').value.trim() || "custom prize"
+      });
+      saveRewards();
+      updateUI();
+      modal.remove();
+      showToast(`"${name}" added`);
+    };
+  }
+
+  function deleteReward(id) {
+    if (confirm("Delete this prize?")) {
+      rewardsShop = rewardsShop.filter(r => r.id !== id);
+      redeemedRewards = redeemedRewards.filter(rid => rid !== id);
+      saveRewards(); saveRedeemed(); updateUI();
+      showToast("prize removed");
+    }
+  }
+
+  function renderRewards() {
+    const container = document.getElementById('rewardsContainer');
+    if(!container) return;
+    container.innerHTML = rewardsShop.map(r => {
+      const owned = redeemedRewards.includes(r.id);
+      return `
+        <div class="reward-card">
+          <div style="font-size: 2.2rem;">${r.icon}</div>
+          <h3 style="margin: 8px 0;">${escapeHtml(r.name)}</h3>
+          <p>${escapeHtml(r.desc)}</p>
+          <div style="font-weight: 700; margin: 12px 0;">🪙 ${r.cost} pts</div>
+          <button class="btn-secondary" onclick="redeemReward('${r.id}', ${r.cost}, '${escapeHtml(r.name)}')" ${owned ? 'disabled style="opacity:0.5;"' : ''}>${owned ? 'claimed' : 'redeem'}</button>
+          <div class="reward-actions">
+            <button class="btn-icon" onclick="openEditRewardModal('${r.id}')">✏️ edit</button>
+            <button class="btn-icon" onclick="deleteReward('${r.id}')">🗑️ delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function checkAchievements() {
+    const completedCount = goals.filter(g => g.status === 'completed').length;
+    let added = false;
+    if (completedCount >= 1 && !achievementsUnlocked.includes('first')) { achievementsUnlocked.push('first'); addPoints(50, "first goal!"); added=true; }
+    if (completedCount >= 3 && !achievementsUnlocked.includes('three')) { achievementsUnlocked.push('three'); addPoints(100, "3 goals!"); added=true; }
+    if (completedCount >= 5 && !achievementsUnlocked.includes('five')) { achievementsUnlocked.push('five'); addPoints(200, "5 goals champion"); added=true; }
+    if (userPoints >= 800 && !achievementsUnlocked.includes('points800')) { achievementsUnlocked.push('points800'); addPoints(100, "800 points"); added=true; }
+    if (dailyStreak >= 5 && !achievementsUnlocked.includes('streak5')) { achievementsUnlocked.push('streak5'); addPoints(80, "5-day streak"); added=true; }
+    if (added) saveAchievements();
+  }
+
+  function renderAchievementsUI() {
+    const badges = [
+      { id:'first', name:'🌱 first forge', desc:'complete 1 goal' },
+      { id:'three', name:'📐 triple threat', desc:'complete 3 goals' },
+      { id:'five', name:'🏆 architect', desc:'complete 5 goals' },
+      { id:'points800', name:'💰 point collector', desc:'800 points' },
+      { id:'streak5', name:'🔥 5-day streak', desc:'consistent action' }
+    ];
+    const container = document.getElementById('achievementsContainer');
+    if(!container) return;
+    container.innerHTML = badges.map(b => {
+      const unlocked = achievementsUnlocked.includes(b.id);
+      return `<div style="background:${unlocked ? '#fef9f0' : '#f8fafc'}; border-radius: 60px; padding: 8px 20px; border:1px solid ${unlocked ? '#e67e22' : '#e2e8f0'};"><span>${unlocked ? '✓' : '◌'}</span> <strong>${b.name}</strong><br><small>${b.desc}</small></div>`;
+    }).join('');
+  }
+
+  function renderRandomQuote() {
+    const q = quoteLibrary[Math.floor(Math.random() * quoteLibrary.length)];
+    document.getElementById('quoteText').innerText = `“${q.text}”`;
+    document.getElementById('quoteAuthor').innerHTML = q.author;
+  }
+
+  function showToast(msg) {
+    const toast = document.createElement('div'); toast.className = 'toast-message'; toast.innerText = msg;
+    document.body.appendChild(toast); setTimeout(() => toast.remove(), 2200);
+  }
+
+  document.getElementById('createGoalBtn')?.addEventListener('click', () => {
+    const title = document.getElementById('goalTitle').value.trim();
+    if(!title) { alert("what's your goal? give it a title."); return; }
+    const target = document.getElementById('goalTarget').value;
+    const progress = document.getElementById('goalProgress').value;
+    const startDate = document.getElementById('goalStartDate').value;
+    const deadline = document.getElementById('goalDeadline').value;
+    const why = document.getElementById('goalWhy').value.trim();
+    const incentive = document.getElementById('goalIncentive').value.trim();
+    const difficulty = document.getElementById('goalDifficulty').value;
+    createGoal(title, target||1, progress||0, startDate, deadline, why, incentive||null, difficulty);
+    document.getElementById('goalTitle').value = '';
+    document.getElementById('goalTarget').value = '1';
+    document.getElementById('goalProgress').value = '0';
+    document.getElementById('goalStartDate').value = '';
+    document.getElementById('goalDeadline').value = '';
+    document.getElementById('goalWhy').value = '';
+    document.getElementById('goalIncentive').value = '';
+    document.querySelector('.tab-btn[data-tab="goals"]').click();
+  });
+
+  document.getElementById('addRewardBtn')?.addEventListener('click', () => openAddRewardModal());
+  document.getElementById('refreshQuoteBtn')?.addEventListener('click', () => renderRandomQuote());
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
+      const tab = btn.getAttribute('data-tab');
+      if(tab === 'goals') document.getElementById('goalsPanel').classList.add('active-panel');
+      else if(tab === 'new-goal') document.getElementById('newGoalPanel').classList.add('active-panel');
+      else if(tab === 'rewards') document.getElementById('rewardsPanel').classList.add('active-panel');
+      else if(tab === 'achievements') document.getElementById('achievementsPanel').classList.add('active-panel');
+    });
+  });
+  document.getElementById('goalFilter')?.addEventListener('change', () => renderGoals());
+  
+  function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+  
+  window.openEditRewardModal = openEditRewardModal;
+  window.deleteReward = deleteReward;
+  
+  loadData();
+</script>
+</body>
+</html>

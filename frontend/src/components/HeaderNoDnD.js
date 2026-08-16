@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api';
 
@@ -42,17 +42,6 @@ const Header = () => {
   const [gameFiles, setGameFiles] = useState([]);
   const [gameFilesList, setGameFilesList] = useState([]);
   const [isUploadingGame, setIsUploadingGame] = useState(false);
-
-  // ─── Prevent default drag behavior (stops browser from opening dropped files) ───
-  useEffect(() => {
-    const preventDefault = (e) => e.preventDefault();
-    document.addEventListener('dragover', preventDefault);
-    document.addEventListener('drop', preventDefault);
-    return () => {
-      document.removeEventListener('dragover', preventDefault);
-      document.removeEventListener('drop', preventDefault);
-    };
-  }, []);
 
   // ─── Cloudinary Widget ───
   const openWidget = (setImageUrl, setPreview) => {
@@ -158,8 +147,6 @@ const Header = () => {
     }
   };
 
-  // ─── Game ───────────────────────────────────────────────
-
   const handleGameFileChange = (e) => {
     const files = Array.from(e.target.files);
     setGameFiles(files);
@@ -185,13 +172,8 @@ const Header = () => {
       formData.append('tags', gameTags);
       formData.append('code', gameCode);
 
-      // Append each file with its relative path
       for (let i = 0; i < gameFiles.length; i++) {
-        const file = gameFiles[i];
-        formData.append('files', file);
-        // webkitRelativePath is set when using webkitdirectory or drag‑and‑drop
-        const path = file.webkitRelativePath || file.name;
-        formData.append('paths', path);
+        formData.append('files', gameFiles[i]);
       }
 
       const response = await fetch('/api/games', {
@@ -530,6 +512,7 @@ const Header = () => {
 
               <div className="form-group">
                 <label>📁 GAME FILES (drag & drop or click to select)</label>
+                {/* ✅ Inline drag-and-drop (original working method) */}
                 <div
                   className="drop-zone"
                   style={{

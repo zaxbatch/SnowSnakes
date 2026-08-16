@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>MockupForge – Rapid Site Mockups</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --bg: #f4f6fa;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            --radius: 14px;
+            --primary: #2a9d8f;
+            --primary-hover: #21867a;
+            --font: 'Inter', system-ui, -apple-system, sans-serif;
+            --transition: 0.25s ease;
+        }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: background var(--transition);
+        }
+        body.dark {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+        button {
+            font: inherit;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: inherit;
+        }
+        input,
+        select {
+            font: inherit;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            background: var(--surface);
+            color: var(--text);
+            transition: border var(--transition), box-shadow var(--transition);
+            width: 100%;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
+        }
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        .toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .toggle-wrap input[type="checkbox"] {
+            width: 36px;
+            height: 20px;
+            appearance: none;
+            background: var(--border);
+            border-radius: 20px;
+            position: relative;
+            transition: background var(--transition);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .toggle-wrap input[type="checkbox"]::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform var(--transition);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .toggle-wrap input[type="checkbox"]:checked {
+            background: var(--primary);
+        }
+        .toggle-wrap input[type="checkbox"]:checked::after {
+            transform: translateX(16px);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        .app {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 340px;
+            min-width: 340px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 1.25rem 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            transition: background var(--transition), border var(--transition);
+            z-index: 10;
+        }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .sidebar-header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .sidebar-header h1 i {
+            color: var(--primary);
+            margin-right: 0.4rem;
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .header-actions button {
+            padding: 0.4rem 0.6rem;
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            transition: background var(--transition), color var(--transition);
+        }
+        .header-actions button:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .control-group .row {
+            display: flex;
+            gap: 0.6rem;
+        }
+        .control-group .row>* {
+            flex: 1;
+        }
+
+        .density-options {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .density-options button {
+            flex: 1;
+            min-width: 50px;
+            padding: 0.4rem 0.2rem;
+            border-radius: 6px;
+            background: var(--bg);
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border: 2px solid transparent;
+            transition: all var(--transition);
+            text-align: center;
+        }
+        .density-options button.active {
+            border-color: var(--primary);
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+        }
+        .density-options button:hover {
+            background: var(--border);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background var(--transition), transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+        .btn-danger {
+            color: #ef4444;
+        }
+        .btn-danger:hover {
+            background: #fef2f2;
+        }
+        body.dark .btn-danger:hover {
+            background: #451a1a;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 0.2rem;
+        }
+        .action-bar .btn-primary,
+        .action-bar .btn-secondary {
+            flex: 1;
+        }
+
+        .toggle-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem 1.2rem;
+            padding: 0.4rem 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .saved-section {
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+            margin-top: 0.2rem;
+        }
+        .saved-section .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+        }
+        .saved-section .section-title span {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .session-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .session-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.6rem;
+            border-radius: 8px;
+            background: var(--bg);
+            transition: background var(--transition);
+            cursor: pointer;
+        }
+        .session-item:hover {
+            background: var(--border);
+        }
+        .session-item .info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .session-item .info .name {
+            font-weight: 500;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .session-item .info .date {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+        .session-item .actions {
+            display: flex;
+            gap: 0.3rem;
+        }
+        .session-item .actions button {
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+        }
+        .session-item .actions button:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+        .session-item .actions button.delete:hover {
+            color: #ef4444;
+            background: #fef2f2;
+        }
+        body.dark .session-item .actions button.delete:hover {
+            background: #451a1a;
+        }
+        .empty-sessions {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .preview-panel {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            transition: background var(--transition);
+        }
+        .preview-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .preview-toolbar .mockup-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .preview-toolbar .mockup-name input {
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            width: auto;
+            min-width: 120px;
+            color: var(--text);
+            border-bottom: 2px solid transparent;
+        }
+        .preview-toolbar .mockup-name input:focus {
+            border-bottom-color: var(--primary);
+            box-shadow: none;
+        }
+        .preview-toolbar .actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .preview-toolbar .actions button {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .preview-toolbar .actions button:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+        .preview-toolbar .actions button.export-btn {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .preview-toolbar .actions button.export-btn:hover {
+            background: var(--primary-hover);
+        }
+        .preview-toolbar .actions button.fullscreen-btn {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .preview-toolbar .actions button.fullscreen-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .mockup-container {
+            flex: 1;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+            transition: background var(--transition), box-shadow var(--transition);
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .mockup-frame {
+            flex: 1;
+            padding: 0;
+            background: #fff;
+            color: #1e293b;
+            overflow: hidden;
+            position: relative;
+            transition: background 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+        .mockup-render {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            overflow: auto;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        /* FULLSCREEN OVERLAY */
+        #fullscreenOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #0a0a0f;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            margin: 0;
+            color: #fff;
+            font-family: var(--font);
+            overflow: hidden;
+            touch-action: none;
+        }
+        .fs-header {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            z-index: 40;
+            display: flex;
+            gap: 12px;
+            touch-action: auto;
+        }
+        .fs-header .close-fs {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 1.2rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: auto;
+        }
+        .fs-header .close-fs:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        .fs-body {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+        }
+        .fs-preview {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: auto;
+        }
+        .fs-preview .mockup-render-fs {
+            width: 100%;
+            min-height: 100%;
+            font-family: 'Inter', system-ui, sans-serif;
+            touch-action: auto;
+        }
+        .fs-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            touch-action: auto;
+        }
+        .fs-nav:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-50%) scale(1.05);
+        }
+        .fs-nav-left {
+            left: 16px;
+        }
+        .fs-nav-right {
+            right: 16px;
+        }
+        .fs-footer {
+            position: absolute;
+            bottom: 24px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.2rem;
+            z-index: 30;
+            pointer-events: none;
+            touch-action: auto;
+        }
+        .fs-footer>* {
+            pointer-events: auto;
+        }
+        .fs-counter {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            letter-spacing: 0.3px;
+            touch-action: auto;
+        }
+        .fs-dots {
+            display: flex;
+            gap: 6px;
+            touch-action: auto;
+        }
+        .fs-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: background 0.2s;
+        }
+        .fs-dot.active {
+            background: #fff;
+            transform: scale(1.2);
+        }
+        @media (max-width: 768px) {
+            .fs-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            .fs-nav-left {
+                left: 8px;
+            }
+            .fs-nav-right {
+                right: 8px;
+            }
+            .fs-header {
+                top: 12px;
+                right: 12px;
+            }
+            .fs-header .close-fs {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            .fs-footer {
+                bottom: 16px;
+                gap: 0.8rem;
+            }
+            .fs-counter {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.8rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .fs-nav {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+        .flex-1 {
+            flex: 1;
+        }
+        .gap-1 {
+            gap: 0.5rem;
+        }
+        .mt-1 {
+            margin-top: 0.5rem;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-sm {
+            font-size: 0.8rem;
+        }
+        .text-muted {
+            color: var(--text-secondary);
+        }
+        .w-full {
+            width: 100%;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.8rem 1.2rem;
+            box-shadow: var(--shadow);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 999;
+            max-width: 300px;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .toast.success {
+            border-left: 4px solid var(--primary);
+        }
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app" id="app">
+
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-wand-magic-sparkles"></i> MockupForge</h1>
+                <div class="header-actions">
+                    <button id="themeToggle" title="Toggle dark mode"><i class="fas fa-moon"></i></button>
+                    <button id="clearAllBtn" title="Clear all saved sessions" class="btn-danger"><i class="fas fa-trash-can"></i></button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="siteNameInput">Site Name</label>
+                <input type="text" id="siteNameInput" placeholder="My Awesome Site" value="Nova Studio" />
+            </div>
+
+            <div class="control-group">
+                <label for="topicInput">Business Topic</label>
+                <input type="text" id="topicInput" placeholder="e.g. coffee shop, law firm" value="design studio" />
+            </div>
+
+            <div class="control-group">
+                <label for="colorPicker">Primary Color</label>
+                <div class="row">
+                    <input type="color" id="colorPicker" value="#2a9d8f" style="flex:0 0 48px; padding:2px; height:42px;" />
+                    <input type="text" id="colorHexInput" value="#2a9d8f" style="flex:1;" />
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="layoutSelect">Layout</label>
+                <select id="layoutSelect">
+                    <option value="hero-cards">Hero + Cards</option>
+                    <option value="full-bleed">Full Bleed Hero</option>
+                    <option value="sidebar">Sidebar Layout</option>
+                    <option value="minimal">Minimal</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Image Density</label>
+                <div class="density-options" id="densityOptions">
+                    <button data-value="heavy" class="active">Heavy</button>
+                    <button data-value="medium">Medium</button>
+                    <button data-value="light">Light</button>
+                    <button data-value="background-only">Bkg Only</button>
+                    <button data-value="none">None</button>
+                </div>
+            </div>
+
+            <div class="toggle-group">
+                <div class="toggle-wrap">
+                    <input type="checkbox" id="toggleHeader" checked />
+                    <label for="toggleHeader">Header</label>
+                </div>
+                <div class="toggle-wrap">
+                    <input type="checkbox" id="toggleMenu" checked />
+                    <label for="toggleMenu">Menu</label>
+                </div>
+                <div class="toggle-wrap">
+                    <input type="checkbox" id="toggleFooter" checked />
+                    <label for="toggleFooter">Footer</label>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn-primary" id="randomizeBtn"><i class="fas fa-dice"></i> Randomize</button>
+                <button class="btn-secondary" id="saveBtn"><i class="fas fa-floppy-disk"></i> Save</button>
+            </div>
+
+            <div class="saved-section">
+                <div class="section-title">
+                    <span><i class="fas fa-clock-rotate-left"></i> Saved Sessions</span>
+                    <span id="sessionCount">0</span>
+                </div>
+                <div class="session-list" id="sessionList">
+                    <div class="empty-sessions">No saved sessions yet.</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="preview-panel">
+            <div class="preview-toolbar">
+                <div class="mockup-name">
+                    <input type="text" id="previewNameInput" value="Nova Studio" placeholder="Site name" />
+                </div>
+                <div class="actions">
+                    <button id="refreshImagesBtn" title="Refresh images from topic"><i class="fas fa-rotate"></i> Refresh</button>
+                    <button class="export-btn" id="exportBtn"><i class="fas fa-file-export"></i> Export</button>
+                    <button class="fullscreen-btn" id="fullscreenBtn"><i class="fas fa-expand"></i> Full Screen</button>
+                </div>
+            </div>
+
+            <div class="mockup-container">
+                <div class="mockup-frame" id="mockupFrame">
+                    <div class="mockup-render" id="mockupRender">
+                        <!-- Dynamic content rendered here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            const state = {
+                siteName: 'Nova Studio',
+                topic: 'design studio',
+                primaryColor: '#2a9d8f',
+                layout: 'hero-cards',
+                density: 'heavy',
+                savedSessions: [],
+                currentId: null,
+                imageCache: {},
+                showHeader: true,
+                showMenu: true,
+                showFooter: true,
+            };
+
+            const $ = (sel) => document.querySelector(sel);
+            const $$ = (sel) => document.querySelectorAll(sel);
+
+            const siteNameInput = $('#siteNameInput');
+            const topicInput = $('#topicInput');
+            const colorPicker = $('#colorPicker');
+            const colorHexInput = $('#colorHexInput');
+            const layoutSelect = $('#layoutSelect');
+            const densityBtns = $$('#densityOptions button');
+            const randomizeBtn = $('#randomizeBtn');
+            const saveBtn = $('#saveBtn');
+            const sessionList = $('#sessionList');
+            const sessionCount = $('#sessionCount');
+            const mockupRender = $('#mockupRender');
+            const previewNameInput = $('#previewNameInput');
+            const refreshImagesBtn = $('#refreshImagesBtn');
+            const exportBtn = $('#exportBtn');
+            const fullscreenBtn = $('#fullscreenBtn');
+            const themeToggle = $('#themeToggle');
+            const clearAllBtn = $('#clearAllBtn');
+            const toast = $('#toast');
+            const toggleHeader = $('#toggleHeader');
+            const toggleMenu = $('#toggleMenu');
+            const toggleFooter = $('#toggleFooter');
+
+            let toastTimeout = null;
+            let fsOverlay = null;
+            let fsSessions = [];
+            let fsIndex = 0;
+            let fsKeyHandler = null;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchStartTime = 0;
+
+            function showToast(msg, type = 'success') {
+                if (toastTimeout) clearTimeout(toastTimeout);
+                toast.textContent = msg;
+                toast.className = 'toast ' + type;
+                void toast.offsetWidth;
+                toast.classList.add('show');
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2500);
+            }
+
+            function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+            function escHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            function getImageUrl(topic, width, height, seed) {
+                const s = seed || Math.floor(Math.random() * 1000);
+                return `https://picsum.photos/seed/${encodeURIComponent(topic + s)}/${width}/${height}`;
+            }
+
+            function getBackgroundUrl(topic) {
+                const s = Math.floor(Math.random() * 1000);
+                return `https://picsum.photos/seed/${encodeURIComponent(topic + 'bkg' + s)}/1600/900`;
+            }
+
+            function generateImages(topic, density, layout) {
+                const cacheKey = `${topic}|${density}|${layout}`;
+                if (state.imageCache[cacheKey]) {
+                    return state.imageCache[cacheKey];
+                }
+                const result = { hero: null, background: null, gallery: [] };
+                const isHeavy = density === 'heavy';
+                const isMedium = density === 'medium';
+                const isBkgOnly = density === 'background-only';
+                const isNone = density === 'none';
+
+                if (!isNone && !isBkgOnly) {
+                    result.hero = getImageUrl(topic, 1200, 600, 'hero');
+                }
+                if (isBkgOnly || isHeavy || isMedium) {
+                    result.background = getBackgroundUrl(topic);
+                }
+                if (isHeavy) {
+                    result.gallery = [
+                        getImageUrl(topic, 600, 400, 'gal1'),
+                        getImageUrl(topic, 600, 400, 'gal2'),
+                        getImageUrl(topic, 600, 400, 'gal3'),
+                        getImageUrl(topic, 600, 400, 'gal4'),
+                        getImageUrl(topic, 600, 400, 'gal5'),
+                        getImageUrl(topic, 600, 400, 'gal6'),
+                    ];
+                } else if (isMedium) {
+                    result.gallery = [
+                        getImageUrl(topic, 600, 400, 'gal1'),
+                        getImageUrl(topic, 600, 400, 'gal2'),
+                        getImageUrl(topic, 600, 400, 'gal3'),
+                    ];
+                }
+                state.imageCache[cacheKey] = result;
+                return result;
+            }
+
+            function buildMockupHTML(params) {
+                const name = params.siteName || 'Untitled';
+                const topic = params.topic || 'default';
+                const color = params.primaryColor || '#2a9d8f';
+                const layout = params.layout || 'hero-cards';
+                const density = params.density || 'heavy';
+                const showHeader = params.showHeader !== undefined ? params.showHeader : true;
+                const showMenu = params.showMenu !== undefined ? params.showMenu : true;
+                const showFooter = params.showFooter !== undefined ? params.showFooter : true;
+
+                const images = generateImages(topic, density, layout);
+                const isBkgOnly = density === 'background-only';
+                const isNone = density === 'none';
+                const hasHero = images.hero && !isBkgOnly && !isNone;
+                const hasBkg = images.background && (isBkgOnly || density === 'heavy' || density === 'medium');
+                const gallery = images.gallery || [];
+
+                const styles = `
+              <style>
+                * { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', system-ui, sans-serif; }
+                body { background:#fff; color:#1e293b; line-height:1.5; }
+                .mockup-wrapper { min-height:100%; display:flex; flex-direction:column; }
+                .container { max-width:1200px; margin:0 auto; padding:1.5rem; width:100%; }
+                .btn { display:inline-block; padding:0.6rem 1.4rem; border-radius:8px; font-weight:600; border:none; cursor:default; }
+                .btn-primary { background:${color}; color:#fff; }
+                .btn-outline { background:transparent; border:2px solid ${color}; color:${color}; }
+                .text-primary { color:${color}; }
+                .bg-primary { background:${color}; }
+                .border-primary { border-color:${color}; }
+                .grid { display:grid; gap:1.5rem; }
+                .grid-cols-3 { grid-template-columns:repeat(3,1fr); }
+                .grid-cols-2 { grid-template-columns:repeat(2,1fr); }
+                .flex { display:flex; }
+                .flex-col { flex-direction:column; }
+                .items-center { align-items:center; }
+                .justify-between { justify-content:space-between; }
+                .gap-2 { gap:0.5rem; }
+                .gap-4 { gap:1rem; }
+                .gap-6 { gap:1.5rem; }
+                .p-4 { padding:1rem; }
+                .p-6 { padding:1.5rem; }
+                .py-12 { padding-top:3rem; padding-bottom:3rem; }
+                .text-center { text-align:center; }
+                .text-2xl { font-size:1.8rem; font-weight:700; }
+                .text-xl { font-size:1.3rem; font-weight:600; }
+                .text-lg { font-size:1.1rem; }
+                .text-sm { font-size:0.85rem; }
+                .text-muted { color:#64748b; }
+                .rounded { border-radius:12px; }
+                .shadow { box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+                .img-fit { width:100%; height:200px; object-fit:cover; border-radius:8px; background:#f1f5f9; }
+                .img-hero { width:100%; height:300px; object-fit:cover; border-radius:12px; }
+                .img-bkg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+                .relative { position:relative; }
+                .z-10 { position:relative; z-index:10; }
+                .overlay { position:absolute; inset:0; background:rgba(0,0,0,0.4); z-index:1; }
+                .bg-cover { background-size:cover; background-position:center; }
+                .min-h-64 { min-height:16rem; }
+                .min-h-96 { min-height:24rem; }
+                .flex-1 { flex:1; }
+                .gap-8 { gap:2rem; }
+                .mt-4 { margin-top:1rem; }
+                .mb-4 { margin-bottom:1rem; }
+                .mb-8 { margin-bottom:2rem; }
+                .border-b { border-bottom:1px solid #e2e8f0; padding-bottom:1rem; }
+                .border-t { border-top:1px solid #e2e8f0; padding-top:1rem; }
+                .menu-bar { display:flex; gap:1.5rem; flex-wrap:wrap; }
+                .menu-bar a { color:#475569; text-decoration:none; font-weight:500; font-size:0.9rem; }
+                .menu-bar a:hover { color:${color}; }
+                header { background:#fff; border-bottom:1px solid #e2e8f0; padding:0.8rem 0; }
+                footer { background:#f8fafc; border-top:1px solid #e2e8f0; padding:1.5rem 0; color:#64748b; font-size:0.85rem; }
+                @media (max-width:640px) { .grid-cols-3 { grid-template-columns:1fr; } .grid-cols-2 { grid-template-columns:1fr; } .img-hero { height:200px; } .menu-bar { gap:0.8rem; } }
+              </style>
+            `;
+
+                let headerHtml = '';
+                if (showHeader) {
+                    headerHtml = `
+                <header>
+                  <div class="container" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                    <div style="font-weight:700; font-size:1.2rem; color:${color};">${name}</div>
+                    ${showMenu ? `<nav class="menu-bar"><a href="#">Home</a><a href="#">Services</a><a href="#">Portfolio</a><a href="#">Contact</a></nav>` : ''}
+                  </div>
+                </header>
+              `;
+                }
+
+                let footerHtml = '';
+                if (showFooter) {
+                    footerHtml = `
+                <footer>
+                  <div class="container" style="text-align:center;">
+                    <p>&copy; ${new Date().getFullYear()} ${name} — Built with MockupForge</p>
+                    <div style="margin-top:0.4rem; display:flex; justify-content:center; gap:1rem; font-size:0.8rem;">
+                      <span>About</span>
+                      <span>Privacy</span>
+                      <span>Terms</span>
+                    </div>
+                  </div>
+                </footer>
+              `;
+                }
+
+                let mainHtml = '';
+
+                if (layout === 'hero-cards') {
+                    let heroHtml = '';
+                    if (hasHero) {
+                        heroHtml = `
+                  <div class="relative" style="border-radius:12px; overflow:hidden; margin-bottom:1.5rem;">
+                    <img src="${images.hero}" alt="Hero" class="img-hero" style="height:320px; width:100%; object-fit:cover;" />
+                    <div class="overlay"></div>
+                    <div class="z-10" style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:2rem; color:#fff;">
+                      <h1 class="text-2xl" style="font-size:2.2rem;">${name}</h1>
+                      <p class="text-lg" style="max-width:500px; opacity:0.9;">Your trusted partner in ${topic}.</p>
+                      <div style="margin-top:1rem; display:flex; gap:0.8rem; flex-wrap:wrap;">
+                        <span class="btn btn-primary" style="background:${color}; color:#fff; border:none;">Get Started</span>
+                        <span class="btn btn-outline" style="border-color:#fff; color:#fff;">Learn More</span>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                    } else {
+                        heroHtml = `
+                  <div style="padding:2rem 0; text-align:center; background:${color}11; border-radius:12px; margin-bottom:1.5rem;">
+                    <h1 class="text-2xl" style="font-size:2.2rem; color:${color};">${name}</h1>
+                    <p class="text-lg text-muted">Your trusted partner in ${topic}.</p>
+                  </div>
+                `;
+                    }
+                    let cardsHtml = '';
+                    const cardCount = density === 'heavy' ? 6 : (density === 'medium' ? 3 : 0);
+                    if (cardCount > 0) {
+                        const cols = cardCount === 6 ? 'grid-cols-3' : 'grid-cols-3';
+                        let items = '';
+                        for (let i = 0; i < cardCount; i++) {
+                            const imgSrc = gallery[i] || '';
+                            const imgTag = imgSrc ?
+                                `<img src="${imgSrc}" alt="Card" class="img-fit" style="height:160px; width:100%; object-fit:cover; border-radius:8px;" />` :
+                                `<div style="height:160px; background:${color}22; border-radius:8px;"></div>`;
+                            items += `
+                    <div class="shadow rounded" style="background:#fff; overflow:hidden; border:1px solid #f1f5f9;">
+                      ${imgTag}
+                      <div style="padding:0.8rem 1rem;">
+                        <h3 class="text-lg" style="font-weight:600;">Card ${i+1}</h3>
+                        <p class="text-sm text-muted">Showcase your ${topic} services.</p>
+                      </div>
+                    </div>
+                  `;
+                        }
+                        cardsHtml = `
+                  <div class="grid ${cols}" style="margin-top:1.5rem;">
+                    ${items}
+                  </div>
+                `;
+                    }
+                    mainHtml = `
+                <div class="container" style="flex:1;">
+                  ${heroHtml}
+                  ${cardsHtml}
+                </div>
+              `;
+                } else if (layout === 'full-bleed') {
+                    let heroImg = '';
+                    if (hasHero) {
+                        heroImg =
+                            `<img src="${images.hero}" alt="Hero" style="width:100%; height:400px; object-fit:cover; display:block;" />`;
+                    } else {
+                        heroImg =
+                            `<div style="width:100%; height:400px; background:${color}33; display:flex; align-items:center; justify-content:center; font-size:2rem; color:${color};">${name}</div>`;
+                    }
+                    mainHtml = `
+                <div style="flex:1;">
+                  <div style="position:relative;">
+                    ${heroImg}
+                    ${hasHero ? `<div class="overlay"></div><div style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:2rem; color:#fff; z-index:10; text-align:center;">
+                      <h1 style="font-size:3rem; font-weight:700;">${name}</h1>
+                      <p style="font-size:1.2rem; max-width:600px; margin:0.5rem auto;">Elevate your ${topic} presence.</p>
+                    </div>` : ''}
+                  </div>
+                  <div class="container" style="padding:2rem 1.5rem; text-align:center;">
+                    <p class="text-lg text-muted">We help ${topic} businesses grow with modern solutions.</p>
+                    <div style="display:flex; justify-content:center; gap:1rem; margin-top:1.5rem; flex-wrap:wrap;">
+                      <span class="btn btn-primary" style="background:${color}; color:#fff;">Explore</span>
+                      <span class="btn btn-outline" style="border-color:${color}; color:${color};">Contact</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+                } else if (layout === 'sidebar') {
+                    let heroImg = '';
+                    if (hasHero) {
+                        heroImg =
+                            `<img src="${images.hero}" alt="Hero" style="width:100%; height:100%; object-fit:cover; border-radius:12px;" />`;
+                    } else {
+                        heroImg =
+                            `<div style="width:100%; height:100%; min-height:200px; background:${color}22; border-radius:12px; display:flex; align-items:center; justify-content:center; color:${color};">${name}</div>`;
+                    }
+                    mainHtml = `
+                <div class="container" style="flex:1;">
+                  <div style="display:grid; grid-template-columns:1fr 2fr; gap:2rem; align-items:start;">
+                    <div style="background:${color}11; padding:1.5rem; border-radius:12px;">
+                      <h2 style="font-size:1.5rem; color:${color};">${name}</h2>
+                      <p class="text-sm text-muted" style="margin-top:0.5rem;">Specializing in ${topic}.</p>
+                      <hr style="margin:1rem 0; border-color:#e2e8f0;" />
+                      <ul style="list-style:none; padding:0; font-size:0.9rem; color:#475569;">
+                        <li style="padding:0.4rem 0;">✓ Services</li>
+                        <li style="padding:0.4rem 0;">✓ Portfolio</li>
+                        <li style="padding:0.4rem 0;">✓ Testimonials</li>
+                      </ul>
+                    </div>
+                    <div>
+                      ${heroImg}
+                      <div style="margin-top:1rem;">
+                        <h3 class="text-xl">Welcome to ${name}</h3>
+                        <p class="text-muted">We craft exceptional experiences for ${topic} brands.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+                } else if (layout === 'minimal') {
+                    mainHtml = `
+                <div class="container" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center;">
+                  <h1 style="font-size:3rem; font-weight:700; color:${color};">${name}</h1>
+                  <p style="font-size:1.2rem; color:#475569; max-width:500px; margin:0.5rem auto;">${topic} · Simple · Effective</p>
+                  <div style="margin-top:2rem; display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;">
+                    <span class="btn btn-primary" style="background:${color}; color:#fff;">Get in Touch</span>
+                    <span class="btn btn-outline" style="border-color:${color}; color:${color};">Learn More</span>
+                  </div>
+                  ${hasHero ? `<img src="${images.hero}" alt="Hero" style="width:100%; max-width:600px; margin-top:2rem; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.08);" />` : ''}
+                </div>
+              `;
+                }
+
+                const wrapperStyle = hasBkg ? `background-image:url('${images.background}'); background-size:cover; background-position:center;` :
+                    '';
+                const overlay = hasBkg ? `<div class="overlay" style="background:rgba(255,255,255,0.7);"></div>` : '';
+
+                return `
+              ${styles}
+              <div class="mockup-wrapper" style="${wrapperStyle} position:relative; min-height:100%;">
+                ${overlay}
+                <div class="z-10" style="flex:1; display:flex; flex-direction:column; ${isBkgOnly ? 'background:rgba(255,255,255,0.8);' : ''}">
+                  ${headerHtml}
+                  ${mainHtml}
+                  ${footerHtml}
+                </div>
+              </div>
+            `;
+            }
+
+            function renderMockup() {
+                const params = getCurrentParams();
+                const html = buildMockupHTML(params);
+                mockupRender.innerHTML = html;
+            }
+
+            function getActiveDensity() {
+                for (const btn of densityBtns) {
+                    if (btn.classList.contains('active')) return btn.dataset.value;
+                }
+                return 'heavy';
+            }
+
+            function setActiveDensity(val) {
+                for (const btn of densityBtns) {
+                    btn.classList.toggle('active', btn.dataset.value === val);
+                }
+            }
+
+            function loadSavedSessions() {
+                try {
+                    const data = localStorage.getItem('mockupSessions');
+                    state.savedSessions = data ? JSON.parse(data) : [];
+                } catch (_) { state.savedSessions = []; }
+                renderSessionList();
+            }
+
+            function saveSessionsToStorage() {
+                localStorage.setItem('mockupSessions', JSON.stringify(state.savedSessions));
+                renderSessionList();
+            }
+
+            function renderSessionList() {
+                const list = state.savedSessions;
+                sessionCount.textContent = list.length;
+                if (list.length === 0) {
+                    sessionList.innerHTML = `<div class="empty-sessions">No saved sessions yet.</div>`;
+                    return;
+                }
+                let html = '';
+                const sorted = [...list].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                for (const sess of sorted) {
+                    const date = sess.createdAt ? new Date(sess.createdAt).toLocaleDateString() : 'unknown';
+                    html += `
+                <div class="session-item" data-id="${sess.id}">
+                  <div class="info">
+                    <div class="name">${escHtml(sess.name || 'Untitled')}</div>
+                    <div class="date">${date} · ${sess.params?.layout || 'layout'}</div>
+                  </div>
+                  <div class="actions">
+                    <button class="load-session" title="Load"><i class="fas fa-folder-open"></i></button>
+                    <button class="delete-session" title="Delete"><i class="fas fa-trash-can"></i></button>
+                  </div>
+                </div>
+              `;
+                }
+                sessionList.innerHTML = html;
+
+                sessionList.querySelectorAll('.load-session').forEach((btn) => {
+                    btn.addEventListener('click', (e) => {
+                        const item = e.target.closest('.session-item');
+                        if (item) loadSessionById(item.dataset.id);
+                    });
+                });
+                sessionList.querySelectorAll('.delete-session').forEach((btn) => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const item = e.target.closest('.session-item');
+                        if (item) deleteSessionById(item.dataset.id);
+                    });
+                });
+                sessionList.querySelectorAll('.session-item').forEach((item) => {
+                    item.addEventListener('click', (e) => {
+                        if (e.target.closest('.actions')) return;
+                        loadSessionById(item.dataset.id);
+                    });
+                });
+            }
+
+            function getCurrentParams() {
+                return {
+                    siteName: previewNameInput.value.trim() || 'Untitled',
+                    topic: topicInput.value.trim() || 'default',
+                    primaryColor: colorPicker.value,
+                    layout: layoutSelect.value,
+                    density: getActiveDensity(),
+                    showHeader: toggleHeader.checked,
+                    showMenu: toggleMenu.checked,
+                    showFooter: toggleFooter.checked,
+                };
+            }
+
+            function applyParams(params) {
+                previewNameInput.value = params.siteName || 'Untitled';
+                siteNameInput.value = params.siteName || 'Untitled';
+                topicInput.value = params.topic || 'default';
+                colorPicker.value = params.primaryColor || '#2a9d8f';
+                colorHexInput.value = params.primaryColor || '#2a9d8f';
+                layoutSelect.value = params.layout || 'hero-cards';
+                setActiveDensity(params.density || 'heavy');
+                toggleHeader.checked = params.showHeader !== undefined ? params.showHeader : true;
+                toggleMenu.checked = params.showMenu !== undefined ? params.showMenu : true;
+                toggleFooter.checked = params.showFooter !== undefined ? params.showFooter : true;
+                state.imageCache = {};
+                renderMockup();
+            }
+
+            function saveSession() {
+                const params = getCurrentParams();
+                const id = state.currentId || uid();
+                const existing = state.savedSessions.find(s => s.id === id);
+                const session = {
+                    id: id,
+                    name: params.siteName,
+                    createdAt: existing ? existing.createdAt : Date.now(),
+                    updatedAt: Date.now(),
+                    params: params,
+                };
+                if (existing) {
+                    Object.assign(existing, session);
+                } else {
+                    state.savedSessions.push(session);
+                }
+                state.currentId = id;
+                saveSessionsToStorage();
+                showToast(`Session "${session.name}" saved!`, 'success');
+            }
+
+            function loadSessionById(id) {
+                const sess = state.savedSessions.find(s => s.id === id);
+                if (!sess) {
+                    showToast('Session not found', 'error');
+                    return;
+                }
+                state.currentId = id;
+                applyParams(sess.params);
+                showToast(`Loaded "${sess.name}"`, 'success');
+            }
+
+            function deleteSessionById(id) {
+                if (!confirm('Delete this session?')) return;
+                state.savedSessions = state.savedSessions.filter(s => s.id !== id);
+                if (state.currentId === id) state.currentId = null;
+                saveSessionsToStorage();
+                showToast('Session deleted', 'success');
+            }
+
+            function clearAllSessions() {
+                if (!confirm('Delete ALL saved sessions?')) return;
+                state.savedSessions = [];
+                state.currentId = null;
+                saveSessionsToStorage();
+                showToast('All sessions cleared', 'success');
+            }
+
+            function randomize() {
+                const topics = [
+                    'coffee shop', 'tech startup', 'bakery', 'law firm',
+                    'fitness', 'travel', 'photography', 'design studio',
+                    'restaurant', 'real estate', 'fashion', 'art gallery',
+                    'spa', 'architecture', 'education', 'nonprofit'
+                ];
+                const colors = [
+                    '#e63946', '#2a9d8f', '#287271', '#8ecae6',
+                    '#219ebc', '#ffb703', '#fb8500', '#6d6875',
+                    '#b5838d', '#355070', '#3a86ff', '#8338ec'
+                ];
+                const layouts = ['hero-cards', 'full-bleed', 'sidebar', 'minimal'];
+                const densities = ['heavy', 'medium', 'light', 'background-only', 'none'];
+
+                const topic = topics[Math.floor(Math.random() * topics.length)];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const layout = layouts[Math.floor(Math.random() * layouts.length)];
+                const density = densities[Math.floor(Math.random() * densities.length)];
+                const name = ['Apex', 'Nova', 'Vivid', 'Zen', 'Pulse', 'Craft', 'Elevate', 'Summit', 'Lumen', 'Fusion'][Math
+                    .floor(Math.random() * 10)
+                ] + ' ' + ['Studio', 'Co.', 'Labs', 'Collective', 'Works', 'Agency', 'Media'][Math.floor(Math.random() *
+                    7)];
+
+                applyParams({
+                    siteName: name,
+                    topic: topic,
+                    primaryColor: color,
+                    layout: layout,
+                    density: density,
+                    showHeader: true,
+                    showMenu: true,
+                    showFooter: true,
+                });
+                state.currentId = null;
+                showToast('Randomized!', 'success');
+            }
+
+            function exportHTML() {
+                const params = getCurrentParams();
+                const html = buildMockupHTML(params);
+                const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escHtml(params.siteName)} — Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
+  <style>${extractStyles(html)}</style>
+</head>
+<body>
+  ${extractBody(html)}
+</body>
+</html>`;
+                const blob = new Blob([fullHtml], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${params.siteName.replace(/\s+/g, '_')}_mockup.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('HTML exported!', 'success');
+            }
+
+            function extractStyles(html) {
+                const match = html.match(/<style>([\s\S]*?)<\/style>/);
+                return match ? match[1] : '';
+            }
+
+            function extractBody(html) {
+                return html.replace(/<style>[\s\S]*?<\/style>/, '');
+            }
+
+            function toggleTheme() {
+                document.body.classList.toggle('dark');
+                const icon = themeToggle.querySelector('i');
+                icon.className = document.body.classList.contains('dark') ? 'fas fa-sun' : 'fas fa-moon';
+                localStorage.setItem('mockupTheme', document.body.classList.contains('dark') ? 'dark' : 'light');
+            }
+
+            function loadTheme() {
+                if (localStorage.getItem('mockupTheme') === 'dark') {
+                    document.body.classList.add('dark');
+                    themeToggle.querySelector('i').className = 'fas fa-sun';
+                }
+            }
+
+            function refreshImages() {
+                state.imageCache = {};
+                renderMockup();
+                showToast('Images refreshed', 'success');
+            }
+
+            // Fullscreen
+            function toggleFullscreen() {
+                if (fsOverlay) {
+                    closeFullscreen();
+                    return;
+                }
+                if (state.savedSessions.length === 0) {
+                    showToast('No saved sessions to show.', 'error');
+                    return;
+                }
+                openFullscreen();
+            }
+
+            function openFullscreen() {
+                fsSessions = [...state.savedSessions].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                fsIndex = 0;
+
+                const overlay = document.createElement('div');
+                overlay.id = 'fullscreenOverlay';
+                overlay.innerHTML = `
+              <div class="fs-header">
+                <button class="close-fs" id="fsCloseBtn"><i class="fas fa-times"></i></button>
+              </div>
+              <div class="fs-body" id="fsBody">
+                <div class="fs-preview" id="fsPreview"></div>
+              </div>
+              <div class="fs-footer">
+                <button class="fs-nav fs-nav-left" id="fsNavLeft"><i class="fas fa-chevron-left"></i></button>
+                <span class="fs-counter" id="fsCounter">1 / 1</span>
+                <div class="fs-dots" id="fsDots"></div>
+                <button class="fs-nav fs-nav-right" id="fsNavRight"><i class="fas fa-chevron-right"></i></button>
+              </div>
+            `;
+                document.body.appendChild(overlay);
+                fsOverlay = overlay;
+
+                showFsSlide(fsIndex);
+                updateDots();
+
+                document.getElementById('fsCloseBtn').addEventListener('click', closeFullscreen);
+                document.getElementById('fsNavLeft').addEventListener('click', () => navigateFs(-1));
+                document.getElementById('fsNavRight').addEventListener('click', () => navigateFs(1));
+
+                const body = document.getElementById('fsBody');
+                body.addEventListener('touchstart', handleTouchStart, { passive: true });
+                body.addEventListener('touchmove', handleTouchMove, { passive: true });
+                body.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+                fsKeyHandler = (e) => {
+                    if (e.key === 'ArrowLeft') { navigateFs(-1);
+                        e.preventDefault(); }
+                    if (e.key === 'ArrowRight') { navigateFs(1);
+                        e.preventDefault(); }
+                    if (e.key === 'Escape') { closeFullscreen(); }
+                };
+                document.addEventListener('keydown', fsKeyHandler);
+
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                }
+
+                const fsChangeHandler = () => {
+                    if (!document.fullscreenElement) {
+                        closeFullscreen();
+                    }
+                };
+                document.addEventListener('fullscreenchange', fsChangeHandler);
+                overlay._fsChangeHandler = fsChangeHandler;
+                overlay._fsKeyHandler = fsKeyHandler;
+            }
+
+            function navigateFs(direction) {
+                const total = fsSessions.length;
+                if (total === 0) return;
+                let newIndex = fsIndex + direction;
+                if (newIndex < 0) newIndex = total - 1;
+                if (newIndex >= total) newIndex = 0;
+                if (newIndex === fsIndex) return;
+                fsIndex = newIndex;
+                showFsSlide(fsIndex);
+                updateDots();
+            }
+
+            function showFsSlide(index) {
+                const session = fsSessions[index];
+                if (!session) return;
+                const html = buildMockupHTML(session.params);
+                const previewContainer = document.getElementById('fsPreview');
+                previewContainer.innerHTML = `<div class="mockup-render-fs">${html}</div>`;
+                document.getElementById('fsCounter').textContent = `${index + 1} / ${fsSessions.length}`;
+            }
+
+            function updateDots() {
+                const dotsContainer = document.getElementById('fsDots');
+                const total = fsSessions.length;
+                if (total <= 1) {
+                    dotsContainer.style.display = 'none';
+                    return;
+                }
+                dotsContainer.style.display = 'flex';
+                dotsContainer.innerHTML = '';
+                for (let i = 0; i < total; i++) {
+                    const dot = document.createElement('span');
+                    dot.className = 'fs-dot' + (i === fsIndex ? ' active' : '');
+                    dotsContainer.appendChild(dot);
+                }
+            }
+
+            function handleTouchStart(e) {
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                touchStartTime = Date.now();
+            }
+
+            function handleTouchMove(e) {
+                // allow scrolling inside mockup
+            }
+
+            function handleTouchEnd(e) {
+                if (!fsOverlay) return;
+                const touch = e.changedTouches[0];
+                if (!touch) return;
+                const deltaX = touch.clientX - touchStartX;
+                const deltaY = touch.clientY - touchStartY;
+                const deltaTime = Date.now() - touchStartTime;
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50 && deltaTime < 500) {
+                    if (deltaX < 0) {
+                        navigateFs(1);
+                    } else {
+                        navigateFs(-1);
+                    }
+                }
+            }
+
+            function closeFullscreen() {
+                if (fsOverlay) {
+                    const overlay = fsOverlay;
+                    if (overlay._fsChangeHandler) {
+                        document.removeEventListener('fullscreenchange', overlay._fsChangeHandler);
+                    }
+                    if (overlay._fsKeyHandler) {
+                        document.removeEventListener('keydown', overlay._fsKeyHandler);
+                    }
+                    const body = document.getElementById('fsBody');
+                    if (body) {
+                        body.removeEventListener('touchstart', handleTouchStart);
+                        body.removeEventListener('touchmove', handleTouchMove);
+                        body.removeEventListener('touchend', handleTouchEnd);
+                    }
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen().catch(() => {});
+                    }
+                    overlay.remove();
+                    fsOverlay = null;
+                    fsSessions = [];
+                    fsIndex = 0;
+                }
+            }
+
+            function init() {
+                loadTheme();
+                loadSavedSessions();
+
+                siteNameInput.addEventListener('input', () => {
+                    previewNameInput.value = siteNameInput.value;
+                    renderMockup();
+                });
+                previewNameInput.addEventListener('input', () => {
+                    siteNameInput.value = previewNameInput.value;
+                    renderMockup();
+                });
+
+                colorPicker.addEventListener('input', () => {
+                    colorHexInput.value = colorPicker.value;
+                    renderMockup();
+                });
+                colorHexInput.addEventListener('input', () => {
+                    if (/^#[0-9a-f]{6}$/i.test(colorHexInput.value)) {
+                        colorPicker.value = colorHexInput.value;
+                        renderMockup();
+                    }
+                });
+
+                topicInput.addEventListener('input', () => {
+                    state.imageCache = {};
+                    renderMockup();
+                });
+                layoutSelect.addEventListener('change', () => {
+                    state.imageCache = {};
+                    renderMockup();
+                });
+
+                densityBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        densityBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        state.imageCache = {};
+                        renderMockup();
+                    });
+                });
+
+                toggleHeader.addEventListener('change', renderMockup);
+                toggleMenu.addEventListener('change', renderMockup);
+                toggleFooter.addEventListener('change', renderMockup);
+
+                randomizeBtn.addEventListener('click', randomize);
+                saveBtn.addEventListener('click', saveSession);
+                refreshImagesBtn.addEventListener('click', refreshImages);
+                exportBtn.addEventListener('click', exportHTML);
+                fullscreenBtn.addEventListener('click', toggleFullscreen);
+                themeToggle.addEventListener('click', toggleTheme);
+                clearAllBtn.addEventListener('click', clearAllSessions);
+
+                renderMockup();
+
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                        e.preventDefault();
+                        saveSession();
+                    }
+                    if (e.key === 'r' && !e.ctrlKey && !e.metaKey && !e.target.closest('input,select,textarea')) {
+                        e.preventDefault();
+                        randomize();
+                    }
+                });
+
+                console.log('🚀 MockupForge ready!');
+            }
+
+            document.addEventListener('DOMContentLoaded', init);
+
+        })();
+    </script>
+
+</body>
+</html>

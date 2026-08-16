@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Paper Trading Journal | Simulator + Performance Tracker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #0f172a;
+            margin: 0;
+            padding: 20px;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* header */
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0 0 0.25rem 0;
+            background: linear-gradient(135deg, #c084fc, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .sub {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            border-left: 3px solid #3b82f6;
+            padding-left: 12px;
+        }
+
+        /* cards grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: #1e293b;
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 0.25rem;
+            word-break: break-word;
+        }
+
+        .positive {
+            color: #4ade80;
+        }
+
+        .negative {
+            color: #f87171;
+        }
+
+        /* two column layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 800px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 1rem;
+            padding: 1.25rem;
+            border: 1px solid #334155;
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        input, select, button {
+            background: #0f172a;
+            border: 1px solid #334155;
+            padding: 0.6rem 0.8rem;
+            border-radius: 0.6rem;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        button {
+            background: #3b82f6;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        button.secondary {
+            background: #334155;
+        }
+
+        button.secondary:hover {
+            background: #475569;
+        }
+
+        button.danger {
+            background: #7f1d1d;
+        }
+
+        button.danger:hover {
+            background: #991b1b;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+            color: #cbd5e1;
+        }
+
+        .trade-table {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.6rem 0.3rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        th {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .badge {
+            background: #334155;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .badge.open {
+            background: #f59e0b;
+            color: #0f172a;
+        }
+
+        .badge.closed {
+            background: #22c55e;
+            color: #0f172a;
+        }
+
+        .close-btn {
+            background: #3b82f6;
+            border: none;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.7rem;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .price-fetch {
+            font-size: 0.7rem;
+            margin-top: 0.3rem;
+            color: #60a5fa;
+        }
+
+        hr {
+            border-color: #334155;
+            margin: 1rem 0;
+        }
+
+        .footer-note {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 2rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📒 Paper Trading Journal</h1>
+    <div class="sub">⚡ real-time market prices (Yahoo Finance) · track P&amp;L · journal every trade</div>
+
+    <!-- stats dashboard -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-label">Total P&amp;L (closed)</div><div class="stat-value" id="totalPnL">$0</div></div>
+        <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" id="winRate">0%</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Win</div><div class="stat-value" id="avgWin">$0</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Loss</div><div class="stat-value" id="avgLoss">$0</div></div>
+        <div class="stat-card"><div class="stat-label">Open Positions P&amp;L</div><div class="stat-value" id="openPL">$0</div></div>
+        <div class="stat-card"><div class="stat-label">Cash Balance</div><div class="stat-value" id="cashBalance">$10,000</div></div>
+    </div>
+
+    <div class="two-col">
+        <!-- LEFT: Enter new trade -->
+        <div class="card">
+            <h2>✏️ New Paper Trade</h2>
+            <div class="form-group">
+                <label>Ticker Symbol (e.g. AAPL, TSLA, NVDA)</label>
+                <input type="text" id="symbol" placeholder="AAPL" autocomplete="off">
+                <div class="price-fetch" id="livePricePreview">↻ Live price will appear here</div>
+            </div>
+            <div class="form-group">
+                <label>Side</label>
+                <select id="side">
+                    <option value="buy">BUY (Long)</option>
+                    <option value="sell">SELL (Short - not recommended for beginners)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Quantity (shares)</label>
+                <input type="number" id="quantity" value="10" step="1">
+            </div>
+            <div class="form-group">
+                <label>Entry Price ($)</label>
+                <input type="number" id="entryPrice" step="any" placeholder="Auto-fill from live price">
+            </div>
+            <div class="form-group">
+                <label>Notes (optional)</label>
+                <input type="text" id="notes" placeholder="gap up / breakout / etc">
+            </div>
+            <button id="addTradeBtn">➕ Open Position</button>
+            <hr>
+            <div class="form-group">
+                <label>⚠️ Reset all data (clear journal)</label>
+                <button id="resetAllBtn" class="danger" style="background:#991b1b;">🗑️ Reset Everything</button>
+            </div>
+        </div>
+
+        <!-- RIGHT: Open positions & Journal -->
+        <div class="card">
+            <h2>📋 Open Positions</h2>
+            <div class="trade-table" id="openTradesContainer">
+                <table id="openTradesTable">
+                    <thead>
+                        <tr><th>Symbol</th><th>Side</th><th>Qty</th><th>Entry</th><th>Current Price</th><th>Unrealized P&L</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="openTradesBody">
+                        <tr><td colspan="7" style="text-align:center;">No open positions</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 style="margin-top: 1.5rem;">📜 Trade Journal (Closed)</h2>
+            <div class="trade-table">
+                <table id="closedTradesTable">
+                    <thead>
+                        <tr><th>Symbol</th><th>Side</th><th>Qty</th><th>Entry</th><th>Exit</th><th>P&L ($)</th><th>Notes</th></tr>
+                    </thead>
+                    <tbody id="closedTradesBody">
+                        <tr><td colspan="7" style="text-align:center;">No closed trades yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="footer-note">
+        📡 Prices from Yahoo Finance (real-time for most equities). Paper trading only — no real money. 
+        Close positions by clicking "Close" button. Cash balance starts at $10,000.
+    </div>
+</div>
+
+<script>
+    // ---------- STORAGE KEYS ----------
+    const STORAGE_TRADES = "paper_trading_trades";
+    const STORAGE_CASH = "paper_trading_cash";
+
+    // Global trades array: each trade object
+    // { id, symbol, side, qty, entryPrice, entryDate, exitPrice, exitDate, notes, status }
+    let trades = [];
+    let cashBalance = 10000.00;
+
+    // Helper: load from localStorage
+    function loadData() {
+        const storedTrades = localStorage.getItem(STORAGE_TRADES);
+        if(storedTrades) {
+            trades = JSON.parse(storedTrades);
+        } else {
+            trades = [];
+        }
+        const storedCash = localStorage.getItem(STORAGE_CASH);
+        if(storedCash) {
+            cashBalance = parseFloat(storedCash);
+        } else {
+            cashBalance = 10000.00;
+        }
+    }
+
+    function saveTrades() {
+        localStorage.setItem(STORAGE_TRADES, JSON.stringify(trades));
+    }
+
+    function saveCash() {
+        localStorage.setItem(STORAGE_CASH, cashBalance.toFixed(2));
+    }
+
+    // Helper: generate simple ID
+    function generateId() {
+        return Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+    }
+
+    // ---------- PRICE FETCHING (Yahoo Finance via CORS proxy) ----------
+    // Using a free CORS proxy to avoid browser blocks. 
+    // Reliable for demo/prototype. In production you would use a backend.
+    async function fetchLivePrice(symbol) {
+        if(!symbol) return null;
+        const cleanSymbol = symbol.toUpperCase().trim();
+        try {
+            // Using a public CORS proxy + Yahoo Finance API (unofficial but works for demo)
+            // Alternative: using yahoo-finance2 on backend, but for pure frontend we use allorigins proxy.
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanSymbol}`;
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            const response = await fetch(proxyUrl);
+            const data = await response.json();
+            if(data && data.contents) {
+                const jsonData = JSON.parse(data.contents);
+                const result = jsonData.chart.result[0];
+                if(result && result.meta && result.meta.regularMarketPrice) {
+                    return result.meta.regularMarketPrice;
+                }
+                // fallback: try to get last close
+                const quote = result?.indicators?.quote[0];
+                if(quote && quote.close && quote.close.length > 0) {
+                    const lastClose = quote.close[quote.close.length-1];
+                    if(lastClose) return lastClose;
+                }
+            }
+            return null;
+        } catch(err) {
+            console.warn(`Price fetch error for ${cleanSymbol}:`, err);
+            return null;
+        }
+    }
+
+    // Update live price preview on symbol input
+    let debounceTimer;
+    const symbolInput = document.getElementById('symbol');
+    const pricePreviewSpan = document.getElementById('livePricePreview');
+    const entryPriceInput = document.getElementById('entryPrice');
+
+    async function updatePricePreview() {
+        const sym = symbolInput.value.trim();
+        if(!sym) {
+            pricePreviewSpan.innerText = '✨ Enter symbol to see live price';
+            return;
+        }
+        pricePreviewSpan.innerText = '⏳ fetching price...';
+        const price = await fetchLivePrice(sym);
+        if(price) {
+            pricePreviewSpan.innerText = `💰 Latest price: $${price.toFixed(2)} (click "Auto fill" below)`;
+            // optional: offer autofill button
+        } else {
+            pricePreviewSpan.innerText = '⚠️ Could not fetch price. Try valid ticker (AAPL, MSFT).';
+        }
+    }
+
+    symbolInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(updatePricePreview, 500);
+    });
+
+    // Autofill entry price button (simple: we add inline button)
+    function addAutoFillButton() {
+        const parent = entryPriceInput.parentElement;
+        const existingBtn = document.getElementById('autoFillBtn');
+        if(!existingBtn) {
+            const btn = document.createElement('button');
+            btn.id = 'autoFillBtn';
+            btn.innerText = 'Auto-fill from live price';
+            btn.type = 'button';
+            btn.style.marginTop = '5px';
+            btn.style.background = '#2d3a5e';
+            btn.onclick = async () => {
+                const sym = symbolInput.value.trim();
+                if(!sym) { alert('Enter symbol first'); return; }
+                const price = await fetchLivePrice(sym);
+                if(price) {
+                    entryPriceInput.value = price.toFixed(2);
+                } else {
+                    alert('Could not fetch price, check symbol');
+                }
+            };
+            parent.appendChild(btn);
+        }
+    }
+    addAutoFillButton();
+
+    // ---------- TRADE LOGIC (Paper portfolio) ----------
+    async function addTrade() {
+        let symbol = symbolInput.value.trim().toUpperCase();
+        const side = document.getElementById('side').value;
+        let quantity = parseFloat(document.getElementById('quantity').value);
+        let entryPrice = parseFloat(document.getElementById('entryPrice').value);
+        const notes = document.getElementById('notes').value || "";
+
+        if(!symbol) { alert("Symbol required"); return; }
+        if(isNaN(quantity) || quantity <= 0) { alert("Valid quantity > 0"); return; }
+        
+        // if entryPrice not provided, try fetch
+        if(isNaN(entryPrice) || entryPrice <= 0) {
+            const live = await fetchLivePrice(symbol);
+            if(live && live > 0) {
+                entryPrice = live;
+                entryPriceInput.value = live.toFixed(2);
+            } else {
+                alert("Please provide a valid entry price or check ticker symbol");
+                return;
+            }
+        }
+
+        const cost = quantity * entryPrice;
+        // For long BUY: cash decreases when buying
+        if(side === 'buy') {
+            if(cashBalance < cost) {
+                alert(`Insufficient cash! Balance: $${cashBalance.toFixed(2)} needed: $${cost.toFixed(2)}`);
+                return;
+            }
+            cashBalance -= cost;
+        } else if(side === 'sell') {
+            // SHORT SELL: cash increases on short sell (margin not tracked fully, but simple)
+            cashBalance += cost;
+        } else {
+            alert("Invalid side");
+            return;
+        }
+
+        const newTrade = {
+            id: generateId(),
+            symbol: symbol,
+            side: side,
+            qty: quantity,
+            entryPrice: entryPrice,
+            entryDate: new Date().toISOString(),
+            exitPrice: null,
+            exitDate: null,
+            notes: notes,
+            status: 'open'
+        };
+        trades.push(newTrade);
+        saveTrades();
+        saveCash();
+        clearFormPartial();
+        await renderAll();
+    }
+
+    function clearFormPartial() {
+        document.getElementById('symbol').value = '';
+        document.getElementById('quantity').value = '10';
+        document.getElementById('entryPrice').value = '';
+        document.getElementById('notes').value = '';
+        document.getElementById('livePricePreview').innerText = '✨ Enter symbol to see live price';
+    }
+
+    // Close trade (realize P&L)
+    async function closeTrade(tradeId) {
+        const tradeIndex = trades.findIndex(t => t.id === tradeId);
+        if(tradeIndex === -1) return;
+        const trade = trades[tradeIndex];
+        if(trade.status !== 'open') return;
+
+        // fetch current price to close at market price
+        const currentPrice = await fetchLivePrice(trade.symbol);
+        if(!currentPrice) {
+            alert(`Cannot close ${trade.symbol}: price fetch failed. Try again.`);
+            return;
+        }
+        const exitPrice = currentPrice;
+        let realizedPL = 0;
+        if(trade.side === 'buy') {
+            realizedPL = (exitPrice - trade.entryPrice) * trade.qty;
+            cashBalance += (trade.qty * exitPrice);  // sell position, add proceeds
+        } else { // short sell
+            realizedPL = (trade.entryPrice - exitPrice) * trade.qty;
+            cashBalance -= (trade.qty * exitPrice);  // cover short: subtract cost
+        }
+
+        trade.exitPrice = exitPrice;
+        trade.exitDate = new Date().toISOString();
+        trade.status = 'closed';
+        trade.realizedPL = realizedPL;
+
+        saveTrades();
+        saveCash();
+        await renderAll();
+    }
+
+    // Reset everything
+    function resetAll() {
+        if(confirm("⚠️ This will delete ALL trades and reset cash to $10,000. Are you sure?")) {
+            trades = [];
+            cashBalance = 10000.00;
+            saveTrades();
+            saveCash();
+            renderAll();
+        }
+    }
+
+    // Compute stats and render tables
+    async function renderAll() {
+        // 1. update open positions with live prices
+        const openTrades = trades.filter(t => t.status === 'open');
+        // fetch current prices for each symbol in open positions (parallel)
+        let priceMap = new Map();
+        for(let trade of openTrades) {
+            if(!priceMap.has(trade.symbol)) {
+                const price = await fetchLivePrice(trade.symbol);
+                if(price) priceMap.set(trade.symbol, price);
+            }
+        }
+        // Update unrealized P&L for open trades display
+        let totalUnrealizedPL = 0;
+        for(let trade of openTrades) {
+            let currentPrice = priceMap.get(trade.symbol);
+            if(currentPrice) {
+                let pl = 0;
+                if(trade.side === 'buy') {
+                    pl = (currentPrice - trade.entryPrice) * trade.qty;
+                } else {
+                    pl = (trade.entryPrice - currentPrice) * trade.qty;
+                }
+                totalUnrealizedPL += pl;
+            }
+        }
+
+        // closed trades stats
+        const closedTrades = trades.filter(t => t.status === 'closed');
+        let totalPnL = 0;
+        let winningTrades = 0;
+        let losingTrades = 0;
+        let sumWin = 0;
+        let sumLoss = 0;
+        for(let t of closedTrades) {
+            let pl = t.realizedPL;
+            totalPnL += pl;
+            if(pl > 0) {
+                winningTrades++;
+                sumWin += pl;
+            } else if(pl < 0) {
+                losingTrades++;
+                sumLoss += pl;
+            }
+        }
+        const winRate = (winningTrades + losingTrades) > 0 ? (winningTrades / (winningTrades + losingTrades) * 100) : 0;
+        const avgWin = winningTrades > 0 ? sumWin / winningTrades : 0;
+        const avgLoss = losingTrades > 0 ? sumLoss / losingTrades : 0;
+
+        document.getElementById('totalPnL').innerHTML = `$${totalPnL.toFixed(2)}`;
+        document.getElementById('winRate').innerHTML = `${winRate.toFixed(1)}%`;
+        document.getElementById('avgWin').innerHTML = `$${avgWin.toFixed(2)}`;
+        document.getElementById('avgLoss').innerHTML = `$${Math.abs(avgLoss).toFixed(2)}`;
+        document.getElementById('openPL').innerHTML = `<span class="${totalUnrealizedPL >= 0 ? 'positive' : 'negative'}">$${totalUnrealizedPL.toFixed(2)}</span>`;
+        document.getElementById('cashBalance').innerHTML = `$${cashBalance.toFixed(2)}`;
+
+        // Render open trades table
+        const openBody = document.getElementById('openTradesBody');
+        if(openTrades.length === 0) {
+            openBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No open positions</td></tr>';
+        } else {
+            let html = '';
+            for(let trade of openTrades) {
+                let currentPrice = priceMap.get(trade.symbol);
+                let unrealized = 0;
+                let priceDisplay = 'N/A';
+                if(currentPrice) {
+                    priceDisplay = `$${currentPrice.toFixed(2)}`;
+                    if(trade.side === 'buy') unrealized = (currentPrice - trade.entryPrice) * trade.qty;
+                    else unrealized = (trade.entryPrice - currentPrice) * trade.qty;
+                } else {
+                    unrealized = 0;
+                    priceDisplay = '?';
+                }
+                const plClass = unrealized >= 0 ? 'positive' : 'negative';
+                html += `<tr>
+                    <td>${trade.symbol}</td>
+                    <td>${trade.side.toUpperCase()}</td>
+                    <td>${trade.qty}</td>
+                    <td>$${trade.entryPrice.toFixed(2)}</td>
+                    <td>${priceDisplay}</td>
+                    <td class="${plClass}">$${unrealized.toFixed(2)}</td>
+                    <td><button class="close-btn" data-id="${trade.id}">Close</button></td>
+                </tr>`;
+            }
+            openBody.innerHTML = html;
+            // attach close events
+            document.querySelectorAll('.close-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = btn.getAttribute('data-id');
+                    closeTrade(id);
+                });
+            });
+        }
+
+        // Closed trades journal
+        const closedBody = document.getElementById('closedTradesBody');
+        if(closedTrades.length === 0) {
+            closedBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No closed trades yet</td></tr>';
+        } else {
+            let html = '';
+            for(let trade of closedTrades.slice().reverse()) {
+                const pl = trade.realizedPL;
+                const plClass = pl >= 0 ? 'positive' : 'negative';
+                html += `<tr>
+                    <td>${trade.symbol}</td>
+                    <td>${trade.side.toUpperCase()}</td>
+                    <td>${trade.qty}</td>
+                    <td>$${trade.entryPrice.toFixed(2)}</td>
+                    <td>$${trade.exitPrice.toFixed(2)}</td>
+                    <td class="${plClass}">$${pl.toFixed(2)}</td>
+                    <td>${trade.notes || '-'}</td>
+                </tr>`;
+            }
+            closedBody.innerHTML = html;
+        }
+    }
+
+    // Initial load and event binding
+    document.getElementById('addTradeBtn').addEventListener('click', addTrade);
+    document.getElementById('resetAllBtn').addEventListener('click', resetAll);
+    
+    // Auto-save on exit? Not needed
+    loadData();
+    renderAll().then(() => {
+        // optionally set default examples: demo welcome trade
+        if(trades.length === 0) {
+            // seed one demo trade for showcase? optional
+        }
+    });
+</script>
+</body>
+</html>
