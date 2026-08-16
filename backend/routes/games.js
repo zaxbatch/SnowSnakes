@@ -68,30 +68,20 @@ const cleanupTempFiles = (files) => {
 
 // ─── Routes ──────────────────────────────────────────────
 
-// GET all games (with comments & like status)
+// GET all games with comments and like status
 router.get('/', async (req, res) => {
   try {
     const games = await Game.findAll();
     for (const g of games) {
-      try {
-        g.comments = await Interaction.getComments('game', g.id);
-      } catch (err) {
-        console.warn('Could not fetch comments for game', g.id, err.message);
-        g.comments = [];
-      }
+      g.comments = await Interaction.getComments('game', g.id);
       if (req.user) {
-        try {
-          g.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', g.id);
-        } catch (err) {
-          g.isLiked = false;
-        }
+        g.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', g.id);
       } else {
         g.isLiked = false;
       }
     }
     res.json(games);
   } catch (err) {
-    console.error('Error in GET /games:', err);
     res.status(500).json({ error: err.message });
   }
 });

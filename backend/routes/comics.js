@@ -5,6 +5,7 @@ const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 
+// GET all comics with comments and like status
 router.get('/', async (req, res) => {
   try {
     const comics = await Comic.findAll();
@@ -22,6 +23,7 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET single comic
 router.get('/:id', async (req, res) => {
   try {
     const comic = await Comic.findById(req.params.id);
@@ -34,6 +36,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// POST new comic
 router.post('/', auth, async (req, res) => {
   try {
     const { title, scene, dialogue, caption, characters, image_url } = req.body;
@@ -45,6 +48,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// DELETE comic (admin only)
 router.delete('/:id', auth, admin, async (req, res) => {
   try {
     const comic = await Comic.delete(req.params.id);
@@ -55,7 +59,9 @@ router.delete('/:id', auth, admin, async (req, res) => {
   }
 });
 
-// Social actions
+// ─── Social actions ──────────────────────────────────────
+
+// Like
 router.post('/:id/like', auth, async (req, res) => {
   try {
     const result = await Interaction.toggleLike(req.user.id, 'comic', req.params.id);
@@ -65,6 +71,7 @@ router.post('/:id/like', auth, async (req, res) => {
   }
 });
 
+// Comment
 router.post('/:id/comment', auth, async (req, res) => {
   try {
     const { text } = req.body;
@@ -77,6 +84,7 @@ router.post('/:id/comment', auth, async (req, res) => {
   }
 });
 
+// Share
 router.post('/:id/share', auth, async (req, res) => {
   try {
     const updated = await Interaction.incrementShare('comic', req.params.id);
@@ -86,6 +94,7 @@ router.post('/:id/share', auth, async (req, res) => {
   }
 });
 
+// Get comments
 router.get('/:id/comments', async (req, res) => {
   try {
     const comments = await Interaction.getComments('comic', req.params.id);

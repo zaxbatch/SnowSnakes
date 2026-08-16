@@ -5,37 +5,25 @@ const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 
-// ─── Public routes ──────────────────────────────────────
-
-// GET all episodes with comments and like status
+// ─── GET all episodes with comments and like status ──────
 router.get('/', async (req, res) => {
   try {
     const episodes = await Episode.findAll();
     for (const ep of episodes) {
-      try {
-        ep.comments = await Interaction.getComments('episode', ep.id);
-      } catch (err) {
-        console.warn('Could not fetch comments for episode', ep.id, err.message);
-        ep.comments = [];
-      }
+      ep.comments = await Interaction.getComments('episode', ep.id);
       if (req.user) {
-        try {
-          ep.isLiked = await Interaction.getLikeStatus(req.user.id, 'episode', ep.id);
-        } catch (err) {
-          ep.isLiked = false;
-        }
+        ep.isLiked = await Interaction.getLikeStatus(req.user.id, 'episode', ep.id);
       } else {
         ep.isLiked = false;
       }
     }
     res.json(episodes);
   } catch (err) {
-    console.error('Error in GET /episodes:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET a single episode
+// ─── GET a single episode ────────────────────────────────
 router.get('/:id', async (req, res) => {
   try {
     const episode = await Episode.findById(req.params.id);
@@ -50,7 +38,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST new episode (admin only)
+// ─── POST new episode (admin only) ──────────────────────
 router.post('/', auth, admin, async (req, res) => {
   try {
     const { title, youtube_id, description, thumbnail_url, episode_number, air_date, featured } = req.body;
@@ -73,7 +61,7 @@ router.post('/', auth, admin, async (req, res) => {
   }
 });
 
-// PUT / update episode (admin only)
+// ─── PUT / update episode (admin only) ──────────────────
 router.put('/:id', auth, admin, async (req, res) => {
   try {
     const { title, youtube_id, description, thumbnail_url, episode_number, air_date, featured } = req.body;
@@ -94,7 +82,7 @@ router.put('/:id', auth, admin, async (req, res) => {
   }
 });
 
-// DELETE episode (admin only)
+// ─── DELETE episode (admin only) ────────────────────────
 router.delete('/:id', auth, admin, async (req, res) => {
   try {
     const episode = await Episode.delete(req.params.id);
@@ -105,7 +93,7 @@ router.delete('/:id', auth, admin, async (req, res) => {
   }
 });
 
-// ─── Social actions ─────────────────────────────────────
+// ─── Social actions ──────────────────────────────────────
 
 // Like
 router.post('/:id/like', auth, async (req, res) => {
