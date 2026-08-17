@@ -33,8 +33,30 @@ const JokeList = () => {
   };
 
   const handleKill = async (id) => {
-    await api.post(`/jokes/${id}/kill`);
-    fetchJokes();
+    // Optimistic update
+    setJokes(prevJokes =>
+      prevJokes.map(joke =>
+        joke.id === id
+          ? { ...joke, kill_count: (joke.kill_count || 0) + 1 }
+          : joke
+      )
+    );
+    try {
+      const response = await api.post(`/jokes/${id}/kill`);
+      console.log('💀 Kill API response:', response.data);
+      // ✅ Do NOT call fetchJokes() here – the state is already updated
+    } catch (err) {
+      console.error('💀 Kill API error:', err);
+      // Rollback if failed
+      setJokes(prevJokes =>
+        prevJokes.map(joke =>
+          joke.id === id
+            ? { ...joke, kill_count: (joke.kill_count || 0) - 1 }
+            : joke
+        )
+      );
+      alert('Failed to kill joke');
+    }
   };
 
   const handleDelete = async (id) => {

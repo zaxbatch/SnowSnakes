@@ -125,4 +125,17 @@ router.get('/:id/comments', async (req, res) => {
   }
 });
 
+router.post('/:id/kill', auth, async (req, res) => {
+  try {
+    console.log('💀 Kill request for joke ID:', req.params.id);
+    const updated = await Joke.incrementKill(req.params.id);
+    console.log('💀 Updated joke:', updated);
+    if (!updated) return res.status(404).json({ error: 'Joke not found' });
+    res.json(updated);
+  } catch (err) {
+    console.error('💀 Kill error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
