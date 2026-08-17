@@ -26,8 +26,6 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, onComment, currentU
 
   const handleKillClick = (e) => {
     e.stopPropagation();
-    console.log('💣 KILL button clicked for joke ID:', joke.id);
-    console.log('💣 onKill function:', onKill);
     onKill(joke.id);
   };
 
@@ -87,13 +85,15 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, onComment, currentU
               >
                 <i className="fas fa-share"></i> {joke.shares || 0}
               </button>
-              <button
-                className="btn btn-warning btn-sm"
-                data-ignore-click
-                onClick={handleKillClick}
-              >
-                <i className="fas fa-bomb"></i> {killerMode ? 'KILL' : 'KILL'}
-              </button>
+              {killerMode && (
+                <button
+                  className="btn btn-warning btn-sm"
+                  data-ignore-click
+                  onClick={handleKillClick}
+                >
+                  <i className="fas fa-bomb"></i> KILL
+                </button>
+              )}
             </div>
 
             {isQnA && <div className="flip-hint">👆 Click to reveal</div>}
