@@ -24,6 +24,13 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, onComment, currentU
     setShowComments(!showComments);
   };
 
+  const handleKillClick = (e) => {
+    e.stopPropagation();
+    console.log('💣 KILL button clicked for joke ID:', joke.id);
+    console.log('💣 onKill function:', onKill);
+    onKill(joke.id);
+  };
+
   return (
     <>
       <div
@@ -40,7 +47,11 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, onComment, currentU
                 </span>
               )}
               {(deleteMode || (currentUser && currentUser.id === joke.author_id)) && (
-                <button className="btn btn-danger btn-sm" data-ignore-click onClick={(e) => { e.stopPropagation(); onDelete(joke.id); }}>
+                <button
+                  className="btn btn-danger btn-sm"
+                  data-ignore-click
+                  onClick={(e) => { e.stopPropagation(); onDelete(joke.id); }}
+                >
                   <i className="fas fa-trash"></i>
                 </button>
               )}
@@ -55,16 +66,32 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, onComment, currentU
             </div>
 
             <div className="social-actions" data-ignore-click>
-              <button className={`btn btn-like btn-sm ${isLiked ? 'liked' : ''}`} data-ignore-click onClick={(e) => { e.stopPropagation(); onLike(joke.id); }}>
+              <button
+                className={`btn btn-like btn-sm ${isLiked ? 'liked' : ''}`}
+                data-ignore-click
+                onClick={(e) => { e.stopPropagation(); onLike(joke.id); }}
+              >
                 <i className="fas fa-heart"></i> {joke.likes || 0}
               </button>
-              <button className="btn btn-comment btn-sm" data-ignore-click onClick={toggleComments}>
+              <button
+                className="btn btn-comment btn-sm"
+                data-ignore-click
+                onClick={toggleComments}
+              >
                 <i className="fas fa-comment"></i> {joke.comments ? joke.comments.length : 0}
               </button>
-              <button className="btn btn-share btn-sm" data-ignore-click onClick={(e) => { e.stopPropagation(); onShare(joke.id); }}>
+              <button
+                className="btn btn-share btn-sm"
+                data-ignore-click
+                onClick={(e) => { e.stopPropagation(); onShare(joke.id); }}
+              >
                 <i className="fas fa-share"></i> {joke.shares || 0}
               </button>
-              <button className="btn btn-warning btn-sm" data-ignore-click onClick={(e) => { e.stopPropagation(); onKill(joke.id); }}>
+              <button
+                className="btn btn-warning btn-sm"
+                data-ignore-click
+                onClick={handleKillClick}
+              >
                 <i className="fas fa-bomb"></i> {killerMode ? 'KILL' : 'KILL'}
               </button>
             </div>

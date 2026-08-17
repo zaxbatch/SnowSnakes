@@ -10,8 +10,12 @@ const JokeList = () => {
   const { user } = useContext(AuthContext);
 
   const fetchJokes = async () => {
-    const res = await api.get('/jokes', { params: { search, sort } });
-    setJokes(res.data);
+    try {
+      const res = await api.get('/jokes', { params: { search, sort } });
+      setJokes(res.data);
+    } catch (err) {
+      console.error('Failed to fetch jokes:', err);
+    }
   };
 
   useEffect(() => {
@@ -28,28 +32,39 @@ const JokeList = () => {
   };
 
   const handleShare = async (id) => {
-    await api.post(`/jokes/${id}/share`);
-    fetchJokes();
+    try {
+      await api.post(`/jokes/${id}/share`);
+      fetchJokes();
+    } catch (err) {
+      alert('Failed to share');
+    }
   };
 
   const handleKill = async (id) => {
-    // Optimistic update
-    setJokes(prevJokes =>
-      prevJokes.map(joke =>
+    // Find current joke to get the current kill count
+    const currentJoke = jokes.find(j => j.id === id);
+    if (!currentJoke) return;
+
+    // Optimistic update – increment immediately in UI
+    const newCount = (currentJoke.kill_count || 0) + 1;
+    setJokes(prev =>
+      prev.map(joke =>
         joke.id === id
-          ? { ...joke, kill_count: (joke.kill_count || 0) + 1 }
+          ? { ...joke, kill_count: newCount }
           : joke
       )
     );
+
     try {
-      const response = await api.post(`/jokes/${id}/kill`);
-      console.log('💀 Kill API response:', response.data);
-      // ✅ Do NOT call fetchJokes() here – the state is already updated
+      await api.post(`/jokes/${id}/kill`);
+      // Optionally sync with server (but we already updated optimistically)
+      // Uncomment the line below if you want to ensure sync after server response
+      // await fetchJokes();
     } catch (err) {
-      console.error('💀 Kill API error:', err);
-      // Rollback if failed
-      setJokes(prevJokes =>
-        prevJokes.map(joke =>
+      console.error('Kill error:', err);
+      // Rollback on failure
+      setJokes(prev =>
+        prev.map(joke =>
           joke.id === id
             ? { ...joke, kill_count: (joke.kill_count || 0) - 1 }
             : joke
@@ -61,8 +76,12 @@ const JokeList = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm('Delete this joke?')) {
-      await api.delete(`/jokes/${id}`);
-      fetchJokes();
+      try {
+        await api.delete(`/jokes/${id}`);
+        fetchJokes();
+      } catch (err) {
+        alert('Failed to delete');
+      }
     }
   };
 
@@ -95,7 +114,7 @@ const JokeList = () => {
       <div className="grid-2">
         {jokes.map(joke => (
           <JokeCard
-            key={joke.id}
+            key={`${joke.id}-${joke.kill_count}`} // ✅ Force re-render when kill_count changes
             joke={joke}
             onLike={handleLike}
             onShare={handleShare}
