@@ -28,8 +28,10 @@ const GameGallery = ({ setShowGameModal }) => {
     setLoading(true);
     try {
       const res = await api.get('/games', { params: { search, sort } });
-      const gamesWithLikes = res.data.map(g => ({ ...g, isLiked: false, comments: [] }));
+      // ✅ Keep the comments from the backend – do NOT reset to empty array
+      const gamesWithLikes = res.data.map(g => ({ ...g, isLiked: false }));
       setGames(gamesWithLikes);
+      // If comment modal is open, update commentContent with fresh data
       if (commentModalOpen && commentContent) {
         const fresh = gamesWithLikes.find(g => g.id === commentContent.id);
         if (fresh) setCommentContent(fresh);
