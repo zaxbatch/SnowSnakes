@@ -87,7 +87,8 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, onComment, currentU
       <CommentModal
         isOpen={showComments}
         onClose={() => setShowComments(false)}
-        joke={joke}
+        content={joke}
+        contentType="joke"
         currentUser={currentUser}
         onComment={onComment}
       />

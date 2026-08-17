@@ -1,19 +1,23 @@
-// CommentModal.js – safe version (no state-resetting effects)
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 
-const CommentModal = ({ isOpen, onClose, content, contentType, currentUser, onComment }) => {
+const CommentModal = ({ isOpen, onClose, content, joke, contentType, currentUser, onComment }) => {
   const [commentText, setCommentText] = useState('');
 
   if (!isOpen) return null;
 
-  const actualContent = content;
-  if (!actualContent) return null;
+  // Support both `content` (new) and `joke` (legacy) props
+  const actualContent = content || joke;
+  if (!actualContent) {
+    console.warn('CommentModal: No content or joke provided');
+    return null;
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!commentText.trim()) return;
-    onComment(commentText.trim());
+    const trimmed = commentText.trim();
+    if (!trimmed) return;
+    onComment(actualContent.id, trimmed);
     setCommentText('');
   };
 
@@ -24,6 +28,8 @@ const CommentModal = ({ isOpen, onClose, content, contentType, currentUser, onCo
     game: '🎮 Game Comments',
     episode: '🎬 Episode Comments',
   };
+
+  const title = contentType ? titleMap[contentType] : '💬 Comments';
 
   return ReactDOM.createPortal(
     <div
@@ -55,12 +61,12 @@ const CommentModal = ({ isOpen, onClose, content, contentType, currentUser, onCo
         }}
       >
         <div className="modal-header">
-          <h2>{titleMap[contentType] || '💬 Comments'}</h2>
+          <h2>{title}</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', marginBottom: '15px' }}>
           {actualContent.comments && actualContent.comments.length > 0 ? (
-            actualContent.comments.map(c => (
+            actualContent.comments.map((c) => (
               <div className="comment-item" key={c.id} style={{ marginBottom: '8px' }}>
                 <span className="comment-user">{c.display_name || c.username}</span>
                 <span className="comment-text">{c.text}</span>

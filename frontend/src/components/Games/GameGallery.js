@@ -369,16 +369,9 @@ const GameGallery = ({ setShowGameModal }) => {
           isOpen={commentModalOpen}
           onClose={() => setCommentModalOpen(false)}
           content={commentContent}
-          contentType={commentContentType}
+          contentType="game"
           currentUser={user}
-          onComment={(text) => {
-            console.log('📝 CommentModal onComment called with text:', text);
-            if (commentContent && commentContent.id) {
-              handleComment(commentContent.id, text);
-            } else {
-              alert('Error: No game selected for comment');
-            }
-          }}
+          onComment={handleComment}   // ✅ direct, no wrapper
         />
       </div>
     </>
