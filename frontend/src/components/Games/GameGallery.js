@@ -30,6 +30,10 @@ const GameGallery = ({ setShowGameModal }) => {
       const res = await api.get('/games', { params: { search, sort } });
       const gamesWithLikes = res.data.map(g => ({ ...g, isLiked: false, comments: [] }));
       setGames(gamesWithLikes);
+      if (commentModalOpen && commentContent) {
+        const fresh = gamesWithLikes.find(g => g.id === commentContent.id);
+        if (fresh) setCommentContent(fresh);
+      }
     } catch (err) {
       console.error('Failed to fetch games:', err);
     } finally {
@@ -111,14 +115,11 @@ const GameGallery = ({ setShowGameModal }) => {
   };
 
   const handleComment = async (gameId, text) => {
-    // Ensure text is a string and trim it
     const cleanText = String(text).trim();
     if (!cleanText) {
       alert('Comment cannot be empty');
       return;
     }
-
-    console.log('📝 handleComment called with:', { gameId, text: cleanText });
 
     // Optimistic update
     updateGame(gameId, (g) => ({
@@ -128,11 +129,9 @@ const GameGallery = ({ setShowGameModal }) => {
 
     try {
       await api.post(`/games/${gameId}/comment`, { text: cleanText });
-      const comments = await fetchGameComments(gameId);
-      updateGame(gameId, (g) => ({
-        ...g,
-        comments,
-      }));
+      // Refetch to get the updated comments from server and update commentContent
+      await fetchGames();
+      // fetchGames will update commentContent if modal is open
     } catch (err) {
       // Rollback
       updateGame(gameId, (g) => ({
@@ -141,7 +140,6 @@ const GameGallery = ({ setShowGameModal }) => {
       }));
       alert('Error posting comment');
     }
-    setCommentModalOpen(false);
   };
 
   const openCommentModal = async (game) => {
@@ -363,7 +361,6 @@ const GameGallery = ({ setShowGameModal }) => {
           </div>
         )}
 
-        {/* ✅ KEY prop forces a fresh CommentModal instance */}
         <CommentModal
           key={commentContent?.id || 'no-game'}
           isOpen={commentModalOpen}
@@ -371,7 +368,7 @@ const GameGallery = ({ setShowGameModal }) => {
           content={commentContent}
           contentType="game"
           currentUser={user}
-          onComment={handleComment}   // ✅ direct, no wrapper
+          onComment={handleComment}
         />
       </div>
     </>

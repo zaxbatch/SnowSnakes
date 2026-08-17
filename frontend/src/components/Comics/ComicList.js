@@ -22,6 +22,10 @@ const ComicList = () => {
     try {
       const res = await api.get('/comics', { params: { search, sort } });
       setComics(res.data);
+      if (commentModalOpen && commentContent) {
+        const fresh = res.data.find(c => c.id === commentContent.id);
+        if (fresh) setCommentContent(fresh);
+      }
     } catch (err) {
       console.error('Failed to fetch comics:', err);
     }
@@ -44,8 +48,7 @@ const ComicList = () => {
   const handleComment = async (contentId, text) => {
     try {
       await api.post(`/comics/${contentId}/comment`, { text });
-      fetchComics();
-      setCommentModalOpen(false);
+      await fetchComics();
     } catch (err) {
       alert('Error posting comment');
     }

@@ -40,6 +40,10 @@ const EpisodeList = () => {
     try {
       const res = await api.get('/episodes', { params: { search, sort } });
       setEpisodes(res.data);
+      if (commentModalOpen && commentContent) {
+        const fresh = res.data.find(e => e.id === commentContent.id);
+        if (fresh) setCommentContent(fresh);
+      }
     } catch (err) {
       console.error('Failed to fetch episodes:', err);
     } finally {
@@ -111,8 +115,7 @@ const EpisodeList = () => {
   const handleComment = async (contentId, text) => {
     try {
       await api.post(`/episodes/${contentId}/comment`, { text });
-      fetchEpisodes();
-      setCommentModalOpen(false);
+      await fetchEpisodes();
     } catch (err) {
       alert('Error posting comment');
     }

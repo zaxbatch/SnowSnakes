@@ -22,6 +22,11 @@ const DoodleGallery = () => {
     try {
       const res = await api.get('/doodles', { params: { search, sort } });
       setDoodles(res.data);
+      // If commentModal is open, update commentContent with fresh data
+      if (commentModalOpen && commentContent) {
+        const fresh = res.data.find(d => d.id === commentContent.id);
+        if (fresh) setCommentContent(fresh);
+      }
     } catch (err) {
       console.error('Failed to fetch doodles:', err);
     }
@@ -44,8 +49,7 @@ const DoodleGallery = () => {
   const handleComment = async (contentId, text) => {
     try {
       await api.post(`/doodles/${contentId}/comment`, { text });
-      fetchDoodles();
-      setCommentModalOpen(false);
+      await fetchDoodles(); // re-fetch and update commentContent via fetchDoodles logic
     } catch (err) {
       alert('Error posting comment');
     }
