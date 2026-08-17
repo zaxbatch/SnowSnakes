@@ -1,21 +1,19 @@
+// CommentModal.js – safe version (no state-resetting effects)
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 
-const CommentModal = ({ isOpen, onClose, joke, content, contentType, currentUser, onComment }) => {
+const CommentModal = ({ isOpen, onClose, content, contentType, currentUser, onComment }) => {
   const [commentText, setCommentText] = useState('');
 
   if (!isOpen) return null;
 
-  // Determine the actual content object (fallback to `joke` for backward compatibility)
-  const actualContent = content || joke;
+  const actualContent = content;
   if (!actualContent) return null;
-
-  const actualContentType = contentType || 'joke';
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    onComment(actualContent.id, commentText.trim());
+    onComment(commentText.trim());
     setCommentText('');
   };
 
@@ -57,7 +55,7 @@ const CommentModal = ({ isOpen, onClose, joke, content, contentType, currentUser
         }}
       >
         <div className="modal-header">
-          <h2>{titleMap[actualContentType] || '💬 Comments'}</h2>
+          <h2>{titleMap[contentType] || '💬 Comments'}</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', marginBottom: '15px' }}>

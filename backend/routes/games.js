@@ -321,11 +321,18 @@ router.post('/:id/like', auth, async (req, res) => {
   }
 });
 
-// Comment
+// Comment (fixed: ensure text is a non-empty string)
 router.post('/:id/comment', auth, async (req, res) => {
   try {
-    const { text } = req.body;
-    if (!text) return res.status(400).json({ error: 'Text required' });
+    let { text } = req.body;
+    // Validate and sanitize
+    if (text === undefined || text === null || typeof text !== 'string') {
+      return res.status(400).json({ error: 'Comment text must be a non-empty string' });
+    }
+    text = text.trim();
+    if (!text) {
+      return res.status(400).json({ error: 'Comment cannot be empty' });
+    }
     await Interaction.addComment(req.user.id, 'game', req.params.id, text);
     const comments = await Interaction.getComments('game', req.params.id);
     res.status(201).json(comments[0] || {});

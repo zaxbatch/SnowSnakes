@@ -111,19 +111,30 @@ const GameGallery = ({ setShowGameModal }) => {
   };
 
   const handleComment = async (gameId, text) => {
+    // Ensure text is a string and trim it
+    const cleanText = String(text).trim();
+    if (!cleanText) {
+      alert('Comment cannot be empty');
+      return;
+    }
+
+    console.log('📝 handleComment called with:', { gameId, text: cleanText });
+
+    // Optimistic update
     updateGame(gameId, (g) => ({
       ...g,
-      comments: g.comments ? [...g.comments, { id: Date.now(), text, user, created_at: new Date() }] : [{ id: Date.now(), text, user, created_at: new Date() }],
+      comments: g.comments ? [...g.comments, { id: Date.now(), text: cleanText, user, created_at: new Date() }] : [{ id: Date.now(), text: cleanText, user, created_at: new Date() }],
     }));
 
     try {
-      await api.post(`/games/${gameId}/comment`, { text });
+      await api.post(`/games/${gameId}/comment`, { text: cleanText });
       const comments = await fetchGameComments(gameId);
       updateGame(gameId, (g) => ({
         ...g,
         comments,
       }));
     } catch (err) {
+      // Rollback
       updateGame(gameId, (g) => ({
         ...g,
         comments: g.comments ? g.comments.slice(0, -1) : [],
@@ -352,13 +363,22 @@ const GameGallery = ({ setShowGameModal }) => {
           </div>
         )}
 
+        {/* ✅ KEY prop forces a fresh CommentModal instance */}
         <CommentModal
+          key={commentContent?.id || 'no-game'}
           isOpen={commentModalOpen}
           onClose={() => setCommentModalOpen(false)}
           content={commentContent}
           contentType={commentContentType}
           currentUser={user}
-          onComment={(text) => handleComment(commentContent.id, text)}
+          onComment={(text) => {
+            console.log('📝 CommentModal onComment called with text:', text);
+            if (commentContent && commentContent.id) {
+              handleComment(commentContent.id, text);
+            } else {
+              alert('Error: No game selected for comment');
+            }
+          }}
         />
       </div>
     </>
