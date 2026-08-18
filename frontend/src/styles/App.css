@@ -1481,3 +1481,24 @@ textarea.form-control {
   cursor: default;
   perspective: none; /* remove 3D space */
 }
+
+.marquee-container {
+  background: #003399;
+  background: linear-gradient(135deg, #003399 0%, #1a4fa0 50%, #0066cc 100%);
+  color: #ffffff;
+  padding: 10px 0;
+  border: 4px solid #ffcc00;
+  border-style: solid;
+  margin-bottom: 15px;
+  font-weight: bold;
+  font-size: 18px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-family: 'Comic Sans MS', 'Segoe UI', cursive;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.marquee-container marquee {
+  display: block;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}

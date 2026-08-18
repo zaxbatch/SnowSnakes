@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { DeleteModeProvider } from './context/DeleteModeContext';
-import { KillerModeProvider } from './context/KillerModeContext'; // ✅ Import
+import { KillerModeProvider } from './context/KillerModeContext';
 import Header from './components/Header';
 import Nav from './components/Nav';
 import Home from './components/Home';
@@ -13,7 +13,8 @@ import GameGallery from './components/Games/GameGallery';
 import EpisodeList from './components/Spread/EpisodeList';
 import Randomizer from './components/Randomizer/Randomizer';
 import AdminPanel from './components/Admin/AdminPanel';
-import SnowSnakeEasterEgg from './components/SnowSnakeEasterEgg'; // ✅ Import
+import SnowSnakeEasterEgg from './components/SnowSnakeEasterEgg';
+import MarqueeBanner from './components/MarqueeBanner';
 import './styles/App.css';
 
 function App() {
@@ -22,8 +23,10 @@ function App() {
   return (
     <AuthProvider>
       <DeleteModeProvider>
-        <KillerModeProvider>   {/* ✅ Wrap with KillerModeProvider */}
+        <KillerModeProvider>
           <BrowserRouter>
+            {/* ✅ Banner OUTSIDE the .app container */}
+            <MarqueeBanner />
             <div className="app">
               <Header showGameModal={showGameModal} setShowGameModal={setShowGameModal} />
               <Nav />
@@ -37,7 +40,7 @@ function App() {
                 <Route path="/randomizer" element={<Randomizer />} />
                 <Route path="/admin" element={<AdminPanel />} />
               </Routes>
-              <SnowSnakeEasterEgg />   {/* ✅ Add the easter egg */}
+              <SnowSnakeEasterEgg />
             </div>
           </BrowserRouter>
         </KillerModeProvider>
