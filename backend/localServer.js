@@ -11,9 +11,7 @@ const path = require('path');
 const app = express();
 
 // ─── CORS ───────────────────────────────────────────────
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://snowsnakes.zerric.xyz'
-}));
+app.use(cors());
 
 // ─── Aggressive timeouts ──────────────────────────────
 app.use((req, res, next) => {
