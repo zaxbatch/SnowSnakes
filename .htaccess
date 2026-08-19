@@ -1,0 +1,8 @@
+PassengerAppRoot /home/u281804670/domains/snowsnakes.zerric.xyz/hbuilds/current/nodejs
+PassengerAppType node
+PassengerNodejs /opt/alt/alt-nodejs22/root/bin/node
+PassengerStartupFile server.js
+PassengerBaseURI /
+PassengerRestartDir /home/u281804670/domains/snowsnakes.zerric.xyz/hbuilds/current/nodejs/tmp
+SetEnv NODE_OPTIONS "--require /home/u281804670/domains/snowsnakes.zerric.xyz/hbuilds/config/preload-timestamp.js"
+SetEnv LSNODE_CONSOLE_LOG "console.log"
