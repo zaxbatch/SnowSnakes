@@ -1,0 +1,5 @@
+PassengerAppRoot /home/u281804670/domains/snowsnakes.zerric.xyz/public_html
+PassengerAppType node
+PassengerNodejs /opt/alt/alt-nodejs22/root/bin/node
+PassengerStartupFile server.js
+PassengerBaseURI /
