@@ -5,8 +5,20 @@ const path = require('path');
 const fs = require('fs');
 const Game = require('../models/Game');
 const Interaction = require('../services/interaction');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
+
+// Optional auth: populates req.user when a valid Bearer token is present,
+// but does NOT reject anonymous requests (games may be posted by guests).
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const decoded = User.verifyToken(authHeader.slice(7));
+    if (decoded) req.user = decoded;
+  }
+  next();
+};
 
 // ─── File upload config ──────────────────────────────────
 const storage = multer.diskStorage({
@@ -75,7 +87,7 @@ const cleanupTempFiles = (files) => {
 // ─── Routes ──────────────────────────────────────────────
 
 // GET all games with search & sort
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { search, sort } = req.query;
     const games = await Game.findAll({ search, sort });
@@ -105,7 +117,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET a single game
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const game = await Game.findById(req.params.id);
     if (!game) return res.status(404).json({ error: 'Not found' });
@@ -131,7 +143,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST a new game (with file upload)
-router.post('/', upload.array('files', 100), async (req, res) => {
+router.post('/', optionalAuth, upload.array('files', 100), async (req, res) => {
   try {
     const { title, description, icon, tags, type, code, code_encoding } = req.body;
     const author_id = req.user ? req.user.id : null;

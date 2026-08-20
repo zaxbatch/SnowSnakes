@@ -184,6 +184,9 @@ const Header = () => {
         method: 'POST',
         body: formData,
         signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
       });
 
       clearTimeout(timeoutId);
