@@ -27,6 +27,26 @@ app.use('/api/fridge', require('./backend/routes/fridge'));
 app.use('/api/random', require('./backend/routes/random'));
 app.use('/api/upload', require('./backend/routes/upload'));
 
+// ─── Temporary: Test database connection ──────────────
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const { pool } = require('./backend/config/db');
+    const result = await pool.query('SELECT NOW()');
+    res.json({ 
+      connected: true, 
+      time: result.rows[0].now,
+      message: 'Database connection successful'
+    });
+  } catch (err) {
+    console.error('Database test failed:', err);
+    res.status(500).json({ 
+      connected: false, 
+      error: err.message,
+      stack: err.stack 
+    });
+  }
+});
+
 // ─── Serve Static Frontend (production) ──────────────
 if (process.env.NODE_ENV === 'production') {
   const buildPath = path.join(__dirname, 'frontend', 'build');
