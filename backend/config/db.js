@@ -12,9 +12,6 @@ if (connectionString && !connectionString.includes('sslmode=')) {
 
 const pool = new Pool({
   connectionString: connectionString,
-  ssl: {
-    rejectUnauthorized: false   // ✅ Accept self‑signed certificates
-  }
 });
 
 // ─── Test connection on startup ──────────────────────────
