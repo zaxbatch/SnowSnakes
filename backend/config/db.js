@@ -1,18 +1,18 @@
 const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
-// ─── Force SSL off by using a non-SSL URL ──────────────
-let connectionString = process.env.DATABASE_URL;
-
-// Remove any sslmode or ssl parameters from the URL
-connectionString = connectionString.replace(/\?.*$/, '');
+const caCert = fs.readFileSync(path.join(__dirname, 'ca.pem')).toString();
 
 const pool = new Pool({
-  connectionString: connectionString,
-  // Do NOT include any SSL options – this disables SSL entirely
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: true,
+    ca: caCert
+  }
 });
 
-// ─── Test connection on startup ──────────────────────────
 pool.connect((err, client, release) => {
   if (err) {
     console.error('❌ Database connection error:', err.stack);
