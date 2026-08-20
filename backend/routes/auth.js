@@ -26,12 +26,10 @@ router.post('/login', async (req, res) => {
     }
     const user = await User.findByUsername(username);
     if (!user) {
-      console.log('❌ User not found:', username);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     const valid = await User.validatePassword(user, password);
     if (!valid) {
-      console.log('❌ Invalid password for:', username);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     const token = User.generateToken(user);
@@ -39,7 +37,8 @@ router.post('/login', async (req, res) => {
     res.json({ token, user: userData });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ error: err.message });
+    // Send the actual error message to the client (temporarily)
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
