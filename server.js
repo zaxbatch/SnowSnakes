@@ -55,7 +55,6 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(buildPath, 'index.html'));
   });
 } else {
-  // In development, just show a message (you'll use dev script)
   app.get('/', (req, res) => {
     res.send('🚀 Snowsnakes API is running. Frontend should be served separately in dev.');
   });
