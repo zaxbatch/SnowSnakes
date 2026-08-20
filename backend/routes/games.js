@@ -34,14 +34,20 @@ const fileFilter = (req, file, cb) => {
   if (allowedExts.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('File type not allowed: ' + file.originalname));
+    const err = new Error('File type not allowed: ' + file.originalname);
+    err.status = 400;
+    cb(err);
   }
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 50 * 1024 * 1024, files: 100 }
+  limits: {
+    fileSize: 50 * 1024 * 1024, // per-file
+    files: 100,                 // max number of files
+    fieldSize: 50 * 1024 * 1024 // pasted code can be a full HTML game (>1MB default!)
+  }
 });
 
 // ─── Helpers ──────────────────────────────────────────────

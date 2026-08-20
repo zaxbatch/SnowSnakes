@@ -60,6 +60,18 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// ─── Global error handler ────────────────────────────────
+// Multer errors (file type/size/field limits) otherwise fall through to
+// Express's default HTML error page, which breaks the frontend's
+// response.json() with "Unexpected token '<'" / "Unexpected token 'F'".
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const status = err.status || (err.code && err.code.startsWith('LIMIT_') ? 400 : 500);
+  const message = err.message || 'Internal Server Error';
+  console.error('❌ Error:', err);
+  res.status(status).json({ error: message });
+});
+
 // ─── Start Server ──────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

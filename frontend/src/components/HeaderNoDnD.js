@@ -185,8 +185,14 @@ const Header = () => {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Submission failed');
+        let errorMsg = 'Submission failed';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch {
+          errorMsg = (await response.text().catch(() => '')) || errorMsg;
+        }
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
