@@ -1,17 +1,15 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// ─── Ensure SSL is enabled in the connection string ──────────
+// ─── Force SSL off by using a non-SSL URL ──────────────
 let connectionString = process.env.DATABASE_URL;
 
-// If no sslmode parameter, add it
-if (connectionString && !connectionString.includes('sslmode=')) {
-  const separator = connectionString.includes('?') ? '&' : '?';
-  connectionString += `${separator}sslmode=require`;
-}
+// Remove any sslmode or ssl parameters from the URL
+connectionString = connectionString.replace(/\?.*$/, '');
 
 const pool = new Pool({
   connectionString: connectionString,
+  // Do NOT include any SSL options – this disables SSL entirely
 });
 
 // ─── Test connection on startup ──────────────────────────
