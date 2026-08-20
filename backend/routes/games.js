@@ -133,12 +133,23 @@ router.get('/:id', async (req, res) => {
 // POST a new game (with file upload)
 router.post('/', upload.array('files', 100), async (req, res) => {
   try {
-    const { title, description, icon, tags, type, code } = req.body;
+    const { title, description, icon, tags, type, code, code_encoding } = req.body;
     const author_id = req.user ? req.user.id : null;
 
     if (!title || !description) {
       cleanupTempFiles(req.files);
       return res.status(400).json({ error: 'Title and description are required' });
+    }
+
+    // Decode base64-transported code (frontend encodes pasted HTML/JS so
+    // Hostinger's edge WAF doesn't 403 the multipart body).
+    let finalCode = code || '';
+    if (code_encoding === 'base64' && finalCode) {
+      try {
+        finalCode = Buffer.from(finalCode, 'base64').toString('utf8');
+      } catch (err) {
+        console.error('Base64 decode failed, storing raw:', err.message);
+      }
     }
 
     const game = await Game.create({
@@ -148,7 +159,7 @@ router.post('/', upload.array('files', 100), async (req, res) => {
       tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
       author_id,
       type: type || 'user',
-      code: code || '',
+      code: finalCode,
       file_count: req.files ? req.files.length : 0,
     });
 

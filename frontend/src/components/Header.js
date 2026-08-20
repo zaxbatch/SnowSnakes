@@ -248,7 +248,11 @@ const Header = ({ showGameModal, setShowGameModal }) => {
       formData.append('description', gameDescription);
       formData.append('icon', gameIconImageUrl || gameIconEmoji);
       formData.append('tags', gameTags);
-      formData.append('code', gameCode);
+      // Encode pasted code as base64 so Hostinger's edge WAF doesn't flag
+      // HTML-form-looking content (it blocks raw <input>/<select>/<script>
+      // bodies with 403 Forbidden before the request reaches the server).
+      formData.append('code', btoa(unescape(encodeURIComponent(gameCode))));
+      formData.append('code_encoding', 'base64');
 
       for (let i = 0; i < gameFiles.length; i++) {
         formData.append('files', gameFiles[i]);
