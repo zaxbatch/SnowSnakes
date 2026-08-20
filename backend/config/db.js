@@ -1,14 +1,23 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+// ─── Ensure SSL is enabled in the connection string ──────────
+let connectionString = process.env.DATABASE_URL;
+
+// If no sslmode parameter, add it
+if (connectionString && !connectionString.includes('sslmode=')) {
+  const separator = connectionString.includes('?') ? '&' : '?';
+  connectionString += `${separator}sslmode=require`;
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: connectionString,
   ssl: {
-    rejectUnauthorized: false   // ✅ Trust the connection
+    rejectUnauthorized: false   // ✅ Accept self‑signed certificates
   }
 });
 
-// Test connection on startup
+// ─── Test connection on startup ──────────────────────────
 pool.connect((err, client, release) => {
   if (err) {
     console.error('❌ Database connection error:', err.stack);
