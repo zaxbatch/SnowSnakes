@@ -13,8 +13,9 @@ router.post('/register', async (req, res) => {
     const token = User.generateToken(user);
     res.status(201).json({ token, user });
   } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({ error: err.message });
+    console.error('Login error:', err);
+    // Send the actual error message to the client (temporarily)
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
