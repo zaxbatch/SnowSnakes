@@ -44,7 +44,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     const { title, scene, dialogue, caption, characters, image_url } = req.body;
-    if (!title || !dialogue) return res.status(400).json({ error: 'Title and dialogue required' });
+    if (!title) return res.status(400).json({ error: 'Title is required' });
     const comic = await Comic.create({
       title,
       scene,
