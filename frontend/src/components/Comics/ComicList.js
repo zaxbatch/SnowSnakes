@@ -39,7 +39,8 @@ const ComicList = () => {
     if (!window.confirm('Delete this comic?')) return;
     try {
       await api.delete(`/comics/${id}`);
-      fetchComics();
+      // Remove in place — no full refetch, so the list updates instantly.
+      setComics((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
       alert('Failed to delete comic');
     }

@@ -78,7 +78,8 @@ const JokeList = () => {
     if (window.confirm('Delete this joke?')) {
       try {
         await api.delete(`/jokes/${id}`);
-        fetchJokes();
+        // Remove in place — no full refetch, so the list updates instantly.
+        setJokes((prev) => prev.filter((j) => j.id !== id));
       } catch (err) {
         alert('Failed to delete');
       }

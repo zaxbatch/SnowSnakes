@@ -17,13 +17,25 @@ import SnowSnakeEasterEgg from './components/SnowSnakeEasterEgg';
 import MarqueeBanner from './components/MarqueeBanner';
 import './styles/App.css';
 
-// Global SUBMIT GAME + REFRESH buttons shown on every page except
-// Spread Da Word (/spread). GameGallery already has its own pair on
-// /games, so that page is skipped too. Refresh remounts the current
-// route so the page's own useEffect data fetch runs again.
-function GlobalActionBar({ showGameModal, refreshPage }) {
+// Global SUBMIT + REFRESH buttons shown on content pages. The label and the
+// modal that opens match the current page's content type (joke / comic /
+// doodle / game). Pages with their own submit UI (/games, /spread) or that
+// need no submission (/randomizer, /admin) skip the bar. Refresh remounts
+// the current route so the page's own useEffect data fetch runs again.
+function GlobalActionBar({
+  setShowGameModal, setShowJokeModal, setShowDoodleModal, setShowComicModal, refreshPage,
+}) {
   const location = useLocation();
-  if (location.pathname === '/spread' || location.pathname === '/games') return null;
+  const path = location.pathname;
+  if (path === '/spread' || path === '/games' || path === '/randomizer' || path === '/admin') return null;
+
+  const actions = {
+    '/jokes':   { label: 'SUBMIT JOKE',   open: () => setShowJokeModal(true) },
+    '/comics':  { label: 'SUBMIT COMIC',  open: () => setShowComicModal(true) },
+    '/doodles': { label: 'SUBMIT DOODLE', open: () => setShowDoodleModal(true) },
+    '/':        { label: 'SUBMIT GAME',   open: () => setShowGameModal(true) },
+  };
+  const action = actions[path] || actions['/'];
 
   return (
     <div
@@ -36,8 +48,8 @@ function GlobalActionBar({ showGameModal, refreshPage }) {
         justifyContent: 'center',
       }}
     >
-      <button className="btn btn-success" onClick={() => showGameModal(true)}>
-        <i className="fas fa-upload"></i> SUBMIT GAME
+      <button className="btn btn-success" onClick={action.open}>
+        <i className="fas fa-upload"></i> {action.label}
       </button>
       <button className="btn btn-secondary" onClick={refreshPage}>
         <i className="fas fa-sync"></i> REFRESH
@@ -48,6 +60,9 @@ function GlobalActionBar({ showGameModal, refreshPage }) {
 
 function App() {
   const [showGameModal, setShowGameModal] = useState(false);
+  const [showJokeModal, setShowJokeModal] = useState(false);
+  const [showDoodleModal, setShowDoodleModal] = useState(false);
+  const [showComicModal, setShowComicModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (
@@ -58,10 +73,22 @@ function App() {
             {/* ✅ Banner OUTSIDE the .app container */}
             <MarqueeBanner />
             <div className="app">
-              <Header showGameModal={showGameModal} setShowGameModal={setShowGameModal} />
+              <Header
+                showGameModal={showGameModal}
+                setShowGameModal={setShowGameModal}
+                showJokeModal={showJokeModal}
+                setShowJokeModal={setShowJokeModal}
+                showDoodleModal={showDoodleModal}
+                setShowDoodleModal={setShowDoodleModal}
+                showComicModal={showComicModal}
+                setShowComicModal={setShowComicModal}
+              />
               <Nav />
               <GlobalActionBar
-                showGameModal={setShowGameModal}
+                setShowGameModal={setShowGameModal}
+                setShowJokeModal={setShowJokeModal}
+                setShowDoodleModal={setShowDoodleModal}
+                setShowComicModal={setShowComicModal}
                 refreshPage={() => setRefreshKey((k) => k + 1)}
               />
               <Routes key={refreshKey}>

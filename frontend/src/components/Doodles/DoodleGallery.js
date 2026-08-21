@@ -40,7 +40,8 @@ const DoodleGallery = () => {
     if (!window.confirm('Delete this doodle?')) return;
     try {
       await api.delete(`/doodles/${id}`);
-      fetchDoodles();
+      // Remove in place — no full refetch, so the gallery updates instantly.
+      setDoodles((prev) => prev.filter((d) => d.id !== id));
     } catch (err) {
       alert('Failed to delete doodle');
     }

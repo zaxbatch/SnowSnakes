@@ -5,7 +5,12 @@ import { useDeleteMode } from '../context/DeleteModeContext';
 import { useKillerMode } from '../context/KillerModeContext';
 import api from '../api';
 
-const Header = ({ showGameModal, setShowGameModal }) => {
+const Header = ({
+  showGameModal, setShowGameModal,
+  showJokeModal, setShowJokeModal,
+  showDoodleModal, setShowDoodleModal,
+  showComicModal, setShowComicModal,
+}) => {
   const { user, logout, login, register } = useContext(AuthContext);
   const { deleteMode, setDeleteMode } = useDeleteMode();
   const { killerMode, setKillerMode } = useKillerMode();
@@ -23,10 +28,8 @@ const Header = ({ showGameModal, setShowGameModal }) => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
-  // ─── Other modals ───
-  const [showJokeModal, setShowJokeModal] = useState(false);
-  const [showDoodleModal, setShowDoodleModal] = useState(false);
-  const [showComicModal, setShowComicModal] = useState(false);
+  // ─── Other modals (joke/doodle/comic state lifted to App for the
+  //     page-aware SUBMIT buttons on the global action bar) ───
 
   // ─── Joke form state ───
   const [jokeContent, setJokeContent] = useState('');

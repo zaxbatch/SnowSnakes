@@ -199,7 +199,8 @@ const GameGallery = ({ setShowGameModal }) => {
     if (!window.confirm('Delete this game?')) return;
     try {
       await api.delete(`/games/${id}`);
-      fetchGames();
+      // Remove in place — no full refetch, so the gallery updates instantly.
+      setGames((prev) => prev.filter((g) => g.id !== id));
     } catch (err) {
       alert('Failed to delete game');
     }
