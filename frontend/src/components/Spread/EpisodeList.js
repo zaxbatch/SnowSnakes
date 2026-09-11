@@ -141,16 +141,15 @@ const EpisodeList = () => {
       </div>
 
       {/* ─── Search & Sort ─── */}
-      <div className="flex justify-between align-center mb-20" style={{ flexWrap: 'wrap', gap: '10px' }}>
+      <div className="flex justify-between align-center mb-20 sort-bar">
         <input
           type="text"
           placeholder="Search episodes..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="form-control"
-          style={{ width: '200px' }}
+          className="form-control search-input"
         />
-        <div className="flex gap-10">
+        <div className="flex gap-10 sort-options">
           <button className="btn btn-secondary" onClick={() => setSort('likes')}>MOST LIKED</button>
           <button className="btn btn-secondary" onClick={() => setSort('newest')}>NEWEST</button>
           <button className="btn btn-secondary" onClick={() => setSort('oldest')}>OLDEST</button>

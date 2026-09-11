@@ -1392,6 +1392,82 @@ textarea.form-control {
 .justify-between { justify-content: space-between; }
 .align-center { align-items: center; }
 
+/* ============================================
+   🧱 LAYOUT PRIMITIVES (search + sort rows, hero)
+   Shared by every gallery. On phones the controls stack so
+   nothing (e.g. the OLDEST button) escapes the card.
+   ============================================ */
+.sort-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.sort-bar .sort-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+    max-width: 100%;
+}
+
+.search-input {
+    width: 200px;
+    max-width: 100%;
+    flex: 0 1 auto;
+}
+
+.home-title {
+    font-size: 48px;
+    color: #003399;
+    text-shadow: 3px 3px 0 #ff00ff;
+    font-family: 'Comic Sans MS', cursive;
+    overflow-wrap: break-word;
+}
+
+/* Runtime-generated content (titles, tags, comments, URLs) can contain
+   very long unbreakable words — never let one widen the page. */
+.card-title,
+.game-title,
+.game-meta,
+.card-meta,
+.card-series,
+.dialogue,
+.caption,
+.comment-text,
+.comment-user,
+.tag,
+.section-header h2,
+.section-header p,
+.spread-card h3,
+.comic-card h3,
+.doodle-card,
+.empty-state p {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    min-width: 0;
+}
+
+/* A <marquee> is a replaced widget: it ignores max-width and pushes the
+   whole page wider. Clip it through a block wrapper instead. */
+.marquee-clip {
+    overflow: hidden;
+    max-width: 100%;
+}
+
+.marquee-clip marquee {
+    display: block;
+    max-width: 100%;
+}
+
+.media-modal-box {
+    min-width: 0;
+    min-height: 0;
+}
+
 @keyframes lookAtMe {
     0%, 100% { transform: scale(1) rotate(0deg); box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3); }
     25% { transform: scale(1.08) rotate(-3deg); box-shadow: 0 8px 30px rgba(243, 156, 18, 0.6); }
@@ -1405,8 +1481,47 @@ textarea.form-control {
     75% { transform: translateX(-15px) rotate(-5deg) scale(0.8); }
 }
 
-@media (max-width: 768px) {
-    .app { padding: 15px; border-width: 4px; }
+/* The hero snake bounce is wider than a phone's content box — give it a
+   small-screen-safe slither so it never pushes the page sideways. */
+@keyframes slither-tight {
+    0%, 100% { transform: translateX(0) rotate(-8deg) scale(0.9); }
+    25% { transform: translateX(4px) rotate(8deg) scale(1); }
+    75% { transform: translateX(-4px) rotate(-4deg) scale(0.85); }
+}
+
+/* Same idea for the attention-grabbing pulse: keep the bounce, drop the
+   rotation and the 8% growth that widens buttons past the screen edge. */
+@keyframes lookAtMeTight {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+/* Nothing in a panel should ever widen the page */
+.panel { max-width: 100%; overflow-x: hidden; }
+.panel .card, .panel .flip-card, .panel .comic-card, .panel .game-card,
+.panel .spread-card, .panel .doodle-card, .panel .modal { max-width: 100%; }
+
+/* ============================================
+   📱 SMALL TABLET  (<= 900px)
+   Single-column cards leave a huge card on mid-size screens;
+   let the galleries use two columns instead.
+   ============================================ */
+@media (max-width: 900px) {
+    .grid-2, .grid-comics, .grid-spread { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    .grid-3, .grid-4, .grid-5 { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .grid-games { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+}
+
+/* ============================================
+   📱 TABLET  (<= 768px)
+   ============================================ */
+@media (max-width: 768px) {    .app { padding: 15px; border-width: 4px; }
+    /* The tilted card is a nice touch with room to spare, but on small
+       screens it tips content past the right edge — lay it flat. */
+    .app, .app:hover { transform: none; }
+    .under-construction { display: none; }
+    .snow-snake-easter { bottom: 12px; right: 12px; font-size: 32px; }
+
     .header { flex-direction: column; align-items: stretch; gap: 10px; }
     .logo { font-size: 24px; justify-content: center; }
     .logo .s-first, .logo .s-second { font-size: 30px; }
@@ -1415,41 +1530,130 @@ textarea.form-control {
     .logo .s-first { margin-right: -4px; }
     .logo .s-second { margin-right: -4px; }
     .header-actions { justify-content: center; }
+    .user-profile { width: 100%; justify-content: center; }
+
+    /* Action buttons get real tap targets instead of slim desktop chips */
+    .header .btn, .global-action-bar .btn, .game-actions .btn, .spread-actions .btn {
+        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+    .global-action-bar { flex-wrap: wrap; }
+    .global-action-bar .btn { flex: 1 1 45%; justify-content: center; }
+
+    /* Nav: a readable, tappable grid instead of cramming 8 tabs into 2 rows */
+    .nav-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; padding: 6px; }
+    .nav-tab {
+        padding: 12px 8px;
+        font-size: 12px;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+        line-height: 1.15;
+        flex: initial;
+    }
+    .nav-tab.active { transform: none; }
+
+    /* Controls stack: the sort buttons wrap instead of running off-screen */
+    .sort-bar { flex-direction: column; align-items: stretch; }
+    .sort-bar .search-input { width: 100%; flex: 1 1 auto; min-height: 44px; }
+    .sort-bar .sort-options { justify-content: flex-start; }
+    .sort-bar .sort-options .btn { flex: 1 1 auto; min-height: 40px; justify-content: center; }
+
+    .grid-2, .grid-comics, .grid-spread { grid-template-columns: minmax(0, 1fr); }
+    .grid-3, .grid-4, .grid-5 { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+
+    .home-title { font-size: 30px; }
+
+    .section-header { padding: 15px 12px; }
+    .section-header h2 { font-size: 24px; }
+    .section-header .section-icon { font-size: 40px; }
+    .section-header p { font-size: 14px; }
+
     .form-row { grid-template-columns: 1fr; }
-    .grid-2, .grid-comics, .grid-spread { grid-template-columns: 1fr; }
-    .grid-3, .grid-4, .grid-5 { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-    .nav-tab { padding: 6px 12px; font-size: 11px; flex: 1; justify-content: center; }
-    .nav-tabs { gap: 3px; padding: 3px; }
-    .modal { padding: 20px; border-width: 4px; }
+
+    .modal { padding: 20px; border-width: 4px; width: 100%; max-width: 100%; max-height: 85vh; }
+    .modal-overlay { padding: 12px; }
+    .modal-header h2 { font-size: 20px; }
+    .modal-close { width: 44px; height: 44px; font-size: 24px; flex-shrink: 0; }
+    .comment-input, .comments-section .comment-input { flex-wrap: wrap; }
+    .comment-item { flex-wrap: wrap; gap: 4px 8px; }
+    .comment-item .comment-text { flex: 1 1 100%; }
+
+    .game-play-modal { padding: 10px; }
     .game-play-modal .modal-box { width: 95vw; height: 60vh; max-height: 80vh; }
+    .game-play-modal .modal-box .game-header { padding: 8px 12px; flex-wrap: wrap; gap: 8px; }
+    .game-play-modal .modal-box .game-header .btn { min-height: 36px; }
+    .media-modal-box { width: 94vw !important; height: 70vh !important; max-height: 85vh !important; }
+    .media-modal-box > div:first-child { flex-wrap: wrap; gap: 8px; }
+
+    .admin-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
     .fridge, .hood { padding: 12px; min-height: 250px; }
     .shelf { padding: 8px; min-height: 50px; }
     .fridge-item { padding: 4px 10px; font-size: 11px; }
+
     .card, .flip-card { min-height: 200px; }
     .flip-card-front, .flip-card-back { min-height: 200px; padding: 15px; }
     .flip-card .card-question { font-size: 15px; }
     .flip-card .card-answer { font-size: 17px; }
-    .user-profile { width: 100%; justify-content: center; }
+    .flip-card .social-actions .btn { min-height: 40px; padding: 6px 12px; font-size: 11px; }
+    .flip-card .flip-actions .btn-sm { min-height: 32px; }
+
+    .social-actions { flex-wrap: wrap; gap: 6px; }
+    .social-actions .btn { min-height: 40px; padding: 6px 12px; font-size: 11px; }
+
+    .doodle-card img, .comic-card img { max-width: 100%; height: auto; }
+    .comic-card .comic-panel .dialogue { padding: 8px 10px; }
+
+    /* Tame decorative bounce animations so they stay inside the page */
+    .home-emoji { font-size: 48px !important; animation: slither-tight 3s infinite ease-in-out !important; }
+    .randomizer-display .big-emoji { font-size: 64px; animation: slither-tight 3.4s infinite ease-in-out; }
+    .btn-warning { animation: lookAtMeTight 3s ease-in-out infinite; }
+    .logo .s-first, .logo .s-second { animation: none; }
+    .snow-snake-easter { display: none; }
 }
 
+/* ============================================
+   📱 PHONE  (<= 480px)
+   ============================================ */
 @media (max-width: 480px) {
     .app { padding: 10px; border-width: 3px; }
-    .btn { padding: 6px 12px; font-size: 11px; border-width: 2px; }
-    .nav-tab { font-size: 9px; padding: 4px 8px; }
+    .btn { padding: 8px 12px; font-size: 12px; border-width: 2px; }
+    .nav-tab { font-size: 11px; padding: 11px 6px; }
+    .nav-tabs { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
     .card .card-title { font-size: 14px; }
+    .home-title { font-size: 24px; }
     .modal { padding: 15px; border-width: 3px; }
-    .game-play-modal .modal-box { width: 98vw; height: 50vh; }
+    .game-play-modal .modal-box { width: 98vw; height: 55vh; }
     .logo { font-size: 18px; }
     .logo .s-first, .logo .s-second { font-size: 22px; }
     .logo span:not(.snow-snake):not(.subtitle):not(.letter-s) { font-size: 18px; }
     .logo .s-first { margin-right: -3px; }
     .logo .s-second { margin-right: -3px; }
     .marquee-container { font-size: 12px; padding: 6px 0; }
+    .section-header h2 { font-size: 20px; }
     .card, .flip-card { min-height: 180px; }
     .flip-card-front, .flip-card-back { min-height: 180px; padding: 12px; }
     .flip-card .card-question { font-size: 13px; }
     .flip-card .card-answer { font-size: 15px; }
     .flip-card .card-answer-emoji { font-size: 24px; }
+    .grid-3, .grid-4, .grid-5 { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}
+
+/* ============================================
+   📱 TINY PHONE  (<= 360px)
+   ============================================ */
+@media (max-width: 360px) {
+    .app { padding: 8px; }
+    .nav-tabs { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 4px; }
+    .nav-tab { padding: 10px 4px; font-size: 10px; }
+    .btn { padding: 7px 10px; font-size: 11px; }
+    .global-action-bar .btn { flex: 1 1 100%; }
+    .home-title { font-size: 21px; }
+    .section-header h2 { font-size: 18px; }
+    .modal-overlay { padding: 8px; }
+    .game-play-area { padding: 10px; }
 }
 
 @media (prefers-contrast: high) {

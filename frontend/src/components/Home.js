@@ -47,8 +47,8 @@ const Home = () => {
   return (
     <div className="panel active" id="panel-home">
       <div style={{ textAlign: 'center', padding: '30px 0' }}>
-        <div style={{ fontSize: '60px', animation: 'slither 3s infinite ease-in-out' }}>🐍</div>
-        <h1 style={{ fontSize: '48px', color: '#003399', textShadow: '3px 3px 0 #ff00ff', fontFamily: "'Comic Sans MS', cursive" }}>
+        <div className="home-emoji" style={{ fontSize: '60px', animation: 'slither 3s infinite ease-in-out' }}>🐍</div>
+        <h1 className="home-title">
           WELCOME TO SNOWSNAKES!
         </h1>
         <p style={{ fontSize: '20px', color: '#003399', fontWeight: 'bold' }}>🌭 Where condiments live their best lives! 🧈</p>
@@ -81,9 +81,11 @@ const Home = () => {
           <span style={{ color: '#666' }}>Submit your own mini-games and get featured!</span>
         </div>
 
-        <marquee behavior="scroll" direction="right" scrollamount="3" style={{ color: '#ff6600', fontWeight: 'bold' }}>
-          🐍 Why don't snow snakes eat? They're cold-blooded! ❄️
-        </marquee>
+        <div className="marquee-clip">
+          <marquee behavior="scroll" direction="right" scrollamount="3" style={{ color: '#ff6600', fontWeight: 'bold' }}>
+            🐍 Why don't snow snakes eat? They're cold-blooded! ❄️
+          </marquee>
+        </div>
 
         <button
           className="btn btn-primary"

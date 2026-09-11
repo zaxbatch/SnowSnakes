@@ -49,7 +49,7 @@ const FullscreenMediaModal = ({ isOpen, onClose, title, imageUrl, children, type
       }}
     >
       <div
-        className="modal-box"
+        className="modal-box media-modal-box"
         style={{
           maxWidth: '1100px',
           width: '85vw',
