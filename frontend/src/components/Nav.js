@@ -12,7 +12,7 @@ const Nav = () => {
     { name: 'HOME', path: '/' },
     { name: 'DAD JOKES', path: '/jokes' },
     { name: 'DOODLES', path: '/doodles' },
-    { name: 'COMICS', path: '/comics' },
+    { name: 'SONGS', path: '/songs' },
     { name: 'GAMES', path: '/games' },
     { name: 'SPREAD DA WORD', path: '/spread' },
     { name: 'RANDOMIZER', path: '/randomizer' },

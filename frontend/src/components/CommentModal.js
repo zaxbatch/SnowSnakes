@@ -24,7 +24,7 @@ const CommentModal = ({ isOpen, onClose, content, joke, contentType, currentUser
   const titleMap = {
     joke: '😂 Joke Comments',
     doodle: '🎨 Doodle Comments',
-    comic: '📢 Comic Comments',
+    song: '🎵 Song Comments',
     game: '🎮 Game Comments',
     episode: '🎬 Episode Comments',
   };

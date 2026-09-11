@@ -24,7 +24,7 @@ const Home = () => {
   const statItems = [
     { key: 'jokes', label: 'Jokes', emoji: '😂', path: '/jokes', color: '#ffccff' },
     { key: 'doodles', label: 'Doodles', emoji: '🎨', path: '/doodles', color: '#ccffcc' },
-    { key: 'comics', label: 'Comics', emoji: '📢', path: '/comics', color: '#ccccff' },
+    { key: 'songs', label: 'Songs', emoji: '🎵', path: '/songs', color: '#ccccff' },
     { key: 'episodes', label: 'Episodes', emoji: '🎬', path: '/spread', color: '#ffffcc' },
     { key: 'games', label: 'Games', emoji: '🎮', path: '/games', color: '#ccffcc' },
   ];

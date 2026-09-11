@@ -114,7 +114,7 @@ const FullscreenMediaModal = ({ isOpen, onClose, title, imageUrl, children, type
                 objectFit: 'contain',
               }}
             />
-          ) : type === 'comic' ? (
+          ) : type === 'song' ? (
             <div style={{ padding: '20px', textAlign: 'center', maxWidth: '100%' }}>
               {children}
             </div>

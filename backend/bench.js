@@ -36,7 +36,7 @@ const timeIt = async (label, fn, runs = 7) => {
   console.log('\n── Row counts (drive the N+1 cost) ──');
   const counts = await pool.query(`
     SELECT (SELECT COUNT(*) FROM jokes) jokes, (SELECT COUNT(*) FROM doodles) doodles,
-           (SELECT COUNT(*) FROM comics) comics, (SELECT COUNT(*) FROM episodes) episodes,
+           (SELECT COUNT(*) FROM songs) songs, (SELECT COUNT(*) FROM episodes) episodes,
            (SELECT COUNT(*) FROM games) games`);
   const c = counts.rows[0];
   Object.entries(c).forEach(([k, v]) => console.log(`   ${k.padEnd(10)} ${v}`));
@@ -48,7 +48,7 @@ const timeIt = async (label, fn, runs = 7) => {
   const rows = [
     ['GET /api/jokes', n('jokes') + 1, 2],
     ['GET /api/doodles', n('doodles') * 2 + 1, 3],
-    ['GET /api/comics', n('comics') * 2 + 1, 3],
+    ['GET /api/songs', n('songs') * 2 + 1, 3],
     ['GET /api/episodes', n('episodes') * 2 + 1, 3],
     ['GET /api/games', n('games') * 2 + 1, 3],
     ['GET /api/random', 6, 6],

@@ -8,7 +8,7 @@ import Nav from './components/Nav';
 import Home from './components/Home';
 import JokeList from './components/Jokes/JokeList';
 import DoodleGallery from './components/Doodles/DoodleGallery';
-import ComicList from './components/Comics/ComicList';
+import SongGallery from './components/Songs/SongGallery';
 import GameGallery from './components/Games/GameGallery';
 import EpisodeList from './components/Spread/EpisodeList';
 import Randomizer from './components/Randomizer/Randomizer';
@@ -23,7 +23,7 @@ import './styles/App.css';
 // need no submission (/randomizer, /admin) skip the bar. Refresh remounts
 // the current route so the page's own useEffect data fetch runs again.
 function GlobalActionBar({
-  setShowGameModal, setShowJokeModal, setShowDoodleModal, setShowComicModal, refreshPage,
+  setShowGameModal, setShowJokeModal, setShowDoodleModal, setShowSongModal, refreshPage,
 }) {
   const location = useLocation();
   const path = location.pathname;
@@ -31,7 +31,7 @@ function GlobalActionBar({
 
   const actions = {
     '/jokes':   { label: 'SUBMIT JOKE',   open: () => setShowJokeModal(true) },
-    '/comics':  { label: 'SUBMIT COMIC',  open: () => setShowComicModal(true) },
+    '/songs':   { label: 'SUBMIT SONG',   open: () => setShowSongModal(true) },
     '/doodles': { label: 'SUBMIT DOODLE', open: () => setShowDoodleModal(true) },
     '/':        { label: 'SUBMIT GAME',   open: () => setShowGameModal(true) },
   };
@@ -62,7 +62,7 @@ function App() {
   const [showGameModal, setShowGameModal] = useState(false);
   const [showJokeModal, setShowJokeModal] = useState(false);
   const [showDoodleModal, setShowDoodleModal] = useState(false);
-  const [showComicModal, setShowComicModal] = useState(false);
+  const [showSongModal, setShowSongModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (
@@ -80,22 +80,22 @@ function App() {
                 setShowJokeModal={setShowJokeModal}
                 showDoodleModal={showDoodleModal}
                 setShowDoodleModal={setShowDoodleModal}
-                showComicModal={showComicModal}
-                setShowComicModal={setShowComicModal}
+                showSongModal={showSongModal}
+                setShowSongModal={setShowSongModal}
               />
               <Nav />
               <GlobalActionBar
                 setShowGameModal={setShowGameModal}
                 setShowJokeModal={setShowJokeModal}
                 setShowDoodleModal={setShowDoodleModal}
-                setShowComicModal={setShowComicModal}
+                setShowSongModal={setShowSongModal}
                 refreshPage={() => setRefreshKey((k) => k + 1)}
               />
               <Routes key={refreshKey}>
                 <Route path="/" element={<Home />} />
                 <Route path="/jokes" element={<JokeList />} />
                 <Route path="/doodles" element={<DoodleGallery />} />
-                <Route path="/comics" element={<ComicList />} />
+                <Route path="/songs" element={<SongGallery />} />
                 <Route path="/games" element={<GameGallery setShowGameModal={setShowGameModal} />} />
                 <Route path="/spread" element={<EpisodeList />} />
                 <Route path="/randomizer" element={<Randomizer />} />

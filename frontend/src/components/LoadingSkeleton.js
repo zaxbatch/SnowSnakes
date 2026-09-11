@@ -3,7 +3,7 @@ import React from 'react';
 // Placeholder cards shown while a gallery loads.
 //
 // Why this exists: on a cold free-tier backend a list request can take
-// several seconds. Previously the jokes, doodles and comics pages rendered
+// several seconds. Previously the jokes, doodles and songs pages rendered
 // nothing at all during that window, so a slow load looked like a broken
 // page. These skeletons reserve the same space the real cards will occupy,
 // so the page appears instantly and then fills in.
@@ -46,7 +46,7 @@ export const MediaCardSkeleton = ({ media = true }) => (
   </div>
 );
 
-// Mirrors a doodle / comic card: art block, title, actions.
+// Mirrors a doodle / song card: art block, title, actions.
 export const TileSkeleton = () => (
   <div className="skeleton-card skeleton-card-tile" aria-hidden="true">
     <div className="skeleton-inner">

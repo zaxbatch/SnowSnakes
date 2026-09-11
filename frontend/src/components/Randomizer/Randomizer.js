@@ -59,16 +59,13 @@ const Randomizer = () => {
             <p><strong>Likes:</strong> {item.likes || 0} | <strong>Shares:</strong> {item.shares || 0}</p>
           </div>
         );
-      case 'comic':
+      case 'song':
         return (
           <div>
-            <h3>📢 Comic</h3>
+            <h3>🎵 Song</h3>
             <p><strong>Title:</strong> {item.title}</p>
-            {item.scene && <p><strong>Scene:</strong> {item.scene}</p>}
-            {item.dialogue && <p><strong>Dialogue:</strong> {item.dialogue}</p>}
-            {item.caption && <p><strong>Caption:</strong> {item.caption}</p>}
-            {item.characters?.length > 0 && <p><strong>Characters:</strong> {item.characters.join(', ')}</p>}
-            {item.image_url && <img src={item.image_url} alt={item.title} style={{ maxWidth: '100%', maxHeight: '300px' }} />}
+            {item.cover_url && <img src={item.cover_url} alt={item.title} style={{ maxWidth: '100%', maxHeight: '300px' }} />}
+            {item.audio_url && <audio src={item.audio_url} controls style={{ width: '100%', marginTop: '10px' }} />}
             <p><strong>Likes:</strong> {item.likes || 0} | <strong>Shares:</strong> {item.shares || 0}</p>
             {item.author_name && <p><strong>Author:</strong> {item.author_name}</p>}
           </div>
@@ -146,7 +143,7 @@ const Randomizer = () => {
             <div className="card" style={{ background: '#fff', border: '4px solid #ff00ff', textAlign: 'left', padding: 20 }}>
               <div><strong>😂 Joke:</strong> <span className="clickable-link" onClick={() => openItemModal('joke', result.joke)} style={{ cursor: 'pointer', color: '#0066cc', textDecoration: 'underline' }}>{result.joke?.content || 'N/A'}</span></div>
               <div><strong>🎨 Doodle:</strong> <span className="clickable-link" onClick={() => openItemModal('doodle', result.doodle)} style={{ cursor: 'pointer', color: '#0066cc', textDecoration: 'underline' }}>{result.doodle?.title || 'N/A'}</span></div>
-              <div><strong>📢 Comic:</strong> <span className="clickable-link" onClick={() => openItemModal('comic', result.comic)} style={{ cursor: 'pointer', color: '#0066cc', textDecoration: 'underline' }}>{result.comic?.title || 'N/A'}</span></div>
+              <div><strong>🎵 Song:</strong> <span className="clickable-link" onClick={() => openItemModal('song', result.song)} style={{ cursor: 'pointer', color: '#0066cc', textDecoration: 'underline' }}>{result.song?.title || 'N/A'}</span></div>
               <div><strong>🎬 Episode:</strong> <span className="clickable-link" onClick={() => openItemModal('episode', result.episode)} style={{ cursor: 'pointer', color: '#0066cc', textDecoration: 'underline' }}>{result.episode?.title || 'N/A'}</span></div>
               <div><strong>🎮 Game:</strong> <span className="clickable-link" onClick={() => openItemModal('game', result.game)} style={{ cursor: 'pointer', color: '#0066cc', textDecoration: 'underline' }}>{result.game?.title || 'N/A'}</span></div>
               <div><strong>🌭 Character:</strong> <span className="clickable-link" onClick={() => openItemModal('character', result.character)} style={{ cursor: 'pointer', color: '#0066cc', textDecoration: 'underline' }}>{result.character?.name || 'N/A'}</span></div>

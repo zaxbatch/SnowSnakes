@@ -9,7 +9,7 @@ const Header = ({
   showGameModal, setShowGameModal,
   showJokeModal, setShowJokeModal,
   showDoodleModal, setShowDoodleModal,
-  showComicModal, setShowComicModal,
+  showSongModal, setShowSongModal,
 }) => {
   const { user, logout, login, register } = useContext(AuthContext);
   const { deleteMode, setDeleteMode } = useDeleteMode();
@@ -28,7 +28,7 @@ const Header = ({
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
-  // ─── Other modals (joke/doodle/comic state lifted to App for the
+  // ─── Other modals (joke/doodle/song state lifted to App for the
   //     page-aware SUBMIT buttons on the global action bar) ───
 
   // ─── Joke form state ───
@@ -44,14 +44,13 @@ const Header = ({
   const [doodleJokeId, setDoodleJokeId] = useState('');
   const [doodleCharacterId, setDoodleCharacterId] = useState('');
 
-  // ─── Comic form state ───
-  const [comicTitle, setComicTitle] = useState('');
-  const [comicImageUrl, setComicImageUrl] = useState('');
-  const [comicImagePreview, setComicImagePreview] = useState('');
-  const [comicScene, setComicScene] = useState('📢');
-  const [comicDialogue, setComicDialogue] = useState('');
-  const [comicCaption, setComicCaption] = useState('');
-  const [comicCharacters, setComicCharacters] = useState('');
+  // ─── Song form state (songs replaced comics: an mp3 plus a cover) ───
+  const [songTitle, setSongTitle] = useState('');
+  const [songAudioUrl, setSongAudioUrl] = useState('');
+  const [songAudioName, setSongAudioName] = useState('');
+  const [songCoverUrl, setSongCoverUrl] = useState('');
+  const [songCoverPreview, setSongCoverPreview] = useState('');
+  const [songUploading, setSongUploading] = useState(false);
 
   // ─── Game form state ───
   const [gameTitle, setGameTitle] = useState('');
@@ -66,32 +65,76 @@ const Header = ({
   const [isUploadingGame, setIsUploadingGame] = useState(false);
 
   // ─── Cloudinary Widget ───
-  const openWidget = (setImageUrl, setPreview) => {
+  // Images go through the "image" resource type; audio must use "video"
+  // (Cloudinary's bucket for audio and video) with a preset that permits it.
+  // Overridable per environment so the preset can change without a rebuild.
+  const IMAGE_PRESET = process.env.REACT_APP_CLOUDINARY_IMAGE_PRESET || 'snowsnakes_unsigned';
+  const AUDIO_PRESET = process.env.REACT_APP_CLOUDINARY_AUDIO_PRESET || 'snowsnakes_audio';
+
+  const runWidget = ({ resourceType, uploadPreset, sources, onSuccess, onFail, label }) => {
+    if (!window.cloudinary || !window.cloudinary.createUploadWidget) {
+      // The widget script is deferred, so this can only happen if it failed
+      // to load (offline, blocked). Say so instead of throwing.
+      alert('The upload tool has not loaded yet. Check your connection and try again.');
+      return;
+    }
     const widget = window.cloudinary.createUploadWidget(
       {
         cloudName: 'r6natkse',
-        uploadPreset: 'snowsnakes_unsigned',
+        uploadPreset,
         folder: 'snowsnakes',
-        sources: ['local', 'url', 'camera'],
+        sources,
         multiple: false,
         maxFiles: 1,
-        resourceType: 'image',
+        resourceType,
       },
       (error, result) => {
         if (error) {
-          console.error('Upload error:', error);
-          alert('Upload failed. Please try again.');
+          console.error(`${label} upload error:`, error);
+          if (onFail) onFail(error);
           return;
         }
         if (result.event === 'success') {
-          const url = result.info.secure_url;
-          setImageUrl(url);
-          if (setPreview) setPreview(url);
-          alert('✅ Image uploaded successfully!');
+          onSuccess(result.info);
         }
       }
     );
     widget.open();
+  };
+
+  const openWidget = (setImageUrl, setPreview) => {
+    runWidget({
+      resourceType: 'image',
+      uploadPreset: IMAGE_PRESET,
+      sources: ['local', 'url', 'camera'],
+      label: 'Image',
+      onSuccess: (info) => {
+        setImageUrl(info.secure_url);
+        if (setPreview) setPreview(info.secure_url);
+        alert('✅ Image uploaded successfully!');
+      },
+      onFail: () => alert('Upload failed. Please try again.'),
+    });
+  };
+
+  const openAudioWidget = () => {
+    runWidget({
+      resourceType: 'video',
+      uploadPreset: AUDIO_PRESET,
+      sources: ['local', 'url'],
+      label: 'Audio',
+      onSuccess: (info) => {
+        setSongAudioUrl(info.secure_url);
+        // Cloudinary returns the original filename in `original_filename`.
+        setSongAudioName(info.original_filename ? `${info.original_filename}` : 'Audio uploaded');
+      },
+      onFail: () => alert(
+        'Audio upload failed.\n\n' +
+        'If this keeps happening, the Cloudinary account needs an unsigned ' +
+        `upload preset named "${AUDIO_PRESET}" that allows the "video" ` +
+        'resource type (Settings → Upload → Add upload preset).'
+      ),
+    });
   };
 
   // ─── Auth handler ─────────────────────────────────────
@@ -188,29 +231,31 @@ const Header = ({
     }
   };
 
-  const handleAddComic = async (e) => {
+  const handleAddSong = async (e) => {
     e.preventDefault();
+    if (!songAudioUrl) {
+      alert('Please upload an audio file first.');
+      return;
+    }
+    setSongUploading(true);
     try {
-      await api.post('/comics', {
-        title: comicTitle,
-        image_url: comicImageUrl || null,
-        scene: comicScene,
-        dialogue: comicDialogue,
-        caption: comicCaption,
-        characters: comicCharacters.split(',').map(c => c.trim()).filter(Boolean),
+      await api.post('/songs', {
+        title: songTitle.trim(),
+        audio_url: songAudioUrl,
+        cover_url: songCoverUrl || null,
       });
-      setShowComicModal(false);
-      setComicTitle('');
-      setComicImageUrl('');
-      setComicImagePreview('');
-      setComicScene('📢');
-      setComicDialogue('');
-      setComicCaption('');
-      setComicCharacters('');
-      alert('📢 Comic published successfully!');
+      setShowSongModal(false);
+      setSongTitle('');
+      setSongAudioUrl('');
+      setSongAudioName('');
+      setSongCoverUrl('');
+      setSongCoverPreview('');
+      alert('🎵 Song published successfully!');
       window.location.reload();
     } catch (err) {
-      alert('Error adding comic: ' + err.message);
+      alert('Error adding song: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setSongUploading(false);
     }
   };
 
@@ -361,8 +406,8 @@ const Header = ({
           <button className="btn btn-pink" onClick={() => setShowDoodleModal(true)}>
             <i className="fas fa-palette"></i> ADD DOODLE
           </button>
-          <button className="btn btn-purple" onClick={() => setShowComicModal(true)}>
-            <i className="fas fa-bullhorn"></i> NEW COMIC
+          <button className="btn btn-purple" onClick={() => setShowSongModal(true)}>
+            <i className="fas fa-music"></i> UPLOAD SONG
           </button>
           <button className="btn btn-success" onClick={() => setShowGameModal(true)}>
             <i className="fas fa-upload"></i> SUBMIT GAME
@@ -583,53 +628,75 @@ const Header = ({
           document.getElementById('modal-root')
         )}
 
-      {/* ─── COMIC MODAL ─── */}
-      {showComicModal &&
+      {/* ─── SONG MODAL ─── */}
+      {showSongModal &&
         ReactDOM.createPortal(
-          <div className="modal-overlay active" onClick={() => closeModal(setShowComicModal)}>
+          <div className="modal-overlay active" onClick={() => closeModal(setShowSongModal)}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h2>📢 Create a Comic</h2>
-                <button className="modal-close" onClick={() => closeModal(setShowComicModal)}>×</button>
+                <h2>🎵 Upload a Song</h2>
+                <button className="modal-close" onClick={() => closeModal(setShowSongModal)}>×</button>
               </div>
-              <form onSubmit={handleAddComic}>
+              <form onSubmit={handleAddSong}>
                 <div className="form-group">
-                  <label>TITLE <span style={{ color: '#ff0000' }}>*</span></label>
-                  <input className="form-control" value={comicTitle} onChange={(e) => setComicTitle(e.target.value)} required />
+                  <label>SONG TITLE <span style={{ color: '#ff0000' }}>*</span></label>
+                  <input
+                    className="form-control"
+                    value={songTitle}
+                    onChange={(e) => setSongTitle(e.target.value)}
+                    placeholder="e.g. Ode to Mayo"
+                    required
+                  />
                 </div>
+
                 <div className="form-group">
-                  <label>📸 COMIC IMAGE <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
+                  <label>🎧 AUDIO FILE (MP3) <span style={{ color: '#ff0000' }}>*</span></label>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <button type="button" className="btn btn-primary" onClick={() => openWidget(setComicImageUrl, setComicImagePreview)}>
+                    <button type="button" className="btn btn-primary" onClick={openAudioWidget} disabled={songUploading}>
+                      <i className={`fas ${songUploading ? 'fa-spinner fa-spin' : 'fa-upload'}`}></i>
+                      {songUploading ? ' Uploading…' : songAudioUrl ? ' Replace Audio' : ' Choose MP3'}
+                    </button>
+                    {songAudioUrl && (
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={() => { setSongAudioUrl(''); setSongAudioName(''); }}
+                      >
+                        <i className="fas fa-times"></i> Remove
+                      </button>
+                    )}
+                  </div>
+                  {songAudioUrl && (
+                    <div style={{ marginTop: '8px' }}>
+                      <div style={{ fontSize: '12px', color: '#00aa55', fontWeight: 700 }}>
+                        ✅ {songAudioName || 'Audio uploaded'}
+                      </div>
+                      <audio src={songAudioUrl} controls style={{ width: '100%', marginTop: '6px' }} />
+                    </div>
+                  )}
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
+                    MP3 or other audio. Large files take a moment to upload.
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>🖼️ COVER ART <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button type="button" className="btn btn-primary" onClick={() => openWidget(setSongCoverUrl, setSongCoverPreview)}>
                       <i className="fas fa-upload"></i> Choose Image
                     </button>
-                    {comicImagePreview && (
+                    {songCoverPreview && (
                       <div style={{ position: 'relative', display: 'inline-block' }}>
-                        <img src={comicImagePreview} alt="Preview" style={{ maxWidth: '100px', maxHeight: '100px', border: '3px solid #660099' }} />
-                        <button type="button" style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ff0000', color: '#fff', border: '2px solid #000', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => { setComicImageUrl(''); setComicImagePreview(''); }}>×</button>
+                        <img src={songCoverPreview} alt="Cover preview" style={{ maxWidth: '100px', maxHeight: '100px', border: '3px solid #660099' }} />
+                        <button type="button" style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ff0000', color: '#fff', border: '2px solid #000', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => { setSongCoverUrl(''); setSongCoverPreview(''); }}>×</button>
                       </div>
                     )}
                   </div>
                   <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>Supported: JPG, PNG, GIF. Max 10MB.</div>
                 </div>
-                <div className="form-group">
-                  <label>SCENE EMOJI <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
-                  <input className="form-control" value={comicScene} onChange={(e) => setComicScene(e.target.value)} maxLength={2} />
-                </div>
-                <div className="form-group">
-                  <label>DIALOGUE <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
-                  <textarea className="form-control" value={comicDialogue} onChange={(e) => setComicDialogue(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label>CAPTION <span style={{ color: '#7f8c8d' }}>(optional)</span></label>
-                  <input className="form-control" value={comicCaption} onChange={(e) => setComicCaption(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label>CHARACTERS (comma separated)</label>
-                  <input className="form-control" value={comicCharacters} onChange={(e) => setComicCharacters(e.target.value)} placeholder="Mayo, Ketchup, Salsa" />
-                </div>
-                <button className="btn btn-purple" type="submit" style={{ width: '100%' }}>
-                  <i className="fas fa-save"></i> PUBLISH COMIC
+
+                <button className="btn btn-purple" type="submit" style={{ width: '100%' }} disabled={songUploading || !songAudioUrl || !songTitle.trim()}>
+                  <i className="fas fa-save"></i> PUBLISH SONG
                 </button>
               </form>
             </div>
