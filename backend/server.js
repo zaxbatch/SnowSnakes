@@ -45,7 +45,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/jokes', require('./routes/jokes'));
 app.use('/api/doodles', require('./routes/doodles'));
-app.use('/api/comics', require('./routes/comics'));
+app.use('/api/songs', require('./routes/songs'));
 app.use('/api/episodes', require('./routes/episodes'));
 app.use('/api/games', require('./routes/games'));
 app.use('/api/characters', require('./routes/characters'));

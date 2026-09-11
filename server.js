@@ -19,7 +19,7 @@ app.use('/api/auth', require('./backend/routes/auth'));
 app.use('/api/admin', require('./backend/routes/admin'));
 app.use('/api/jokes', require('./backend/routes/jokes'));
 app.use('/api/doodles', require('./backend/routes/doodles'));
-app.use('/api/comics', require('./backend/routes/comics'));
+app.use('/api/songs', require('./backend/routes/songs'));
 app.use('/api/episodes', require('./backend/routes/episodes'));
 app.use('/api/games', require('./backend/routes/games'));
 app.use('/api/characters', require('./backend/routes/characters'));

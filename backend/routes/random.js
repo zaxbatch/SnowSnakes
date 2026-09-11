@@ -10,7 +10,7 @@ const { pool } = require('../config/db');
 const RANDOM_TABLES = [
   ['joke', 'jokes'],
   ['doodle', 'doodles'],
-  ['comic', 'comics'],
+  ['song', 'songs'],
   ['episode', 'episodes'],
   ['game', 'games'],
   ['character', 'characters'],

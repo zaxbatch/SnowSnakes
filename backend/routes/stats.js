@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
       SELECT
         (SELECT COUNT(*) FROM jokes)     AS jokes,
         (SELECT COUNT(*) FROM doodles)   AS doodles,
-        (SELECT COUNT(*) FROM comics)    AS comics,
+        (SELECT COUNT(*) FROM songs)     AS songs,
         (SELECT COUNT(*) FROM episodes)  AS episodes,
         (SELECT COUNT(*) FROM games)     AS games
     `);
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
     const data = {
       jokes: Number(row.jokes) || 0,
       doodles: Number(row.doodles) || 0,
-      comics: Number(row.comics) || 0,
+      songs: Number(row.songs) || 0,
       episodes: Number(row.episodes) || 0,
       games: Number(row.games) || 0,
     };
