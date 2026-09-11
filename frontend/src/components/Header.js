@@ -10,6 +10,9 @@ const Header = ({
   showJokeModal, setShowJokeModal,
   showDoodleModal, setShowDoodleModal,
   showSongModal, setShowSongModal,
+  doodleImageUrl, setDoodleImageUrl,
+  doodleImagePreview, setDoodleImagePreview,
+  onOpenDoodleMaker,
 }) => {
   const { user, logout, login, register } = useContext(AuthContext);
   const { deleteMode, setDeleteMode } = useDeleteMode();
@@ -37,10 +40,9 @@ const Header = ({
   const [jokeTags, setJokeTags] = useState('');
   const [jokeSeries, setJokeSeries] = useState('');
 
-  // ─── Doodle form state ───
+  // ─── Doodle form state (title/ids live here; the image itself is owned by
+  //     App so the Doodle Maker can hand its output straight to this form) ───
   const [doodleTitle, setDoodleTitle] = useState('');
-  const [doodleImageUrl, setDoodleImageUrl] = useState('');
-  const [doodleImagePreview, setDoodleImagePreview] = useState('');
   const [doodleJokeId, setDoodleJokeId] = useState('');
   const [doodleCharacterId, setDoodleCharacterId] = useState('');
 
@@ -254,8 +256,8 @@ const Header = ({
       });
       setShowDoodleModal(false);
       setDoodleTitle('');
-      setDoodleImageUrl('');
-      setDoodleImagePreview('');
+      if (setDoodleImageUrl) setDoodleImageUrl('');
+      if (setDoodleImagePreview) setDoodleImagePreview('');
       setDoodleJokeId('');
       setDoodleCharacterId('');
       alert('🎨 Doodle added successfully!');
@@ -634,6 +636,9 @@ const Header = ({
                     <button type="button" className="btn btn-primary" onClick={() => openWidget(setDoodleImageUrl, setDoodleImagePreview)}>
                       <i className="fas fa-upload"></i> Choose Image
                     </button>
+                    <button type="button" className="btn btn-warning" onClick={onOpenDoodleMaker}>
+                      <i className="fas fa-paintbrush"></i> Or draw one
+                    </button>
                     {doodleImagePreview && (
                       <div style={{ position: 'relative', display: 'inline-block' }}>
                         <img src={doodleImagePreview} alt="Preview" style={{ maxWidth: '100px', maxHeight: '100px', border: '3px solid #003399' }} />
@@ -641,7 +646,10 @@ const Header = ({
                       </div>
                     )}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>Supported: JPG, PNG, GIF. Max 10MB.</div>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
+                    Supported: JPG, PNG, GIF. Max 10MB. No picture handy? Draw one in the Doodle Maker
+                    and it will be attached here.
+                  </div>
                 </div>
                 <div className="form-row">
                   <div className="form-group">

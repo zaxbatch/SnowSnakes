@@ -7,7 +7,7 @@ import CommentModal from '../CommentModal';
 import FullscreenMediaModal from '../FullscreenMediaModal';
 import LoadingSkeleton, { LoadError } from '../LoadingSkeleton';
 
-const DoodleGallery = () => {
+const DoodleGallery = ({ setShowDoodleModal, onOpenDoodleMaker }) => {
   const { user } = useContext(AuthContext);
   const { deleteMode } = useDeleteMode();
   const [doodles, setDoodles] = useState([]);
@@ -76,6 +76,24 @@ const DoodleGallery = () => {
         <span className="section-icon">🎨</span>
         <h2>DOODLE GALLERY</h2>
         <p>Where art meets condiments</p>
+      </div>
+
+      <div className="doodle-actions">
+        <button type="button" className="btn btn-warning" onClick={onOpenDoodleMaker}>
+          <i className="fas fa-paintbrush"></i> MAKE DOODLE
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={fetchDoodles}
+          disabled={loading}
+          title="Reload the gallery"
+        >
+          <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-sync'}`}></i> REFRESH
+        </button>
+        <button type="button" className="btn btn-success" onClick={() => setShowDoodleModal(true)}>
+          <i className="fas fa-upload"></i> ADD DOODLE
+        </button>
       </div>
 
       {/* ─── Search & Sort ─── */}
@@ -161,6 +179,7 @@ const DoodleGallery = () => {
         currentUser={user}
         onComment={handleComment}
       />
+
     </div>
   );
 };

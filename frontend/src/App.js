@@ -9,6 +9,8 @@ import Home from './components/Home';
 import JokeList from './components/Jokes/JokeList';
 import DoodleGallery from './components/Doodles/DoodleGallery';
 import SongGallery from './components/Songs/SongGallery';
+import DoodleMaker from './components/Doodles/DoodleMaker';
+import { uploadImageBlob } from './utils/uploadImage';
 import GameGallery from './components/Games/GameGallery';
 import EpisodeList from './components/Spread/EpisodeList';
 import Randomizer from './components/Randomizer/Randomizer';
@@ -64,6 +66,13 @@ function App() {
   const [showDoodleModal, setShowDoodleModal] = useState(false);
   const [showSongModal, setShowSongModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  // The doodle maker is mounted here, once, so it can be opened from the
+  // doodles page and from inside the Add Doodle form without duplicating it.
+  // The image it produces is shared with the form, so finishing a drawing
+  // leaves the form ready to publish.
+  const [doodleMakerOpen, setDoodleMakerOpen] = useState(false);
+  const [doodleImageUrl, setDoodleImageUrl] = useState('');
+  const [doodleImagePreview, setDoodleImagePreview] = useState('');
 
   return (
     <AuthProvider>
@@ -82,6 +91,11 @@ function App() {
                 setShowDoodleModal={setShowDoodleModal}
                 showSongModal={showSongModal}
                 setShowSongModal={setShowSongModal}
+                doodleImageUrl={doodleImageUrl}
+                setDoodleImageUrl={setDoodleImageUrl}
+                doodleImagePreview={doodleImagePreview}
+                setDoodleImagePreview={setDoodleImagePreview}
+                onOpenDoodleMaker={() => { setShowDoodleModal(false); setDoodleMakerOpen(true); }}
               />
               <Nav />
               <GlobalActionBar
@@ -94,7 +108,15 @@ function App() {
               <Routes key={refreshKey}>
                 <Route path="/" element={<Home />} />
                 <Route path="/jokes" element={<JokeList />} />
-                <Route path="/doodles" element={<DoodleGallery />} />
+                <Route
+                  path="/doodles"
+                  element={
+                    <DoodleGallery
+                      setShowDoodleModal={setShowDoodleModal}
+                      onOpenDoodleMaker={() => setDoodleMakerOpen(true)}
+                    />
+                  }
+                />
                 <Route path="/songs" element={<SongGallery />} />
                 <Route path="/games" element={<GameGallery setShowGameModal={setShowGameModal} />} />
                 <Route path="/spread" element={<EpisodeList />} />
@@ -103,6 +125,17 @@ function App() {
               </Routes>
               <SnowSnakeEasterEgg />
             </div>
+            <DoodleMaker
+              open={doodleMakerOpen}
+              onClose={() => setDoodleMakerOpen(false)}
+              uploadImage={uploadImageBlob}
+              onUseDoodle={(imageUrl) => {
+                setDoodleImageUrl(imageUrl);
+                setDoodleImagePreview(imageUrl);
+                setDoodleMakerOpen(false);
+                setShowDoodleModal(true);
+              }}
+            />
           </BrowserRouter>
         </KillerModeProvider>
       </DeleteModeProvider>
