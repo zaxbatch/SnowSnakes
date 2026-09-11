@@ -21,4 +21,39 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// ─── Expired / invalid session recovery ──────────────────────
+// A stored token stops being accepted whenever it expires (7 days) or the
+// server's JWT secret changes. Previously the app kept sending that dead
+// token and every write failed with "Invalid token", with no way out short
+// of clearing browser storage by hand. Now the first rejected request clears
+// the dead session and tells the user to sign in again.
+let sessionExpiredHandled = false;
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response && error.response.status;
+    const body = (error.response && error.response.data) || {};
+    const message = typeof body === 'string' ? body : body.error || '';
+    const tokenRejected = status === 401 && /invalid token/i.test(message);
+
+    if (tokenRejected) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // Only interrupt once per page load, so several failing requests in
+      // flight at the same time don't stack up alerts.
+      if (!sessionExpiredHandled) {
+        sessionExpiredHandled = true;
+        alert('Your session has expired. Please log in again.\n\nThe page will reload now.');
+        window.location.reload();
+      }
+
+      return new Promise(() => {}); // page is reloading; swallow the rejection
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default api;
