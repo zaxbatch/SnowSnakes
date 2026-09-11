@@ -10,14 +10,15 @@ router.get('/', async (req, res) => {
   try {
     const { search, sort } = req.query;
     const doodles = await Doodle.findAll({ search, sort });
-    // Add like status and comment counts if needed
+    // One query for all comments and one for like status, instead of
+    // two round trips per doodle.
+    const [commentsByDoodle, likedIds] = await Promise.all([
+      Interaction.getCommentsForMany('doodle', doodles.map((d) => d.id)),
+      Interaction.getLikedIds(req.user && req.user.id, 'doodle', doodles.map((d) => d.id)),
+    ]);
     for (const d of doodles) {
-      if (req.user) {
-        d.isLiked = await Interaction.getLikeStatus(req.user.id, 'doodle', d.id);
-      } else {
-        d.isLiked = false;
-      }
-      d.comments = await Interaction.getComments('doodle', d.id);
+      d.comments = commentsByDoodle.get(Number(d.id)) || [];
+      d.isLiked = likedIds.has(Number(d.id));
     }
     res.json(doodles);
   } catch (err) {

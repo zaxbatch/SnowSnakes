@@ -138,8 +138,8 @@ const Randomizer = () => {
         <span className="big-emoji" style={{ fontSize: 100, display: 'block', marginBottom: 15 }}>🐍</span>
         <h1 style={{ color: '#ff00ff', fontFamily: "'Comic Sans MS', cursive" }}>RANDOM SNOW SNAKE</h1>
         <p style={{ color: '#003399', fontWeight: 'bold' }}>CLICK THE BUTTON AND LET THE SNOW SNAKE CHOOSE YOUR FATE!</p>
-        <button className="btn btn-primary mt-20" onClick={fetchRandom} style={{ fontSize: 24, padding: '15px 40px' }}>
-          <i className="fas fa-dice"></i> {loading ? 'SUMMONING...' : 'SUMMON!'}
+        <button className="btn btn-primary mt-20" onClick={fetchRandom} disabled={loading} style={{ fontSize: 24, padding: '15px 40px' }}>
+          <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-dice'}`}></i> {loading ? 'SUMMONING...' : 'SUMMON!'}
         </button>
         {result && (
           <div style={{ marginTop: 30 }}>

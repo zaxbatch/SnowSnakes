@@ -1,11 +1,16 @@
 const fetch = require('node-fetch');
 
-// Use the new environment variable name
-//const HUBSPOT_ACCESS_TOKEN = process.env.HUBSPOT_ACCESS_TOKEN;
 const HUBSPOT_ACCESS_TOKEN = process.env.HUBSPOT_ACCESS_TOKEN;
 const HUBSPOT_API_URL = 'https://api.hubapi.com/crm/v3/objects/contacts';
-console.log('🔑 Token exists?', !!HUBSPOT_ACCESS_TOKEN);
-console.log('🔑 Token starts with:', HUBSPOT_ACCESS_TOKEN ? HUBSPOT_ACCESS_TOKEN.substring(0, 8) + '...' : 'undefined');
+
+// Presence only. This previously printed the first 8 characters of the
+// access token on every boot, which put a chunk of a live credential into
+// the host's log output — logs are widely readable and long-lived, so a
+// token fragment does not belong there.
+if (!HUBSPOT_ACCESS_TOKEN) {
+  console.warn('⚠️ HUBSPOT_ACCESS_TOKEN not set – lead creation disabled');
+}
+
 async function createHubSpotContact(userData) {
   if (!HUBSPOT_ACCESS_TOKEN) {
     console.warn('⚠️ HubSpot access token not set – skipping lead creation');

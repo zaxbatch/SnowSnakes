@@ -4,6 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
 import SocialActions from '../SocialActions';
 import CommentModal from '../CommentModal';
+import LoadingSkeleton from '../LoadingSkeleton';
 
 // ─── Extract YouTube video ID ───
 const extractYouTubeId = (input) => {
@@ -158,7 +159,7 @@ const EpisodeList = () => {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px' }}>Loading episodes...</div>
+        <LoadingSkeleton variant="media" count={4} gridClass="grid-spread" message="Loading episodes…" />
       ) : episodes.length === 0 ? (
         <div className="empty-state">
           <span className="empty-icon">📺</span>

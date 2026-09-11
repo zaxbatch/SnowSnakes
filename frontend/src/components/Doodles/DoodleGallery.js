@@ -5,6 +5,7 @@ import { useDeleteMode } from '../../context/DeleteModeContext';
 import SocialActions from '../SocialActions';
 import CommentModal from '../CommentModal';
 import FullscreenMediaModal from '../FullscreenMediaModal';
+import LoadingSkeleton, { LoadError } from '../LoadingSkeleton';
 
 const DoodleGallery = () => {
   const { user } = useContext(AuthContext);
@@ -13,12 +14,16 @@ const DoodleGallery = () => {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('newest');
   const [selectedDoodle, setSelectedDoodle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [commentContent, setCommentContent] = useState(null);
   const [commentContentType, setCommentContentType] = useState('');
 
   const fetchDoodles = async () => {
+    setLoading(true);
+    setError(false);
     try {
       const res = await api.get('/doodles', { params: { search, sort } });
       setDoodles(res.data);
@@ -29,6 +34,9 @@ const DoodleGallery = () => {
       }
     } catch (err) {
       console.error('Failed to fetch doodles:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,44 +94,54 @@ const DoodleGallery = () => {
         </div>
       </div>
 
-      <div className="grid-3">
-        {doodles.map(d => (
-          <div className="doodle-card" key={d.id}>
-            {d.image_url && d.image_url.startsWith('http') ? (
-              <img
-                src={d.image_url}
-                alt={d.title}
-                style={{ maxWidth: '100%', maxHeight: '150px', objectFit: 'contain', cursor: 'pointer' }}
-                onClick={() => setSelectedDoodle(d)}
-              />
-            ) : (
-              <span className="doodle-art" style={{ fontSize: 60, cursor: 'pointer' }} onClick={() => setSelectedDoodle(d)}>
-                {d.image_url || '🎨'}
-              </span>
-            )}
-            <div className="card-title">{d.title}</div>
-            {deleteMode && (
-              <button className="btn btn-danger btn-sm mt-20" onClick={() => handleDelete(d.id)}>
-                <i className="fas fa-trash"></i> DELETE
+      {loading ? (
+        <LoadingSkeleton variant="tile" count={6} gridClass="grid-3" message="Loading doodles…" />
+      ) : error ? (
+        <LoadError message="Couldn't load the doodles." onRetry={fetchDoodles} />
+      ) : doodles.length === 0 ? (
+        <div className="empty-state">
+          <span className="empty-icon">🎨</span>
+          <p>No doodles yet.</p>
+        </div>
+      ) : (
+        <div className="grid-3">
+          {doodles.map(d => (
+            <div className="doodle-card" key={d.id}>
+              {d.image_url && d.image_url.startsWith('http') ? (
+                <img
+                  src={d.image_url}
+                  alt={d.title}
+                  style={{ maxWidth: '100%', maxHeight: '150px', objectFit: 'contain', cursor: 'pointer' }}
+                  onClick={() => setSelectedDoodle(d)}
+                />
+              ) : (
+                <span className="doodle-art" style={{ fontSize: 60, cursor: 'pointer' }} onClick={() => setSelectedDoodle(d)}>
+                  {d.image_url || '🎨'}
+                </span>
+              )}
+              <div className="card-title">{d.title}</div>
+              {deleteMode && (
+                <button className="btn btn-danger btn-sm mt-20" onClick={() => handleDelete(d.id)}>
+                  <i className="fas fa-trash"></i> DELETE
+                </button>
+              )}
+              <button className="btn btn-primary btn-sm" onClick={() => setSelectedDoodle(d)}>
+                <i className="fas fa-expand"></i> Expand
               </button>
-            )}
-            <button className="btn btn-primary btn-sm" onClick={() => setSelectedDoodle(d)}>
-              <i className="fas fa-expand"></i> Expand
-            </button>
-            <SocialActions
-              contentType="doodle"
-              contentId={d.id}
-              likes={d.likes || 0}
-              shares={d.shares || 0}
-              commentCount={d.comments ? d.comments.length : 0}
-              currentUser={user}
-              onUpdate={fetchDoodles}
-              onOpenCommentModal={() => openCommentModal(d)}
-            />
-          </div>
-        ))}
-        {doodles.length === 0 && <p>No doodles yet.</p>}
-      </div>
+              <SocialActions
+                contentType="doodle"
+                contentId={d.id}
+                likes={d.likes || 0}
+                shares={d.shares || 0}
+                commentCount={d.comments ? d.comments.length : 0}
+                currentUser={user}
+                onUpdate={fetchDoodles}
+                onOpenCommentModal={() => openCommentModal(d)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {selectedDoodle && (
         <FullscreenMediaModal

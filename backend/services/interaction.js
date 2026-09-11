@@ -82,6 +82,47 @@ class Interaction {
     );
     return result.rows.length > 0;
   }
+
+  // ─── Batch helpers (N+1 fix) ────────────────────────────────
+  // List endpoints used to call getComments()/getLikeStatus() inside a loop,
+  // i.e. one database round trip per row. Against a remote or free-tier
+  // database that latency dominates the page load: 20 jokes meant 20
+  // sequential round trips before the list could render. These two helpers
+  // fetch everything for a whole page in a single query each.
+
+  // Returns Map<contentId, comment[]>; every requested id is present.
+  static async getCommentsForMany(contentType, contentIds) {
+    const ids = [...new Set((contentIds || []).map(Number).filter(Number.isInteger))];
+    const grouped = new Map(ids.map((id) => [id, []]));
+    if (ids.length === 0) return grouped;
+
+    const result = await pool.query(
+      `SELECT c.*, u.username, u.display_name, u.avatar
+       FROM comments c
+       JOIN users u ON c.user_id = u.id
+       WHERE c.content_type = $1 AND c.content_id = ANY($2::int[])
+       ORDER BY c.created_at DESC`,
+      [contentType, ids]
+    );
+
+    for (const row of result.rows) {
+      const bucket = grouped.get(Number(row.content_id));
+      if (bucket) bucket.push(row);
+    }
+    return grouped;
+  }
+
+  // Returns a Set of the content ids this user has liked.
+  static async getLikedIds(userId, contentType, contentIds) {
+    const ids = [...new Set((contentIds || []).map(Number).filter(Number.isInteger))];
+    if (!userId || ids.length === 0) return new Set();
+
+    const result = await pool.query(
+      'SELECT content_id FROM likes WHERE user_id = $1 AND content_type = $2 AND content_id = ANY($3::int[])',
+      [String(userId), contentType, ids]
+    );
+    return new Set(result.rows.map((r) => Number(r.content_id)));
+  }
 }
 
 module.exports = Interaction;

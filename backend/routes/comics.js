@@ -10,13 +10,15 @@ router.get('/', async (req, res) => {
   try {
     const { search, sort } = req.query;
     const comics = await Comic.findAll({ search, sort });
+    // One query for all comments and one for like status, instead of
+    // two round trips per comic.
+    const [commentsByComic, likedIds] = await Promise.all([
+      Interaction.getCommentsForMany('comic', comics.map((c) => c.id)),
+      Interaction.getLikedIds(req.user && req.user.id, 'comic', comics.map((c) => c.id)),
+    ]);
     for (const c of comics) {
-      if (req.user) {
-        c.isLiked = await Interaction.getLikeStatus(req.user.id, 'comic', c.id);
-      } else {
-        c.isLiked = false;
-      }
-      c.comments = await Interaction.getComments('comic', c.id);
+      c.comments = commentsByComic.get(Number(c.id)) || [];
+      c.isLiked = likedIds.has(Number(c.id));
     }
     res.json(comics);
   } catch (err) {

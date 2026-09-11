@@ -26,6 +26,7 @@ app.use('/api/characters', require('./backend/routes/characters'));
 app.use('/api/fridge', require('./backend/routes/fridge'));
 app.use('/api/random', require('./backend/routes/random'));
 app.use('/api/upload', require('./backend/routes/upload'));
+app.use('/api/stats', require('./backend/routes/stats'));
 
 // ─── Temporary: Test database connection ──────────────
 app.get('/api/test-db', async (req, res) => {

@@ -2,19 +2,27 @@ import React, { useEffect, useState, useContext } from 'react';
 import api from '../../api';
 import { AuthContext } from '../../context/AuthContext';
 import JokeCard from './JokeCard';
+import LoadingSkeleton, { LoadError } from '../LoadingSkeleton';
 
 const JokeList = () => {
   const [jokes, setJokes] = useState([]);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('newest');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const { user } = useContext(AuthContext);
 
   const fetchJokes = async () => {
+    setLoading(true);
+    setError(false);
     try {
       const res = await api.get('/jokes', { params: { search, sort } });
       setJokes(res.data);
     } catch (err) {
       console.error('Failed to fetch jokes:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -111,20 +119,31 @@ const JokeList = () => {
           <button className="btn btn-secondary" onClick={() => setSort('oldest')}>OLDEST</button>
         </div>
       </div>
-      <div className="grid-2">
-        {jokes.map(joke => (
-          <JokeCard
-            key={`${joke.id}-${joke.kill_count}`} // ✅ Force re-render when kill_count changes
-            joke={joke}
-            onLike={handleLike}
-            onShare={handleShare}
-            onKill={handleKill}
-            onDelete={handleDelete}
-            onComment={handleComment}
-            currentUser={user}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <LoadingSkeleton variant="joke" count={6} gridClass="grid-2" message="Loading dad jokes…" />
+      ) : error ? (
+        <LoadError message="Couldn't load the jokes." onRetry={fetchJokes} />
+      ) : jokes.length === 0 ? (
+        <div className="empty-state">
+          <span className="empty-icon">😂</span>
+          <p>No jokes here yet — be the first to submit one!</p>
+        </div>
+      ) : (
+        <div className="grid-2">
+          {jokes.map(joke => (
+            <JokeCard
+              key={`${joke.id}-${joke.kill_count}`} // ✅ Force re-render when kill_count changes
+              joke={joke}
+              onLike={handleLike}
+              onShare={handleShare}
+              onKill={handleKill}
+              onDelete={handleDelete}
+              onComment={handleComment}
+              currentUser={user}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

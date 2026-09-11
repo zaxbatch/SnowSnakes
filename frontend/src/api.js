@@ -7,6 +7,10 @@ const baseURL = process.env.NODE_ENV === 'production'
 
 const api = axios.create({
   baseURL: baseURL,
+  // A cold free-tier backend can take a while, but it should never leave the
+  // UI spinning forever. Past this point the request fails and the page shows
+  // a retry instead of an endless skeleton.
+  timeout: 30000,
 });
 
 api.interceptors.request.use((config) => {

@@ -4,6 +4,7 @@ import api from '../../api';
 import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
 import CommentModal from '../CommentModal';
+import LoadingSkeleton from '../LoadingSkeleton';
 
 const BACKEND_URL = api.defaults.baseURL.replace(/\/api$/, '');
 
@@ -289,7 +290,7 @@ const GameGallery = ({ setShowGameModal }) => {
         )}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>Loading games...</div>
+          <LoadingSkeleton variant="media" count={6} gridClass="grid-games" message="Loading games…" />
         ) : (
           <div className="grid-games">
             {games.length === 0 ? (

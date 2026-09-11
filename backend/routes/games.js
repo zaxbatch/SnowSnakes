@@ -91,23 +91,15 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     const { search, sort } = req.query;
     const games = await Game.findAll({ search, sort });
+    // One query for all comments and one for like status, instead of
+    // two round trips per game.
+    const [commentsByGame, likedIds] = await Promise.all([
+      Interaction.getCommentsForMany('game', games.map((g) => g.id)),
+      Interaction.getLikedIds(req.user && req.user.id, 'game', games.map((g) => g.id)),
+    ]);
     for (const g of games) {
-      try {
-        g.comments = await Interaction.getComments('game', g.id);
-      } catch (err) {
-        console.error(`Error fetching comments for game ${g.id}:`, err);
-        g.comments = [];
-      }
-      if (req.user) {
-        try {
-          g.isLiked = await Interaction.getLikeStatus(req.user.id, 'game', g.id);
-        } catch (err) {
-          console.error(`Error fetching like status for game ${g.id}:`, err);
-          g.isLiked = false;
-        }
-      } else {
-        g.isLiked = false;
-      }
+      g.comments = commentsByGame.get(Number(g.id)) || [];
+      g.isLiked = likedIds.has(Number(g.id));
     }
     res.json(games);
   } catch (err) {

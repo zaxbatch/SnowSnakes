@@ -4,33 +4,18 @@ import api from '../api';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    jokes: 0,
-    doodles: 0,
-    comics: 0,
-    episodes: 0,
-    games: 0,
-  });
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
+    // One cheap COUNT query instead of downloading all five content tables
+    // just to read .length off them.
     const fetchStats = async () => {
       try {
-        const [jokesRes, doodlesRes, comicsRes, episodesRes, gamesRes] = await Promise.all([
-          api.get('/jokes'),
-          api.get('/doodles'),
-          api.get('/comics'),
-          api.get('/episodes'),
-          api.get('/games'),
-        ]);
-        setStats({
-          jokes: jokesRes.data.length,
-          doodles: doodlesRes.data.length,
-          comics: comicsRes.data.length,
-          episodes: episodesRes.data.length,
-          games: gamesRes.data.length,
-        });
+        const res = await api.get('/stats');
+        setStats(res.data);
       } catch (err) {
         console.error('Failed to fetch stats:', err);
+        setStats(null); // tiles fall back to a dash rather than a wrong 0
       }
     };
     fetchStats();
@@ -70,8 +55,8 @@ const Home = () => {
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
               <div style={{ fontSize: '40px' }}>{item.emoji}</div>
-              <h3>{stats[item.key]} {item.label}</h3>
-              <p style={{ color: '#003399' }}>Click to explore</p>
+              <h3>{stats ? stats[item.key] : '—'} {item.label}</h3>
+              <p style={{ color: '#003399' }}>{stats ? 'Click to explore' : 'Counting…'}</p>
             </div>
           ))}
         </div>

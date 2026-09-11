@@ -50,6 +50,7 @@ app.use('/api/characters', require('./routes/characters'));
 app.use('/api/fridge', require('./routes/fridge'));
 app.use('/api/random', require('./routes/random'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/stats', require('./routes/stats'));
 
 // ─── Global error handler ────────────────────────────────
 // Multer errors (file type/size/field limits) otherwise fall through to

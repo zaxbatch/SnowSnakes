@@ -5,6 +5,7 @@ import { useDeleteMode } from '../../context/DeleteModeContext';
 import SocialActions from '../SocialActions';
 import CommentModal from '../CommentModal';
 import FullscreenMediaModal from '../FullscreenMediaModal';
+import LoadingSkeleton, { LoadError } from '../LoadingSkeleton';
 
 const ComicList = () => {
   const { user } = useContext(AuthContext);
@@ -13,12 +14,16 @@ const ComicList = () => {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('newest');
   const [selectedComic, setSelectedComic] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [commentContent, setCommentContent] = useState(null);
   const [commentContentType, setCommentContentType] = useState('');
 
   const fetchComics = async () => {
+    setLoading(true);
+    setError(false);
     try {
       const res = await api.get('/comics', { params: { search, sort } });
       setComics(res.data);
@@ -28,6 +33,9 @@ const ComicList = () => {
       }
     } catch (err) {
       console.error('Failed to fetch comics:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,47 +93,57 @@ const ComicList = () => {
         </div>
       </div>
 
-      <div className="grid-comics">
-        {comics.map(c => (
-          <div className="comic-card" key={c.id}>
-            {c.image_url && c.image_url.startsWith('http') ? (
-              <img
-                src={c.image_url}
-                alt={c.title}
-                style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', marginBottom: '10px', cursor: 'pointer' }}
-                onClick={() => setSelectedComic(c)}
-              />
-            ) : (
-              <div className="comic-panel" onClick={() => setSelectedComic(c)}>
-                <span className="scene">{c.scene}</span>
-                <div className="dialogue">"{c.dialogue}"</div>
-                <div className="caption">{c.caption}</div>
-              </div>
-            )}
-            <h3 style={{ fontFamily: "'Comic Sans MS', cursive", color: '#660099' }}>{c.title}</h3>
-            <div style={{ fontSize: 12, color: '#666', marginTop: 8 }}>✏️ By {c.author_name || 'anonymous'}</div>
-            {deleteMode && (
-              <button className="btn btn-danger btn-sm" onClick={() => handleDelete(c.id)}>
-                <i className="fas fa-trash"></i> DELETE
+      {loading ? (
+        <LoadingSkeleton variant="tile" count={4} gridClass="grid-comics" message="Loading comics…" />
+      ) : error ? (
+        <LoadError message="Couldn't load the comics." onRetry={fetchComics} />
+      ) : comics.length === 0 ? (
+        <div className="empty-state">
+          <span className="empty-icon">📢</span>
+          <p>No comics yet.</p>
+        </div>
+      ) : (
+        <div className="grid-comics">
+          {comics.map(c => (
+            <div className="comic-card" key={c.id}>
+              {c.image_url && c.image_url.startsWith('http') ? (
+                <img
+                  src={c.image_url}
+                  alt={c.title}
+                  style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', marginBottom: '10px', cursor: 'pointer' }}
+                  onClick={() => setSelectedComic(c)}
+                />
+              ) : (
+                <div className="comic-panel" onClick={() => setSelectedComic(c)}>
+                  <span className="scene">{c.scene}</span>
+                  <div className="dialogue">"{c.dialogue}"</div>
+                  <div className="caption">{c.caption}</div>
+                </div>
+              )}
+              <h3 style={{ fontFamily: "'Comic Sans MS', cursive", color: '#660099' }}>{c.title}</h3>
+              <div style={{ fontSize: 12, color: '#666', marginTop: 8 }}>✏️ By {c.author_name || 'anonymous'}</div>
+              {deleteMode && (
+                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(c.id)}>
+                  <i className="fas fa-trash"></i> DELETE
+                </button>
+              )}
+              <button className="btn btn-primary btn-sm" onClick={() => setSelectedComic(c)}>
+                <i className="fas fa-expand"></i> Expand
               </button>
-            )}
-            <button className="btn btn-primary btn-sm" onClick={() => setSelectedComic(c)}>
-              <i className="fas fa-expand"></i> Expand
-            </button>
-            <SocialActions
-              contentType="comic"
-              contentId={c.id}
-              likes={c.likes || 0}
-              shares={c.shares || 0}
-              commentCount={c.comments ? c.comments.length : 0}
-              currentUser={user}
-              onUpdate={fetchComics}
-              onOpenCommentModal={() => openCommentModal(c)}
-            />
-          </div>
-        ))}
-        {comics.length === 0 && <p>No comics yet.</p>}
-      </div>
+              <SocialActions
+                contentType="comic"
+                contentId={c.id}
+                likes={c.likes || 0}
+                shares={c.shares || 0}
+                commentCount={c.comments ? c.comments.length : 0}
+                currentUser={user}
+                onUpdate={fetchComics}
+                onOpenCommentModal={() => openCommentModal(c)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {selectedComic && (
         <FullscreenMediaModal

@@ -11,9 +11,10 @@ router.get('/', async (req, res) => {
   try {
     const { search, sort } = req.query;
     const jokes = await Joke.findAll({ search, sort });
-    // For each joke, get comments using Interaction
-    for (let joke of jokes) {
-      joke.comments = await Interaction.getComments('joke', joke.id);
+    // One query for the whole page's comments instead of one per joke.
+    const commentsByJoke = await Interaction.getCommentsForMany('joke', jokes.map((j) => j.id));
+    for (const joke of jokes) {
+      joke.comments = commentsByJoke.get(Number(joke.id)) || [];
     }
     res.json(jokes);
   } catch (err) {
