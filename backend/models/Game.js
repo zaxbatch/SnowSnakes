@@ -2,9 +2,31 @@ const { pool } = require('../config/db');
 
 class Game {
   // ─── Find all with search & sort ─────────────────────────
+  //
+  // NOTE: this returns the full row including `code`, which holds the pasted
+  // game source. One game on this site carries 5.3 MB of it, so calling this
+  // to render the gallery shipped ~5.4 MB per page load. Use findAllForList()
+  // for lists; keep this for anything that actually needs the code.
   static async findAll({ search, sort } = {}) {
+    return this._find({ search, sort, columns: 'g.*' });
+  }
+
+  // ─── Find all WITHOUT the game source (for list/gallery views) ───
+  // Everything the gallery renders, minus the multi-megabyte `code` column.
+  // Note: production's games table has no `files` column (only `file_count`),
+  // so the badge count comes from file_count rather than a files array.
+  static async findAllForList({ search, sort } = {}) {
+    return this._find({
+      search,
+      sort,
+      columns: `g.id, g.title, g.description, g.icon, g.tags, g.author_id, g.type,
+                g.votes, g.plays, g.file_count, g.created_at, g.shares, g.likes`,
+    });
+  }
+
+  static async _find({ search, sort, columns }) {
     let query = `
-      SELECT g.*, u.username as author_name
+      SELECT ${columns}, u.username as author_name
       FROM games g
       LEFT JOIN users u ON g.author_id = u.id
     `;

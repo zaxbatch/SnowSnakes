@@ -90,7 +90,11 @@ const cleanupTempFiles = (files) => {
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const { search, sort } = req.query;
-    const games = await Game.findAll({ search, sort });
+    // findAllForList omits the `code` column: one game here carries 5.3 MB of
+    // pasted source, and the gallery never renders it, so including it made
+    // every visit to /games download ~5.4 MB. The full row is still used by
+    // the single-game and launch endpoints.
+    const games = await Game.findAllForList({ search, sort });
     // One query for all comments and one for like status, instead of
     // two round trips per game.
     const [commentsByGame, likedIds] = await Promise.all([

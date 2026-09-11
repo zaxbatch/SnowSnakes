@@ -306,9 +306,12 @@ const GameGallery = ({ setShowGameModal }) => {
                   ) : (
                     <div className="game-badge" style={{ background: '#ffcc00', color: '#000' }}>⭐ BUILT-IN</div>
                   )}
-                  {game.files && game.files.length > 0 && (
+                  {/* The list endpoint returns file_count, not a files array
+                      (the array column does not exist in production, so this
+                      badge never rendered). */}
+                  {game.file_count > 0 && (
                     <div className="game-badge" style={{ right: '80px', background: '#00cc66', color: '#fff' }}>
-                      📁 {game.files.length}
+                      📁 {game.file_count}
                     </div>
                   )}
                   <span className="game-icon" style={{ display: 'block', textAlign: 'center' }}>
