@@ -208,6 +208,11 @@ const SongGallery = () => {
         <p>Fan-made tracks from the condiment universe — upload an mp3 and its cover</p>
       </div>
 
+      <div className="song-notice" role="note">
+        ⚠️ Songs here are posted by the community. Upload only your own work or music you have
+        permission to share — anything posted without the rights holder&apos;s permission will be removed.
+      </div>
+
       {/* ─── Search & Sort ─── */}
       <div className="flex justify-between align-center mb-20 sort-bar">
         <input

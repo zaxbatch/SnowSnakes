@@ -34,6 +34,24 @@ const destroyUpload = async (url, resourceType) => {
   }
 };
 
+// Only mp3 is accepted. The upload widget restricts the file picker and the
+// Cloudinary preset on the account should restrict formats too, but neither is
+// enforceable from here — a request can be crafted directly, and the preset
+// currently has no format restriction. This check is the gate that actually
+// holds, so a WAV/M4A URL cannot be published even if it gets uploaded.
+const ALLOWED_AUDIO_FORMATS = (process.env.ALLOWED_AUDIO_FORMATS || 'mp3')
+  .split(',')
+  .map((f) => f.trim().toLowerCase())
+  .filter(Boolean);
+
+const audioFormatOf = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  const lastSegment = url.split('?')[0].split('#')[0].split('/').pop() || '';
+  // No dot at all means there is no extension to trust.
+  if (!lastSegment.includes('.')) return null;
+  return (lastSegment.split('.').pop() || '').toLowerCase();
+};
+
 // GET all songs with search & sort
 router.get('/', async (req, res) => {
   try {
@@ -77,6 +95,14 @@ router.post('/', auth, async (req, res) => {
     const { title, audio_url, cover_url } = req.body;
     if (!title || !title.trim()) return res.status(400).json({ error: 'Title is required' });
     if (!audio_url) return res.status(400).json({ error: 'An audio file is required' });
+
+    const format = audioFormatOf(audio_url);
+    if (!format || !ALLOWED_AUDIO_FORMATS.includes(format)) {
+      return res.status(400).json({
+        error: `Unsupported audio format${format ? ` (${format})` : ''}. ` +
+               `Only ${ALLOWED_AUDIO_FORMATS.map((f) => f.toUpperCase()).join(' / ')} is accepted — please convert the file first.`,
+      });
+    }
 
     const song = await Song.create({
       title: title.trim(),

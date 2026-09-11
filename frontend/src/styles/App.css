@@ -1119,6 +1119,38 @@ body {
 .song-card .social-actions { margin-top: auto; }
 .song-card audio { width: 100%; display: block; }
 
+/* Ownership notice: full version in the upload form, short version on the gallery. */
+.song-disclaimer {
+    background: #fff8e6;
+    border: 3px solid #ff9900;
+    border-left-width: 8px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    color: #6b4e00;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.song-disclaimer strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #8a5a00;
+}
+
+.song-disclaimer p { margin: 0; }
+
+.song-notice {
+    background: #fff8e6;
+    border: 3px solid #ff9900;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    color: #6b4e00;
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: center;
+}
+
 /* ─── FORMS ─── */
 .form-group {
     margin-bottom: 20px;

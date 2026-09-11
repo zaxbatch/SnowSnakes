@@ -71,7 +71,18 @@ const Header = ({
   const IMAGE_PRESET = process.env.REACT_APP_CLOUDINARY_IMAGE_PRESET || 'snowsnakes_unsigned';
   const AUDIO_PRESET = process.env.REACT_APP_CLOUDINARY_AUDIO_PRESET || 'snowsnakes_audio';
 
-  const runWidget = ({ resourceType, uploadPreset, sources, onSuccess, onFail, label }) => {
+  // Only mp3 is accepted. WAV uploads worked before because the Cloudinary
+  // preset had no format restriction and the widget did not either; the file
+  // was already stored by the time anything could object.
+  const AUDIO_FORMATS = ['mp3'];
+
+  const isAllowedAudio = (url) => {
+    if (!url) return false;
+    const ext = (url.split('?')[0].split('.').pop() || '').toLowerCase();
+    return AUDIO_FORMATS.includes(ext);
+  };
+
+  const runWidget = ({ resourceType, uploadPreset, sources, clientAllowedFormats, onSuccess, onFail, label }) => {
     if (!window.cloudinary || !window.cloudinary.createUploadWidget) {
       // The widget script is deferred, so this can only happen if it failed
       // to load (offline, blocked). Say so instead of throwing.
@@ -87,6 +98,9 @@ const Header = ({
         multiple: false,
         maxFiles: 1,
         resourceType,
+        // When set, the widget refuses disallowed files in the picker and
+        // reports the error through the callback below.
+        ...(clientAllowedFormats ? { clientAllowedFormats } : {}),
       },
       (error, result) => {
         if (error) {
@@ -121,19 +135,39 @@ const Header = ({
     runWidget({
       resourceType: 'video',
       uploadPreset: AUDIO_PRESET,
-      sources: ['local', 'url'],
+      // Local file picker only. The widget's format check can be bypassed via
+      // the cloud-source tabs (Drive/Dropbox), so those are not offered here.
+      sources: ['local'],
+      // Rejects anything that is not an mp3 in the picker, before it uploads.
+      clientAllowedFormats: AUDIO_FORMATS,
       label: 'Audio',
       onSuccess: (info) => {
+        // Belt and braces: the widget is not the only way a URL could arrive,
+        // so re-check the extension of whatever it reports back.
+        if (!isAllowedAudio(info.secure_url)) {
+          alert(
+            `That file type isn't supported.\n\nSongs must be ${AUDIO_FORMATS.join(' or ').toUpperCase()}.\n` +
+            'Convert it first (any free converter can do it), then upload again.\n\n' +
+            'Note: the file may already have been stored on our media host — it will simply be unused.'
+          );
+          return;
+        }
         setSongAudioUrl(info.secure_url);
-        // Cloudinary returns the original filename in `original_filename`.
         setSongAudioName(info.original_filename ? `${info.original_filename}` : 'Audio uploaded');
       },
-      onFail: () => alert(
-        'Audio upload failed.\n\n' +
-        'If this keeps happening, the Cloudinary account needs an unsigned ' +
-        `upload preset named "${AUDIO_PRESET}" that allows the "video" ` +
-        'resource type (Settings → Upload → Add upload preset).'
-      ),
+      onFail: (error) => {
+        const msg = (error && (error.message || error.statusText)) || '';
+        if (/format|type/i.test(msg)) {
+          alert(`That file type isn't supported. Songs must be ${AUDIO_FORMATS.join(' or ').toUpperCase()}.`);
+          return;
+        }
+        alert(
+          'Audio upload failed.\n\n' +
+          'If this keeps happening, the Cloudinary account needs an unsigned ' +
+          `upload preset named "${AUDIO_PRESET}" that allows the "video" ` +
+          'resource type (Settings → Upload → Add upload preset).'
+        );
+      },
     });
   };
 
@@ -638,6 +672,17 @@ const Header = ({
                 <button className="modal-close" onClick={() => closeModal(setShowSongModal)}>×</button>
               </div>
               <form onSubmit={handleAddSong}>
+                <div className="song-disclaimer" role="note">
+                  <strong>⚠️ Post only what you have the right to post.</strong>
+                  <p>
+                    By uploading, you confirm that <strong>you own this song</strong>, that you
+                    created it, or that you have the <strong>copyright owner&apos;s permission</strong> to
+                    publish it here. Do not upload other artists&apos; music, label releases, or
+                    anything you found online. You are responsible for what you upload, and
+                    anything posted without permission will be removed.
+                  </p>
+                </div>
+
                 <div className="form-group">
                   <label>SONG TITLE <span style={{ color: '#ff0000' }}>*</span></label>
                   <input
@@ -675,7 +720,8 @@ const Header = ({
                     </div>
                   )}
                   <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
-                    MP3 or other audio. Large files take a moment to upload.
+                    MP3 only. WAV, M4A and other formats are not accepted — convert first
+                    (any free audio converter can do it). Large files take a moment to upload.
                   </div>
                 </div>
 
