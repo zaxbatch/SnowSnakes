@@ -29,7 +29,14 @@ const Nav = () => {
         <Link
           key={tab.path}
           to={tab.path}
-          className={`nav-tab ${location.pathname === tab.path ? 'active' : ''}`}
+          // Exact match for the gallery itself, prefix match for its detail
+          // pages (/jokes/42 keeps the Dad Jokes tab lit). "/" only matches "/"
+          // so the Home tab does not light up everywhere.
+          className={`nav-tab ${
+            location.pathname === tab.path ||
+            (tab.path !== '/' && location.pathname.startsWith(tab.path + '/'))
+              ? 'active' : ''
+          }`}
         >
           {tab.name}
         </Link>

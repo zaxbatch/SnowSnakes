@@ -13,7 +13,9 @@ import { useNavigate } from 'react-router-dom';
 export const shareUrlFor = (contentType, id) => {
   const route = contentType === 'episode' ? 'spread' : `${contentType}s`;
   const base = typeof window !== 'undefined' ? window.location.origin : 'https://snowsnakes.zerric.xyz';
-  return `${base}/${route}?${contentType}=${id}`;
+  // A real page for the item, not the gallery with a hint attached: the
+  // visitor should land on the thing that was shared.
+  return `${base}/${route}/${id}`;
 };
 
 const plural = { joke: 'jokes', doodle: 'doodles', song: 'songs', game: 'games', episode: 'episodes' };
@@ -173,7 +175,7 @@ const ShareModal = ({ open, onClose, contentType, contentId, title, subtitle, po
           </button>
 
           {popular && (
-            <button type="button" className="explore-card" onClick={() => goTo(`/${plural[popular.contentType]}?${popular.contentType}=${popular.id}`)}>
+            <button type="button" className="explore-card" onClick={() => goTo(`/${plural[popular.contentType]}/${popular.id}`)}>
               <span className="explore-emoji">🔥</span>
               <span className="explore-text">
                 <strong>Popular post right now</strong>

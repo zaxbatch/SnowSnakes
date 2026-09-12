@@ -29,7 +29,7 @@ router.get('/', optionalAuth, async (req, res) => {
 });
 
 // GET single episode
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const episode = await Episode.findById(req.params.id);
     if (!episode) return res.status(404).json({ error: 'Not found' });

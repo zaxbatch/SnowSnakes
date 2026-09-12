@@ -29,12 +29,15 @@ router.get('/', optionalAuth, async (req, res) => {
 });
 
 // GET a single joke with comments
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const joke = await Joke.findById(req.params.id);
     if (!joke) return res.status(404).json({ error: 'Not found' });
     const comments = await Interaction.getComments('joke', req.params.id);
-    res.json({ ...joke, comments });
+    // Jokes record their likers as an array rather than in the likes table.
+    const isLiked = !!(req.user && Array.isArray(joke.liked_by) &&
+      joke.liked_by.includes(String(req.user.id)));
+    res.json({ ...joke, comments, isLiked });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

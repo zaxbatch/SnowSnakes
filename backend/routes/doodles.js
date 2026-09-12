@@ -29,7 +29,7 @@ router.get('/', optionalAuth, async (req, res) => {
 });
 
 // GET single doodle
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const doodle = await Doodle.findById(req.params.id);
     if (!doodle) return res.status(404).json({ error: 'Not found' });

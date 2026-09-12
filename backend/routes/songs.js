@@ -76,7 +76,7 @@ router.get('/', optionalAuth, async (req, res) => {
 });
 
 // GET single song
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const song = await Song.findById(req.params.id);
     if (!song) return res.status(404).json({ error: 'Not found' });
