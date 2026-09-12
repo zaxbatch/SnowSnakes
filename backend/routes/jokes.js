@@ -8,7 +8,7 @@ const optionalAuth = require('../middleware/optionalAuth');
 // ─── Public routes ──────────────────────────────────────
 
 // GET all jokes (with search & sort)
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { search, sort } = req.query;
     const jokes = await Joke.findAll({ search, sort });
@@ -16,6 +16,11 @@ router.get('/', async (req, res) => {
     const commentsByJoke = await Interaction.getCommentsForMany('joke', jokes.map((j) => j.id));
     for (const joke of jokes) {
       joke.comments = commentsByJoke.get(Number(joke.id)) || [];
+      // Jokes track who liked them in a liked_by array rather than the likes
+      // table, so the flag is computed here. Without it the heart could never
+      // render as already-liked on a reload.
+      joke.isLiked = !!(req.user && Array.isArray(joke.liked_by) &&
+        joke.liked_by.includes(String(req.user.id)));
     }
     res.json(jokes);
   } catch (err) {

@@ -9,7 +9,7 @@ import ShareModal from '../ShareModal';
 import useDeepLink from '../../utils/useDeepLink';
 
 // ─── A single song: cover art, title, and a real audio player ────────────
-const SongCard = ({ song, currentUser, deleteMode, onDelete, onOpenComments, onShare }) => {
+const SongCard = ({ song, currentUser, deleteMode, onDelete, onOpenComments, onShare, onLikeChange }) => {
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -138,6 +138,8 @@ const SongCard = ({ song, currentUser, deleteMode, onDelete, onOpenComments, onS
         currentUser={currentUser}
         onOpenCommentModal={() => onOpenComments(song)}
         onShare={onShare}
+        isLiked={!!song.isLiked}
+        onUpdate={(liked) => onLikeChange(song.id, liked)}
       />
     </div>
   );
@@ -193,6 +195,12 @@ const SongGallery = () => {
         setPopular(false);
       }
     }
+  };
+
+  const applyLike = (id, liked) => {
+    setSongs((prev) => prev.map((s) => (
+      s.id === id ? { ...s, isLiked: liked, likes: liked ? (s.likes || 0) + 1 : Math.max(0, (s.likes || 0) - 1) } : s
+    )));
   };
 
   const handleDelete = async (id) => {
@@ -270,6 +278,7 @@ const SongGallery = () => {
               onDelete={handleDelete}
               onOpenComments={openComments}
               onShare={() => openShare(song)}
+              onLikeChange={applyLike}
             />
           ))}
         </div>

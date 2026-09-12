@@ -33,8 +33,12 @@ const GameGallery = ({ setShowGameModal }) => {
     setLoading(true);
     try {
       const res = await api.get('/games', { params: { search, sort } });
-      // ✅ Keep the comments from the backend – do NOT reset to empty array
-      const gamesWithLikes = res.data.map(g => ({ ...g, isLiked: false }));
+      // Keep the comments from the backend – do NOT reset to empty array.
+      // isLiked comes from the server too (it is computed from the likes table
+      // for the signed-in visitor); this used to be hard-coded to false here,
+      // which is why a game you had already liked always looked unliked after
+      // a reload.
+      const gamesWithLikes = res.data.map((g) => ({ ...g, isLiked: !!g.isLiked }));
       setGames(gamesWithLikes);
       // If comment modal is open, update commentContent with fresh data
       if (commentModalOpen && commentContent) {
@@ -84,7 +88,14 @@ const GameGallery = ({ setShowGameModal }) => {
     }));
 
     try {
-      await api.post(`/games/${gameId}/like`);
+      const res = await api.post(`/games/${gameId}/like`);
+      if (res.data && typeof res.data.liked === 'boolean' && res.data.liked !== newLiked) {
+        updateGame(gameId, (g) => ({
+          ...g,
+          isLiked: res.data.liked,
+          likes: res.data.liked ? (g.likes || 0) + 1 : Math.max(0, (g.likes || 0) - 1),
+        }));
+      }
     } catch (err) {
       updateGame(gameId, (g) => ({
         ...g,
@@ -218,6 +229,13 @@ const GameGallery = ({ setShowGameModal }) => {
             background: #e74c3c !important;
             color: #fff !important;
           }
+          /* These are !important above, so the already-liked state needs its own
+             rule at the same weight or the heart never looks different from an
+             unliked one. */
+          .btn-like.liked {
+            background: #ff0000 !important;
+            box-shadow: inset 0 0 0 2px #000000 !important;
+          }
         `}
       </style>
       <div className="panel active">
@@ -339,7 +357,7 @@ const GameGallery = ({ setShowGameModal }) => {
 
                   <div className="social-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center' }}>
                     <button
-                      className={`btn btn-sm ${game.isLiked ? 'btn-like-active' : 'btn-like'}`}
+                      className={`btn btn-sm ${game.isLiked ? 'btn-like liked' : 'btn-like'}`}
                       onClick={() => handleLike(game.id)}
                       disabled={!user}
                     >

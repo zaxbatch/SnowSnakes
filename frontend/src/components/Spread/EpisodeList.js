@@ -129,6 +129,16 @@ const EpisodeList = () => {
   // Arriving from a shared /spread?episode=42 link.
   useDeepLink('episode', episodes, loading);
 
+  // Applied in place: refetching the list on a like is what made liking feel
+  // like a page refresh.
+  const applyLike = (id, liked) => {
+    setEpisodes((prev) => prev.map((e) => (
+      e.id === id
+        ? { ...e, isLiked: liked, likes: liked ? (e.likes || 0) + 1 : Math.max(0, (e.likes || 0) - 1) }
+        : e
+    )));
+  };
+
   const openShare = async (episode) => {
     setShareTarget(episode);
     if (popular === null) {
@@ -244,10 +254,11 @@ const EpisodeList = () => {
                   contentType="episode"
                   contentId={ep.id}
                   likes={ep.likes || 0}
+                  isLiked={!!ep.isLiked}
                   shares={ep.shares || 0}
                   commentCount={ep.comments ? ep.comments.length : 0}
                   currentUser={user}
-                  onUpdate={fetchEpisodes}
+                  onUpdate={(liked) => applyLike(ep.id, liked)}
                   onOpenCommentModal={() => openCommentModal(ep)}
                   onShare={() => openShare(ep)}
                 />

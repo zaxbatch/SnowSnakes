@@ -7,6 +7,7 @@ const SocialActions = ({
   likes = 0, 
   shares = 0, 
   commentCount = 0,
+  isLiked: isLikedProp = false,
   currentUser, 
   onUpdate, 
   onOpenCommentModal,
@@ -14,7 +15,10 @@ const SocialActions = ({
 }) => {
   const [localLikes, setLocalLikes] = useState(likes);
   const [localShares, setLocalShares] = useState(shares);
-  const [isLiked, setIsLiked] = useState(false);
+  // Seeded from the server's flag, so an item that is already liked shows a
+  // filled heart on load. This used to start false unconditionally, which is
+  // why the heart only ever lit up on the item you had just clicked.
+  const [isLiked, setIsLiked] = useState(!!isLikedProp);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -22,16 +26,34 @@ const SocialActions = ({
     setLocalShares(shares);
   }, [likes, shares]);
 
+  useEffect(() => {
+    setIsLiked(!!isLikedProp);
+  }, [isLikedProp]);
+
   const handleLike = async () => {
     if (!currentUser) { alert('Please login to like'); return; }
+
+    // Optimistic: the heart and the count move on click, then the request goes
+    // out, and both are rolled back if it fails. The gallery list is not
+    // refetched — that reload is what made liking feel like a page refresh.
+    const nextLiked = !isLiked;
+    const previousLikes = localLikes;
+    setIsLiked(nextLiked);
+    setLocalLikes(nextLiked ? localLikes + 1 : Math.max(0, localLikes - 1));
     setIsLoading(true);
+
     try {
       const res = await api.post(`/${contentType}s/${contentId}/like`);
-      setIsLiked(res.data.liked);
-      setLocalLikes(res.data.liked ? localLikes + 1 : localLikes - 1);
-      if (onUpdate) onUpdate();
+      // Trust the server if it disagrees with what was assumed.
+      const settled = res.data && typeof res.data.liked === 'boolean' ? res.data.liked : nextLiked;
+      if (settled !== nextLiked) setIsLiked(settled);
+      // Tell the parent so its item data stays in step. This must be an
+      // in-place update, never a refetch.
+      if (onUpdate) onUpdate(settled);
     } catch (err) {
-      alert('Error liking');
+      setIsLiked(!nextLiked);
+      setLocalLikes(previousLikes);
+      alert('Error liking — please try again');
     } finally {
       setIsLoading(false);
     }

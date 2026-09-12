@@ -12,7 +12,12 @@ const JokeCard = ({ joke, onLike, onOpenShare, onKill, onDelete, onComment, curr
   const killerClass = (killerMode && (joke.kill_count || 0) > 50) ? 'killer' : '';
   const noFlipClass = !isQnA ? 'no-flip' : '';
 
-  const isLiked = currentUser && joke.liked_by && joke.liked_by.includes(String(currentUser.id));
+  // The list sends isLiked now (computed from liked_by server-side). The array
+  // check stays as a fallback for any payload that predates it.
+  const isLiked = !!currentUser && (
+    joke.isLiked === true ||
+    (Array.isArray(joke.liked_by) && joke.liked_by.includes(String(currentUser.id)))
+  );
 
   const handleCardClick = (e) => {
     if (e.target.closest('button, a, [data-ignore-click]')) return;

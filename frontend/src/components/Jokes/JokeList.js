@@ -62,12 +62,29 @@ const JokeList = () => {
     }
   };
 
+  // Optimistic, and the list is never refetched: reloading the whole gallery
+  // for one heart is what made liking feel like a page refresh.
   const handleLike = async (id) => {
+    const joke = jokes.find((j) => j.id === id);
+    if (!joke) return;
+    if (!user) { alert('Please login to like jokes'); return; }
+
+    const previous = { liked: !!joke.isLiked, likes: joke.likes || 0 };
+    const nextLiked = !previous.liked;
+
+    const paint = (liked, likes) => setJokes((prev) => prev.map((j) => (
+      j.id === id ? { ...j, isLiked: liked, likes } : j
+    )));
+
+    paint(nextLiked, nextLiked ? previous.likes + 1 : Math.max(0, previous.likes - 1));
+
     try {
-      await api.post(`/jokes/${id}/like`);
-      fetchJokes();
+      const res = await api.post(`/jokes/${id}/like`);
+      const settled = res.data && typeof res.data.liked === 'boolean' ? res.data.liked : nextLiked;
+      if (settled !== nextLiked) paint(settled, settled ? previous.likes + 1 : previous.likes);
     } catch (err) {
-      alert('Please login to like jokes');
+      paint(previous.liked, previous.likes);
+      alert('Error liking — please try again');
     }
   };
 

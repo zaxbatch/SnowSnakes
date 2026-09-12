@@ -63,6 +63,14 @@ const DoodleGallery = ({ setShowDoodleModal, onOpenDoodleMaker }) => {
     }
   };
 
+  // Applied in place: refetching the gallery on a like is what made liking
+  // feel like a page refresh.
+  const applyLike = (id, liked) => {
+    setDoodles((prev) => prev.map((d) => (
+      d.id === id ? { ...d, isLiked: liked, likes: liked ? (d.likes || 0) + 1 : Math.max(0, (d.likes || 0) - 1) } : d
+    )));
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this doodle?')) return;
     try {
@@ -169,10 +177,11 @@ const DoodleGallery = ({ setShowDoodleModal, onOpenDoodleMaker }) => {
                 contentType="doodle"
                 contentId={d.id}
                 likes={d.likes || 0}
+                isLiked={!!d.isLiked}
                 shares={d.shares || 0}
                 commentCount={d.comments ? d.comments.length : 0}
                 currentUser={user}
-                onUpdate={fetchDoodles}
+                onUpdate={(liked) => applyLike(d.id, liked)}
                 onOpenCommentModal={() => openCommentModal(d)}
                 onShare={() => openShare(d)}
               />

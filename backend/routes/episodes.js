@@ -7,7 +7,7 @@ const optionalAuth = require('../middleware/optionalAuth');
 const admin = require('../middleware/admin');
 
 // GET all episodes with search & sort
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { search, sort } = req.query;
     const episodes = await Episode.findAll({ search, sort });

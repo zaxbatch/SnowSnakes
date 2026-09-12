@@ -7,7 +7,7 @@ const optionalAuth = require('../middleware/optionalAuth');
 const admin = require('../middleware/admin');
 
 // GET all doodles with search & sort
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { search, sort } = req.query;
     const doodles = await Doodle.findAll({ search, sort });

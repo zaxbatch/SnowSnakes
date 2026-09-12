@@ -54,7 +54,7 @@ const audioFormatOf = (url) => {
 };
 
 // GET all songs with search & sort
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { search, sort } = req.query;
     const songs = await Song.findAll({ search, sort });
