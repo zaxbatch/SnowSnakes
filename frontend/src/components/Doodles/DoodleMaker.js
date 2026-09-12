@@ -39,7 +39,7 @@ const TOOLS = [
   { id: 'marker', label: 'Marker', icon: 'fa-highlighter', hint: 'Draw a fat, see-through line' },
   { id: 'spray', label: 'Spray', icon: 'fa-spray-can', hint: 'Splatter paint like a spray can' },
   { id: 'eraser', label: 'Eraser', icon: 'fa-eraser', hint: 'Rub bits out' },
-  { id: 'fill', label: 'Fill', icon: 'fa-fill-drip', hint: 'Flood the whole canvas with colour' },
+  { id: 'fill', label: 'Fill', icon: 'fa-fill-drip', hint: 'Fill inside a closed shape' },
   { id: 'stamp', label: 'Stamp', icon: 'fa-stamp', hint: 'Plop a condiment on the page' },
 ];
 
@@ -146,14 +146,110 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
     ctx.fillText(stamp, x, y);
   };
 
+  // ─── Flood fill ───
+  // Fills the contiguous region under the pointer and stops at drawn lines, the
+  // way a paint-bucket works. Walks the pixel buffer directly: a stack-based
+  // scanline fill, because a naive per-pixel recursion would blow the call
+  // stack on a canvas this size.
+  //
+  // Lines drawn here are anti-aliased, so a strict "exact colour match" test
+  // would stop short of the stroke and leave a pale halo all the way around.
+  // Instead the target colour is sampled as the average of the pointer's
+  // neighbourhood, and pixels within a tolerance count as part of the region.
+  const hexToRgb = (hex) => {
+    const clean = hex.replace('#', '');
+    const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
+    return {
+      r: parseInt(full.slice(0, 2), 16),
+      g: parseInt(full.slice(2, 4), 16),
+      b: parseInt(full.slice(4, 6), 16),
+    };
+  };
+
+  const floodFill = (ctx, startX, startY, hexColor) => {
+    const canvas = canvasRef.current;
+    const w = canvas.width;
+    const h = canvas.height;
+    const sx = Math.floor(startX);
+    const sy = Math.floor(startY);
+    if (sx < 0 || sy < 0 || sx >= w || sy >= h) return;
+
+    const image = ctx.getImageData(0, 0, w, h);
+    const data = image.data;
+
+    // Sample the average colour in a small box so a click on an anti-aliased
+    // edge does not sample a half-blended pixel as the target.
+    let sr = 0, sg = 0, sb = 0, sa = 0, n = 0;
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const px = sx + dx, py = sy + dy;
+        if (px < 0 || py < 0 || px >= w || py >= h) continue;
+        const i = (py * w + px) * 4;
+        sr += data[i]; sg += data[i + 1]; sb += data[i + 2]; sa += data[i + 3]; n++;
+      }
+    }
+    const target = { r: sr / n, g: sg / n, b: sb / n, a: sa / n };
+    const { r: fr, g: fg, b: fb } = hexToRgb(hexColor);
+
+    // Nothing to do if the region is already the requested colour.
+    if (Math.abs(target.r - fr) < 2 && Math.abs(target.g - fg) < 2 &&
+        Math.abs(target.b - fb) < 2 && target.a > 250) return;
+
+    // 0..255 per channel. Generous enough to absorb anti-aliasing, tight enough
+    // not to leak across a real stroke.
+    const TOLERANCE = 60;
+    const within = (i) =>
+      Math.abs(data[i] - target.r) <= TOLERANCE &&
+      Math.abs(data[i + 1] - target.g) <= TOLERANCE &&
+      Math.abs(data[i + 2] - target.b) <= TOLERANCE &&
+      Math.abs(data[i + 3] - target.a) <= TOLERANCE;
+
+    const filled = new Uint8Array(w * h);
+    const stack = [[sx, sy]];
+
+    while (stack.length) {
+      const [x, y] = stack.pop();
+      let left = x;
+      let right = x;
+      const rowStart = y * w;
+      // Walk left and right along this row for as long as the run matches.
+      while (left > 0 && within((rowStart + left - 1) * 4)) left--;
+      while (right < w - 1 && within((rowStart + right + 1) * 4)) right++;
+
+      for (let px = left; px <= right; px++) {
+        const p = rowStart + px;
+        const i = p * 4;
+        filled[p] = 1;
+        data[i] = fr; data[i + 1] = fg; data[i + 2] = fb; data[i + 3] = 255;
+      }
+
+      // Seed the rows above and below, once per contiguous run.
+      for (const ny of [y - 1, y + 1]) {
+        if (ny < 0 || ny >= h) continue;
+        let inRun = false;
+        for (let px = left; px <= right; px++) {
+          const p = ny * w + px;
+          const matches = !filled[p] && within(p * 4);
+          if (matches && !inRun) { stack.push([px, ny]); inRun = true; }
+          else if (!matches) inRun = false;
+        }
+      }
+    }
+
+    ctx.putImageData(image, 0, 0);
+  };
+
   const startStroke = (e) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     const { x, y } = posFromEvent(e);
 
     if (tool === 'fill') {
-      ctx.fillStyle = color;
-      ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+      // Flood fill must run with normal compositing; the eraser leaves
+      // destination-out set, which would make the fill erase instead of paint.
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      floodFill(ctx, x, y, color);
       pushHistory();
       return;
     }
