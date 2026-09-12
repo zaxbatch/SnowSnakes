@@ -5,6 +5,8 @@ import { useDeleteMode } from '../../context/DeleteModeContext';
 import SocialActions from '../SocialActions';
 import CommentModal from '../CommentModal';
 import LoadingSkeleton from '../LoadingSkeleton';
+import ShareModal from '../ShareModal';
+import useDeepLink from '../../utils/useDeepLink';
 
 // ─── Extract YouTube video ID ───
 const extractYouTubeId = (input) => {
@@ -26,6 +28,8 @@ const EpisodeList = () => {
   const { deleteMode } = useDeleteMode();
   const [episodes, setEpisodes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [shareTarget, setShareTarget] = useState(null);
+  const [popular, setPopular] = useState(null);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('newest');
   const [activeEpisode, setActiveEpisode] = useState(null);
@@ -122,6 +126,22 @@ const EpisodeList = () => {
     }
   };
 
+  // Arriving from a shared /spread?episode=42 link.
+  useDeepLink('episode', episodes, loading);
+
+  const openShare = async (episode) => {
+    setShareTarget(episode);
+    if (popular === null) {
+      try {
+        const res = await api.get('/episodes', { params: { sort: 'likes' } });
+        const top = res.data && res.data[0];
+        setPopular(top && top.id !== episode.id ? { contentType: 'episode', id: top.id, title: top.title } : false);
+      } catch (err) {
+        setPopular(false);
+      }
+    }
+  };
+
   const openCommentModal = (item) => {
     setCommentContent(item);
     setCommentContentType('episode');
@@ -170,7 +190,7 @@ const EpisodeList = () => {
           {episodes.map(ep => {
             const thumb = getThumbnail(ep);
             return (
-              <div className="spread-card" key={ep.id}>
+              <div className="spread-card" key={ep.id} id={`episode-${ep.id}`}>
                 <div className="episode-badge">{ep.episode_number || 'SPECIAL'}</div>
                 {ep.featured && <div className="episode-featured">⭐ FEATURED</div>}
                 <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', marginBottom: '10px' }}>
@@ -229,6 +249,7 @@ const EpisodeList = () => {
                   currentUser={user}
                   onUpdate={fetchEpisodes}
                   onOpenCommentModal={() => openCommentModal(ep)}
+                  onShare={() => openShare(ep)}
                 />
               </div>
             );
@@ -332,6 +353,16 @@ const EpisodeList = () => {
         contentType={commentContentType}
         currentUser={user}
         onComment={handleComment}
+      />
+
+      <ShareModal
+        open={!!shareTarget}
+        onClose={() => setShareTarget(null)}
+        contentType="episode"
+        contentId={shareTarget && shareTarget.id}
+        title={shareTarget && shareTarget.title}
+        subtitle="Spread Da Word — the official series"
+        popular={popular || null}
       />
     </div>
   );

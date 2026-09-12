@@ -3,7 +3,7 @@ import { useDeleteMode } from '../../context/DeleteModeContext';
 import { useKillerMode } from '../../context/KillerModeContext';
 import CommentModal from '../CommentModal';
 
-const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, onComment, currentUser }) => {
+const JokeCard = ({ joke, onLike, onOpenShare, onKill, onDelete, onComment, currentUser }) => {
   const [flipped, setFlipped] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const { deleteMode } = useDeleteMode();
@@ -32,6 +32,7 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, onComment, currentU
   return (
     <>
       <div
+        id={`joke-${joke.id}`}
         className={`flip-card ${killerClass} ${noFlipClass} ${flipped ? 'flipped' : ''}`}
         onClick={handleCardClick}
         style={{ cursor: isQnA ? 'pointer' : 'default' }}
@@ -81,7 +82,8 @@ const JokeCard = ({ joke, onLike, onShare, onKill, onDelete, onComment, currentU
               <button
                 className="btn btn-share btn-sm"
                 data-ignore-click
-                onClick={(e) => { e.stopPropagation(); onShare(joke.id); }}
+                title="Share a direct link to this joke"
+                onClick={(e) => { e.stopPropagation(); onOpenShare(joke); }}
               >
                 <i className="fas fa-share"></i> {joke.shares || 0}
               </button>

@@ -3,6 +3,7 @@ const router = express.Router();
 const Joke = require('../models/Joke');
 const Interaction = require('../services/interaction'); // ADD THIS
 const auth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 
 // ─── Public routes ──────────────────────────────────────
 
@@ -106,7 +107,7 @@ router.post('/:id/comment', auth, async (req, res) => {
 });
 
 // Share a joke
-router.post('/:id/share', auth, async (req, res) => {
+router.post('/:id/share', optionalAuth, async (req, res) => {
   try {
     const updated = await Interaction.incrementShare('joke', req.params.id);
     if (!updated) return res.status(404).json({ error: 'Joke not found' });

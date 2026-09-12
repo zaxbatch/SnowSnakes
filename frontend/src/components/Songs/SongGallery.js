@@ -5,9 +5,11 @@ import { useDeleteMode } from '../../context/DeleteModeContext';
 import SocialActions from '../SocialActions';
 import CommentModal from '../CommentModal';
 import LoadingSkeleton, { LoadError } from '../LoadingSkeleton';
+import ShareModal from '../ShareModal';
+import useDeepLink from '../../utils/useDeepLink';
 
 // ─── A single song: cover art, title, and a real audio player ────────────
-const SongCard = ({ song, currentUser, deleteMode, onDelete, onOpenComments }) => {
+const SongCard = ({ song, currentUser, deleteMode, onDelete, onOpenComments, onShare }) => {
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -62,7 +64,7 @@ const SongCard = ({ song, currentUser, deleteMode, onDelete, onOpenComments }) =
   const progressPct = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
   return (
-    <div className="song-card">
+    <div className="song-card" id={`song-${song.id}`}>
       <div className="song-cover-wrap">
         {song.cover_url ? (
           <img className="song-cover" src={song.cover_url} alt={`Cover art for ${song.title}`} loading="lazy" />
@@ -135,6 +137,7 @@ const SongCard = ({ song, currentUser, deleteMode, onDelete, onOpenComments }) =
         commentCount={song.comments ? song.comments.length : 0}
         currentUser={currentUser}
         onOpenCommentModal={() => onOpenComments(song)}
+        onShare={onShare}
       />
     </div>
   );
@@ -149,6 +152,10 @@ const SongGallery = () => {
   const [sort, setSort] = useState('newest');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [shareTarget, setShareTarget] = useState(null);
+  const [popular, setPopular] = useState(null);
+
+  useDeepLink('song', songs, loading);
 
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [commentContent, setCommentContent] = useState(null);
@@ -174,6 +181,19 @@ const SongGallery = () => {
   useEffect(() => {
     fetchSongs();
   }, [search, sort]);
+
+  const openShare = async (song) => {
+    setShareTarget(song);
+    if (popular === null) {
+      try {
+        const res = await api.get('/songs', { params: { sort: 'likes' } });
+        const top = res.data && res.data[0];
+        setPopular(top && top.id !== song.id ? { contentType: 'song', id: top.id, title: top.title } : false);
+      } catch (err) {
+        setPopular(false);
+      }
+    }
+  };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this song? Its audio and cover will be removed too.')) return;
@@ -249,6 +269,7 @@ const SongGallery = () => {
               deleteMode={deleteMode}
               onDelete={handleDelete}
               onOpenComments={openComments}
+              onShare={() => openShare(song)}
             />
           ))}
         </div>
@@ -261,6 +282,16 @@ const SongGallery = () => {
         contentType="song"
         currentUser={user}
         onComment={handleComment}
+      />
+
+      <ShareModal
+        open={!!shareTarget}
+        onClose={() => setShareTarget(null)}
+        contentType="song"
+        contentId={shareTarget && shareTarget.id}
+        title={shareTarget && shareTarget.title}
+        subtitle={shareTarget && shareTarget.author_name ? `by ${shareTarget.author_name}` : 'A community track'}
+        popular={popular || null}
       />
     </div>
   );

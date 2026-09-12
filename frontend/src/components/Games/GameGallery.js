@@ -5,6 +5,8 @@ import { AuthContext } from '../../context/AuthContext';
 import { useDeleteMode } from '../../context/DeleteModeContext';
 import CommentModal from '../CommentModal';
 import LoadingSkeleton from '../LoadingSkeleton';
+import ShareModal from '../ShareModal';
+import useDeepLink from '../../utils/useDeepLink';
 
 const BACKEND_URL = api.defaults.baseURL.replace(/\/api$/, '');
 
@@ -21,6 +23,8 @@ const GameGallery = ({ setShowGameModal }) => {
   const iframeRef = useRef(null);
   const containerRef = useRef(null);
 
+  const [shareTarget, setShareTarget] = useState(null);
+  const [popular, setPopular] = useState(null);
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [commentContent, setCommentContent] = useState(null);
   const [commentContentType, setCommentContentType] = useState('');
@@ -91,31 +95,6 @@ const GameGallery = ({ setShowGameModal }) => {
     }
   };
 
-  const handleShare = async (gameId) => {
-    const game = games.find(g => g.id === gameId);
-    if (!game) return;
-
-    updateGame(gameId, (g) => ({
-      ...g,
-      shares: (g.shares || 0) + 1,
-    }));
-
-    try {
-      const res = await api.post(`/games/${gameId}/share`);
-      if (res.data && res.data.shares !== undefined) {
-        updateGame(gameId, (g) => ({
-          ...g,
-          shares: res.data.shares,
-        }));
-      }
-    } catch (err) {
-      updateGame(gameId, (g) => ({
-        ...g,
-        shares: (g.shares || 0) - 1,
-      }));
-      alert('Failed to share – please try again');
-    }
-  };
 
   const handleComment = async (gameId, text) => {
     const cleanText = String(text).trim();
@@ -142,6 +121,26 @@ const GameGallery = ({ setShowGameModal }) => {
         comments: g.comments ? g.comments.slice(0, -1) : [],
       }));
       alert('Error posting comment');
+    }
+  };
+
+  // Arriving from a shared /games?game=42 link.
+  useDeepLink('game', games, loading);
+
+  const openShare = async (game) => {
+    setShareTarget(game);
+    // Count the share, and update the card immediately. Anyone can share, so
+    // this no longer waits for a login.
+    updateGame(game.id, (g) => ({ ...g, shares: (g.shares || 0) + 1 }));
+    api.post(`/games/${game.id}/share`).catch(() => {});
+    if (popular === null) {
+      try {
+        const res = await api.get('/games', { params: { sort: 'likes' } });
+        const top = res.data && res.data[0];
+        setPopular(top && top.id !== game.id ? { contentType: 'game', id: top.id, title: top.title } : false);
+      } catch (err) {
+        setPopular(false);
+      }
     }
   };
 
@@ -300,7 +299,7 @@ const GameGallery = ({ setShowGameModal }) => {
               </div>
             ) : (
               games.map(game => (
-                <div className="game-card" key={game.id}>
+                <div className="game-card" key={game.id} id={`game-${game.id}`}>
                   {game.type === 'user' ? (
                     <div className="game-badge" style={{ background: '#ff6b6b', color: '#fff' }}>👤 USER</div>
                   ) : (
@@ -355,8 +354,8 @@ const GameGallery = ({ setShowGameModal }) => {
                     </button>
                     <button
                       className="btn btn-sm btn-share"
-                      onClick={() => handleShare(game.id)}
-                      disabled={!user}
+                      onClick={() => openShare(game)}
+                      title="Share a direct link to this game"
                     >
                       <i className="fas fa-share-alt"></i> {game.shares || 0}
                     </button>
@@ -375,6 +374,16 @@ const GameGallery = ({ setShowGameModal }) => {
           contentType="game"
           currentUser={user}
           onComment={handleComment}
+        />
+
+        <ShareModal
+          open={!!shareTarget}
+          onClose={() => setShareTarget(null)}
+          contentType="game"
+          contentId={shareTarget && shareTarget.id}
+          title={shareTarget && shareTarget.title}
+          subtitle={shareTarget && shareTarget.description}
+          popular={popular || null}
         />
       </div>
     </>

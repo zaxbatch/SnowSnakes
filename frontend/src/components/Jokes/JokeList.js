@@ -2,7 +2,9 @@ import React, { useEffect, useState, useContext } from 'react';
 import api from '../../api';
 import { AuthContext } from '../../context/AuthContext';
 import JokeCard from './JokeCard';
+import ShareModal from '../ShareModal';
 import LoadingSkeleton, { LoadError } from '../LoadingSkeleton';
+import useDeepLink from '../../utils/useDeepLink';
 
 const JokeList = () => {
   const [jokes, setJokes] = useState([]);
@@ -10,7 +12,12 @@ const JokeList = () => {
   const [sort, setSort] = useState('newest');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [shareTarget, setShareTarget] = useState(null);
+  const [popular, setPopular] = useState(null);
   const { user } = useContext(AuthContext);
+
+  // Arriving from a shared /jokes?joke=123 link.
+  useDeepLink('joke', jokes, loading);
 
   const fetchJokes = async () => {
     setLoading(true);
@@ -30,21 +37,37 @@ const JokeList = () => {
     fetchJokes();
   }, [search, sort]);
 
+  // Fetched lazily: the suggestion only matters if someone actually shares, and
+  // the gallery should not pay for an extra request on every page load.
+  const openShare = async (joke) => {
+    setShareTarget(joke);
+    // Count it here rather than in the card: sharing a link needs no login.
+    const current = jokes.find((j) => j.id === joke.id);
+    if (current) {
+      setJokes((prev) => prev.map((j) => (j.id === joke.id ? { ...j, shares: (j.shares || 0) + 1 } : j)));
+    }
+    api.post(`/jokes/${joke.id}/share`).catch(() => {});
+    if (popular === null) {
+      try {
+        const res = await api.get('/jokes', { params: { sort: 'likes' } });
+        const top = res.data && res.data[0];
+        if (top && top.id !== joke.id) {
+          setPopular({ contentType: 'joke', id: top.id, title: top.content });
+        } else {
+          setPopular(false);
+        }
+      } catch (err) {
+        setPopular(false);
+      }
+    }
+  };
+
   const handleLike = async (id) => {
     try {
       await api.post(`/jokes/${id}/like`);
       fetchJokes();
     } catch (err) {
       alert('Please login to like jokes');
-    }
-  };
-
-  const handleShare = async (id) => {
-    try {
-      await api.post(`/jokes/${id}/share`);
-      fetchJokes();
-    } catch (err) {
-      alert('Failed to share');
     }
   };
 
@@ -135,15 +158,25 @@ const JokeList = () => {
               key={`${joke.id}-${joke.kill_count}`} // ✅ Force re-render when kill_count changes
               joke={joke}
               onLike={handleLike}
-              onShare={handleShare}
               onKill={handleKill}
               onDelete={handleDelete}
               onComment={handleComment}
               currentUser={user}
+              onOpenShare={openShare}
             />
           ))}
         </div>
       )}
+
+      <ShareModal
+        open={!!shareTarget}
+        onClose={() => setShareTarget(null)}
+        contentType="joke"
+        contentId={shareTarget && shareTarget.id}
+        title={shareTarget && shareTarget.content}
+        subtitle={shareTarget && shareTarget.series}
+        popular={popular || null}
+      />
     </div>
   );
 };

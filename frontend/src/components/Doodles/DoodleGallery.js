@@ -6,6 +6,8 @@ import SocialActions from '../SocialActions';
 import CommentModal from '../CommentModal';
 import FullscreenMediaModal from '../FullscreenMediaModal';
 import LoadingSkeleton, { LoadError } from '../LoadingSkeleton';
+import ShareModal from '../ShareModal';
+import useDeepLink from '../../utils/useDeepLink';
 
 const DoodleGallery = ({ setShowDoodleModal, onOpenDoodleMaker }) => {
   const { user } = useContext(AuthContext);
@@ -16,6 +18,10 @@ const DoodleGallery = ({ setShowDoodleModal, onOpenDoodleMaker }) => {
   const [selectedDoodle, setSelectedDoodle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [shareTarget, setShareTarget] = useState(null);
+  const [popular, setPopular] = useState(null);
+
+  useDeepLink('doodle', doodles, loading);
 
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [commentContent, setCommentContent] = useState(null);
@@ -43,6 +49,19 @@ const DoodleGallery = ({ setShowDoodleModal, onOpenDoodleMaker }) => {
   useEffect(() => {
     fetchDoodles();
   }, [search, sort]);
+
+  const openShare = async (doodle) => {
+    setShareTarget(doodle);
+    if (popular === null) {
+      try {
+        const res = await api.get('/doodles', { params: { sort: 'likes' } });
+        const top = res.data && res.data[0];
+        setPopular(top && top.id !== doodle.id ? { contentType: 'doodle', id: top.id, title: top.title } : false);
+      } catch (err) {
+        setPopular(false);
+      }
+    }
+  };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this doodle?')) return;
@@ -124,7 +143,7 @@ const DoodleGallery = ({ setShowDoodleModal, onOpenDoodleMaker }) => {
       ) : (
         <div className="grid-3">
           {doodles.map(d => (
-            <div className="doodle-card" key={d.id}>
+            <div className="doodle-card" key={d.id} id={`doodle-${d.id}`}>
               {d.image_url && d.image_url.startsWith('http') ? (
                 <img
                   src={d.image_url}
@@ -155,6 +174,7 @@ const DoodleGallery = ({ setShowDoodleModal, onOpenDoodleMaker }) => {
                 currentUser={user}
                 onUpdate={fetchDoodles}
                 onOpenCommentModal={() => openCommentModal(d)}
+                onShare={() => openShare(d)}
               />
             </div>
           ))}
@@ -180,6 +200,15 @@ const DoodleGallery = ({ setShowDoodleModal, onOpenDoodleMaker }) => {
         onComment={handleComment}
       />
 
+      <ShareModal
+        open={!!shareTarget}
+        onClose={() => setShareTarget(null)}
+        contentType="doodle"
+        contentId={shareTarget && shareTarget.id}
+        title={shareTarget && shareTarget.title}
+        subtitle="Fan art from the condiment universe"
+        popular={popular || null}
+      />
     </div>
   );
 };

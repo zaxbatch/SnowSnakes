@@ -5,20 +5,11 @@ const path = require('path');
 const fs = require('fs');
 const Game = require('../models/Game');
 const Interaction = require('../services/interaction');
-const User = require('../models/User');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
-
-// Optional auth: populates req.user when a valid Bearer token is present,
-// but does NOT reject anonymous requests (games may be posted by guests).
-const optionalAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const decoded = User.verifyToken(authHeader.slice(7));
-    if (decoded) req.user = decoded;
-  }
-  next();
-};
+// Populates req.user when a valid token is present but never rejects anonymous
+// requests: games may be posted by guests, and anyone can share a link.
+const optionalAuth = require('../middleware/optionalAuth');
 
 // ─── File upload config ──────────────────────────────────
 const storage = multer.diskStorage({
@@ -368,7 +359,7 @@ router.post('/:id/comment', auth, async (req, res) => {
 });
 
 // Share
-router.post('/:id/share', auth, async (req, res) => {
+router.post('/:id/share', optionalAuth, async (req, res) => {
   try {
     const updated = await Interaction.incrementShare('game', req.params.id);
     res.json(updated);

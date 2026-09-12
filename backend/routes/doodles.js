@@ -3,6 +3,7 @@ const router = express.Router();
 const Doodle = require('../models/Doodle');
 const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 const admin = require('../middleware/admin');
 
 // GET all doodles with search & sort
@@ -91,7 +92,7 @@ router.post('/:id/comment', auth, async (req, res) => {
 });
 
 // Share
-router.post('/:id/share', auth, async (req, res) => {
+router.post('/:id/share', optionalAuth, async (req, res) => {
   try {
     const updated = await Doodle.incrementShare(req.params.id);
     res.json(updated);

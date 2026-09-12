@@ -9,7 +9,8 @@ const SocialActions = ({
   commentCount = 0,
   currentUser, 
   onUpdate, 
-  onOpenCommentModal 
+  onOpenCommentModal,
+  onShare,
 }) => {
   const [localLikes, setLocalLikes] = useState(likes);
   const [localShares, setLocalShares] = useState(shares);
@@ -36,18 +37,15 @@ const SocialActions = ({
     }
   };
 
-  const handleShare = async () => {
-    if (!currentUser) { alert('Please login to share'); return; }
-    setIsLoading(true);
-    try {
-      await api.post(`/${contentType}s/${contentId}/share`);
-      setLocalShares(localShares + 1);
-      if (onUpdate) onUpdate();
-    } catch (err) {
-      alert('Error sharing');
-    } finally {
-      setIsLoading(false);
-    }
+  // Sharing counts the share AND opens the link panel. The count request is
+  // deliberately not awaited: producing the link must never wait on the
+  // network, and the count does not change what the visitor sees.
+  const handleShare = () => {
+    setLocalShares(localShares + 1);
+    api.post(`/${contentType}s/${contentId}/share`).catch(() => {
+      // A failed count is not worth interrupting a share for.
+    });
+    if (onShare) onShare();
   };
 
   return (
@@ -70,6 +68,7 @@ const SocialActions = ({
         className="btn btn-share btn-sm"
         onClick={handleShare}
         disabled={isLoading}
+        title="Share a direct link to this post"
       >
         <i className="fas fa-share"></i> {localShares}
       </button>

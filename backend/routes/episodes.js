@@ -3,6 +3,7 @@ const router = express.Router();
 const Episode = require('../models/Episode');
 const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 const admin = require('../middleware/admin');
 
 // GET all episodes with search & sort
@@ -103,7 +104,7 @@ router.post('/:id/comment', auth, async (req, res) => {
 });
 
 // Share
-router.post('/:id/share', auth, async (req, res) => {
+router.post('/:id/share', optionalAuth, async (req, res) => {
   try {
     const updated = await Interaction.incrementShare('episode', req.params.id);
     res.json(updated);

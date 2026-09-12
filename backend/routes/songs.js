@@ -4,6 +4,7 @@ const cloudinary = require('cloudinary').v2;
 const Song = require('../models/Song');
 const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 const admin = require('../middleware/admin');
 
 cloudinary.config({
@@ -158,7 +159,7 @@ router.post('/:id/comment', auth, async (req, res) => {
 });
 
 // Share
-router.post('/:id/share', auth, async (req, res) => {
+router.post('/:id/share', optionalAuth, async (req, res) => {
   try {
     const updated = await Interaction.incrementShare('song', req.params.id);
     res.json(updated);
