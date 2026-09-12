@@ -49,6 +49,9 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
 
   const [tool, setTool] = useState('brush');
   const [color, setColor] = useState('#003399');
+  // Tracks whether the active colour came from the spectrum picker rather than
+  // a preset swatch, so the right control shows as selected.
+  const [customColor, setCustomColor] = useState(false);
   const [size, setSize] = useState(8);
   const [stamp, setStamp] = useState('🌭');
   const [busy, setBusy] = useState(false);
@@ -204,6 +207,28 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
       Math.abs(data[i + 2] - target.b) <= TOLERANCE &&
       Math.abs(data[i + 3] - target.a) <= TOLERANCE;
 
+    // ⚠️ The jagged border problem.
+    //
+    // Strokes are anti-aliased, so at the boundary every pixel is a blend of
+    // the old colour and the stroke. Filling those pixels opaquely gives a
+    // staircase edge; leaving them alone (the classic paint-bucket behaviour)
+    // leaves a pale halo all the way around. Neither reads as smooth.
+    //
+    // Instead the fill is composited by distance: a pixel exactly on the target
+    // colour becomes fully filled, a pixel right at the stroke stays untouched,
+    // and everything in between gets a partial alpha proportional to how close
+    // it is. The existing pixel shows through that alpha, so the transition
+    // takes on the edge's own anti-aliasing and the result looks like a solid
+    // fill drawn up to a smooth line.
+    const distance = (i) => Math.max(
+      Math.abs(data[i] - target.r),
+      Math.abs(data[i + 1] - target.g),
+      Math.abs(data[i + 2] - target.b),
+      Math.abs(data[i + 3] - target.a)
+    );
+
+    const FULL_BLEND = TOLERANCE * 1.6; // beyond this the stroke wins entirely
+
     const filled = new Uint8Array(w * h);
     const stack = [[sx, sy]];
 
@@ -220,7 +245,17 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
         const p = rowStart + px;
         const i = p * 4;
         filled[p] = 1;
-        data[i] = fr; data[i + 1] = fg; data[i + 2] = fb; data[i + 3] = 255;
+
+        const d = distance(i);
+        const alpha = d <= TOLERANCE ? 1 : Math.max(0, 1 - (d - TOLERANCE) / (FULL_BLEND - TOLERANCE));
+
+        // Composite the fill over the existing pixel: colour channels blend by
+        // alpha, and the pixel keeps its own alpha (the sheet is opaque).
+        data[i] = Math.round(fr * alpha + data[i] * (1 - alpha));
+        data[i + 1] = Math.round(fg * alpha + data[i + 1] * (1 - alpha));
+        data[i + 2] = Math.round(fb * alpha + data[i + 2] * (1 - alpha));
+        // The sheet is opaque, so alpha stays 255; only colour blends.
+        data[i + 3] = 255;
       }
 
       // Seed the rows above and below, once per contiguous run.
@@ -342,7 +377,8 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
   const surpriseColor = () => {
     const next = COLORS[Math.floor(Math.random() * COLORS.length)];
     setColor(next);
-    if (tool === 'eraser' || tool === 'fill') setTool('brush');
+    setCustomColor(false);
+    if (tool === 'eraser') setTool('brush');
   };
 
   // ─── Export ───
@@ -447,9 +483,9 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
               <button
                 key={c}
                 type="button"
-                className={`dm-swatch ${color === c && tool !== 'eraser' ? 'is-active' : ''}`}
+                className={`dm-swatch ${!customColor && color === c && tool !== 'eraser' ? 'is-active' : ''}`}
                 style={{ background: c }}
-                onClick={() => { setColor(c); if (tool === 'eraser') setTool('brush'); }}
+                onClick={() => { setColor(c); setCustomColor(false); if (tool === 'eraser') setTool('brush'); }}
                 title={c}
                 aria-label={`Colour ${c}`}
               />
@@ -458,6 +494,25 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
               <i className="fas fa-dice"></i>
             </button>
           </div>
+          {/* Full spectrum picker. The native control is styled to look like
+              another swatch, and hidden behind a label so it matches the row. */}
+          <label
+            className={`dm-swatch dm-spectrum ${customColor && tool !== 'eraser' ? 'is-active' : ''}`}
+            style={{ background: customColor ? color : undefined }}
+            title="Pick any colour"
+          >
+            <i className={`fas ${customColor ? 'fa-check' : 'fa-eye-dropper'}`}></i>
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => {
+                setColor(e.target.value);
+                setCustomColor(true);
+                if (tool === 'eraser') setTool('brush');
+              }}
+              aria-label="Pick any colour"
+            />
+          </label>
         </div>
 
         <div className="dm-group">

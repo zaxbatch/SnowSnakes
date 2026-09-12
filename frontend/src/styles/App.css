@@ -1102,6 +1102,31 @@ body {
     justify-content: center;
 }
 
+/* Spectrum picker: the native colour input is invisible but still receives the
+   click, so the swatch-like label opens the browser's colour chooser. */
+.dm-spectrum {
+    position: relative;
+    overflow: hidden;
+    background: conic-gradient(from 0deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+    color: #000000;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 3px #ffffff, 0 0 3px #ffffff;
+}
+
+.dm-spectrum input[type="color"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
 .dm-stamps { display: flex; flex-wrap: wrap; gap: 4px; max-width: 220px; }
 
 .dm-stamp {
