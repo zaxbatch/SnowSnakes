@@ -12,6 +12,15 @@ import ReactDOM from 'react-dom';
 
 const STAGE_W = 900;
 const STAGE_H = 700;
+
+// Device-pixel scale for the backing store, capped to bound memory and the
+// cost of the pixel-level flood fill. Computed once so the canvas attributes
+// are stable across renders.
+const initialScale = () =>
+  Math.min(3, Math.max(1, (typeof window !== 'undefined' && window.devicePixelRatio) || 1));
+const INITIAL_SCALE = initialScale();
+const initialWidth = Math.round(STAGE_W * INITIAL_SCALE);
+const initialHeight = Math.round(STAGE_H * INITIAL_SCALE);
 const MAX_HISTORY = 30;
 
 // SnowSnakes palette: the condiments the whole site is built around, plus the
@@ -59,6 +68,16 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
 
   const drawing = useRef(false);
   const last = useRef(null);
+  // Which device-pixel scale the canvas is currently initialised at, or null
+  // when it has not been set up yet.
+  const initializedRef = useRef(null);
+  // Device-pixel scale for the canvas backing store. The drawing tools all work
+  // in the logical 900x700 space; only the backing store is scaled up, so a
+  // retina screen or a zoomed-in browser renders crisp edges instead of
+  // blocky ones. Capped at 3 to bound memory and fill cost.
+  const [dprScale, setDprScale] = useState(() =>
+    Math.min(3, Math.max(1, (typeof window !== 'undefined' && window.devicePixelRatio) || 1))
+  );
   // Snapshot stack for undo/redo. The first entry is the blank canvas.
   const history = useRef([]);
   const historyIndex = useRef(-1);
@@ -94,26 +113,109 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
     img.src = dataUrl;
   };
 
-  // ─── Set up the canvas when the maker opens ───
+  // ─── Set up / rescale the canvas when the maker opens ───
   // The component renders nothing until `open` is true, so on the first pass
   // the canvas does not exist yet. Keying off `open` (and bailing out when the
   // ref is still empty) is what keeps this from dereferencing a null canvas
   // and taking the whole app down with it.
+  //
+  // The backing store is sized to logical x dprScale while the CSS size stays
+  // 900x700, and the context is scaled to match. Every tool therefore keeps
+  // working in logical units, but the browser rasterises strokes at the higher
+  // device resolution. If the scale changes (zoom, or the window moving to a
+  // different monitor) whatever is already drawn is carried across.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // Reopening should start from a clean sheet, so forget the setup state.
+      initializedRef.current = null;
+      return;
+    }
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // ⚠️ The canvas attributes are seeded at the initial scale, so on the very
+    // first open the element is ALREADY the right size. Comparing sizes alone
+    // therefore concluded "nothing to do" and returned before painting the
+    // white sheet, leaving the canvas transparent. Track initialization
+    // explicitly instead of inferring it from dimensions.
+    if (initializedRef.current === dprScale) {
+      const ready = canvas.getContext('2d');
+      ready.setTransform(dprScale, 0, 0, dprScale, 0, 0);
+      ready.lineJoin = 'round';
+      ready.lineCap = 'round';
+      return;
+    }
+
+    // Preserve the current artwork across a rescale (null on first open).
+    const previous = initializedRef.current !== null && canvas.width > 0
+      ? canvas.toDataURL('image/png')
+      : null;
+
+    canvas.width = Math.round(STAGE_W * dprScale);
+    canvas.height = Math.round(STAGE_H * dprScale);
+
     const ctx = canvas.getContext('2d');
+    // Draw in logical coordinates from here on.
+    ctx.setTransform(dprScale, 0, 0, dprScale, 0, 0);
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+
+    if (previous) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      };
+      img.src = previous;
+    }
+
+    initializedRef.current = dprScale;
+
     // Reopening the maker starts a fresh sheet rather than restoring the last
     // drawing, so reset the history stack to that blank state.
     history.current = [];
     historyIndex.current = -1;
     pushHistory();
-  }, [open]);
+  }, [open, dprScale]);
+
+  // Follow device-pixel-ratio changes (browser zoom, monitor switch) so the
+  // canvas is never left rendering at a stale resolution. A resolution media
+  // query fires even where the window itself does not resize, so both signals
+  // are watched and the query is re-armed for the new ratio each time.
+  useEffect(() => {
+    const readScale = () => {
+      const next = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+      setDprScale((current) => (Math.abs(current - next) < 0.01 ? current : next));
+    };
+    readScale();
+    window.addEventListener('resize', readScale);
+
+    let mq = null;
+    function onRatioChange() {
+      readScale();
+      watchRatio();
+    }
+    function watchRatio() {
+      if (mq) mq.removeEventListener('change', onRatioChange);
+      mq = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+      mq.addEventListener('change', onRatioChange);
+    }
+    watchRatio();
+
+    return () => {
+      window.removeEventListener('resize', readScale);
+      if (mq) mq.removeEventListener('change', onRatioChange);
+    };
+  }, []);
+
+  // Logical -> device pixels, for the pixel-level flood fill.
+  const scale = dprScale;
+  const DW = Math.round(STAGE_W * scale);
+  const DH = Math.round(STAGE_H * scale);
 
   // ─── Map a pointer event onto canvas coordinates ───
   const posFromEvent = (e) => {
@@ -170,21 +272,25 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
   };
 
   const floodFill = (ctx, startX, startY, hexColor) => {
-    const canvas = canvasRef.current;
-    const w = canvas.width;
-    const h = canvas.height;
-    const sx = Math.floor(startX);
-    const sy = Math.floor(startY);
+    // getImageData/putImageData ignore the context transform and work in device
+    // pixels, so the logical click point is scaled up to match the backing store.
+    const w = DW;
+    const h = DH;
+    const sx = Math.floor(startX * scale);
+    const sy = Math.floor(startY * scale);
     if (sx < 0 || sy < 0 || sx >= w || sy >= h) return;
 
     const image = ctx.getImageData(0, 0, w, h);
     const data = image.data;
 
-    // Sample the average colour in a small box so a click on an anti-aliased
-    // edge does not sample a half-blended pixel as the target.
+    // Sample the average colour over a small box so a click on an anti-aliased
+    // edge does not sample a half-blended pixel as the target. The box is
+    // defined in logical units and scaled, so it covers the same part of the
+    // drawing at any device-pixel ratio.
+    const sampleRadius = Math.max(2, Math.round(2 * scale));
     let sr = 0, sg = 0, sb = 0, sa = 0, n = 0;
-    for (let dy = -2; dy <= 2; dy++) {
-      for (let dx = -2; dx <= 2; dx++) {
+    for (let dy = -sampleRadius; dy <= sampleRadius; dy++) {
+      for (let dx = -sampleRadius; dx <= sampleRadius; dx++) {
         const px = sx + dx, py = sy + dy;
         if (px < 0 || py < 0 || px >= w || py >= h) continue;
         const i = (py * w + px) * 4;
@@ -227,7 +333,12 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
       Math.abs(data[i + 3] - target.a)
     );
 
-    const FULL_BLEND = TOLERANCE * 1.6; // beyond this the stroke wins entirely
+    // The look of the edge must not change with resolution, so the smear is
+    // expressed in logical pixels and converted to a per-channel distance for
+    // the current scale. Otherwise a retina canvas would smooth over a wider
+    // band of device pixels and produce a softer edge than a 1x one.
+    const SMEAR_LOGICAL = 3;
+    const SMEAR = Math.max(8, Math.round((SMEAR_LOGICAL * 255 * 1.6) / scale));
 
     const filled = new Uint8Array(w * h);
     const stack = [[sx, sy]];
@@ -247,7 +358,10 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
         filled[p] = 1;
 
         const d = distance(i);
-        const alpha = d <= TOLERANCE ? 1 : Math.max(0, 1 - (d - TOLERANCE) / (FULL_BLEND - TOLERANCE));
+        // Opaque within the solid region; the rest of the smear fades the fill
+        // out into whatever the edge already had.
+        const solid = TOLERANCE + SMEAR;
+        const alpha = d <= solid ? 1 : Math.max(0, 1 - (d - solid) / SMEAR);
 
         // Composite the fill over the existing pixel: colour channels blend by
         // alpha, and the pixel keeps its own alpha (the sheet is opaque).
@@ -564,8 +678,13 @@ const DoodleMaker = ({ open, onClose, onUseDoodle, uploadImage }) => {
       <div className="dm-stage" ref={wrapRef}>
         <canvas
           ref={canvasRef}
-          width={STAGE_W}
-          height={STAGE_H}
+          // React must never change these: writing width/height resets the
+          // bitmap. They seed the first paint at the initial device-pixel
+          // ratio, and the setup effect resizes the element itself for every
+          // later scale change, so the drawing survives. CSS keeps the rendered
+          // size at the logical 900x700 either way.
+          width={initialWidth}
+          height={initialHeight}
           className={`dm-canvas dm-cursor-${tool}`}
           onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); startStroke(e); }}
           onPointerMove={moveStroke}
