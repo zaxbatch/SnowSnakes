@@ -10,7 +10,6 @@ import JokeList from './components/Jokes/JokeList';
 import DoodleGallery from './components/Doodles/DoodleGallery';
 import SongGallery from './components/Songs/SongGallery';
 import DoodleMaker from './components/Doodles/DoodleMaker';
-import ContentView from './components/ContentView';
 import { uploadImageBlob } from './utils/uploadImage';
 import GameGallery from './components/Games/GameGallery';
 import EpisodeList from './components/Spread/EpisodeList';
@@ -109,7 +108,6 @@ function App() {
               <Routes key={refreshKey}>
                 <Route path="/" element={<Home />} />
                 <Route path="/jokes" element={<JokeList />} />
-                <Route path="/jokes/:id" element={<ContentView type="joke" />} />
                 <Route
                   path="/doodles"
                   element={
@@ -119,13 +117,9 @@ function App() {
                     />
                   }
                 />
-                <Route path="/doodles/:id" element={<ContentView type="doodle" />} />
                 <Route path="/songs" element={<SongGallery />} />
-                <Route path="/songs/:id" element={<ContentView type="song" />} />
                 <Route path="/games" element={<GameGallery setShowGameModal={setShowGameModal} />} />
-                <Route path="/games/:id" element={<ContentView type="game" />} />
                 <Route path="/spread" element={<EpisodeList />} />
-                <Route path="/spread/:id" element={<ContentView type="episode" />} />
                 <Route path="/randomizer" element={<Randomizer />} />
                 <Route path="/admin" element={<AdminPanel />} />
               </Routes>
