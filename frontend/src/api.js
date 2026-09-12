@@ -22,22 +22,23 @@ api.interceptors.request.use((config) => {
 });
 
 // ─── Expired / invalid session recovery ──────────────────────
-// A stored token stops being accepted whenever it expires (7 days) or the
-// server's JWT secret changes. Previously the app kept sending that dead
-// token and every write failed with "Invalid token", with no way out short
-// of clearing browser storage by hand. Now the first rejected request clears
-// the dead session and tells the user to sign in again.
+// A stored token stops working when it expires (7 days), when the server's JWT
+// secret changes, or when it is missing entirely. Previously the app kept
+// using that dead session and every write failed with a bare 401, with no way
+// out short of clearing browser storage by hand. Now the first rejected write
+// clears the dead session and asks the user to sign in again.
+//
+// ANY 401 is treated as a dead session, not just the ones the server labels
+// "Invalid token". A missing token comes back as "No token provided" and an
+// expired one as "Invalid token" — matching only the latter left the app
+// showing an unexplained "Request failed with status code 401" with the UI
+// still believing the user was signed in.
 let sessionExpiredHandled = false;
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const status = error.response && error.response.status;
-    const body = (error.response && error.response.data) || {};
-    const message = typeof body === 'string' ? body : body.error || '';
-    const tokenRejected = status === 401 && /invalid token/i.test(message);
-
-    if (tokenRejected) {
+    if (error.response && error.response.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
 

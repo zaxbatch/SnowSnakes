@@ -222,6 +222,10 @@ const Header = ({
 
   const handleAddJoke = async (e) => {
     e.preventDefault();
+    if (!user) {
+      alert('Please log in before posting a joke.');
+      return;
+    }
     try {
       await api.post('/jokes', {
         content: jokeContent,
@@ -243,6 +247,12 @@ const Header = ({
 
   const handleAddDoodle = async (e) => {
     e.preventDefault();
+    // Checked here so a signed-out visitor gets told why rather than seeing a
+    // bare 401 from the server.
+    if (!user) {
+      alert('Please log in before uploading a doodle.');
+      return;
+    }
     if (!doodleImageUrl) {
       alert('Please upload an image first!');
       return;
@@ -269,6 +279,10 @@ const Header = ({
 
   const handleAddSong = async (e) => {
     e.preventDefault();
+    if (!user) {
+      alert('Please log in before posting a song.');
+      return;
+    }
     if (!songAudioUrl) {
       alert('Please upload an audio file first.');
       return;
