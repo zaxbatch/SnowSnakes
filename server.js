@@ -28,6 +28,41 @@ app.use('/api/random', require('./backend/routes/random'));
 app.use('/api/upload', require('./backend/routes/upload'));
 app.use('/api/stats', require('./backend/routes/stats'));
 
+// ─── Schema migrations on boot ────────────────────────
+// The files in backend/migrations are the record of how the schema has to
+// look. They are written to be idempotent (every change is guarded or purely
+// permissive), so running them on startup is safe and keeps a deploy from
+// shipping code that expects a shape the database does not have yet.
+//
+// This exists because the database cannot be reached from a command-line
+// script on this host: node aborts as soon as any async socket is opened, so
+// `node migrate.js` and a local psql are both unavailable. The long-running
+// server process has no such problem, so it applies them here instead.
+//
+// A failure is logged and never stops the server: a migration problem should
+// not take the whole site down, and the next boot will try again.
+const runMigrations = async () => {
+  const fs = require('fs');
+  const dir = path.join(__dirname, 'backend', 'migrations');
+  let files = [];
+  try {
+    files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
+  } catch (err) {
+    console.warn('⚠️ No migrations directory found, skipping:', err.message);
+    return;
+  }
+  const { pool } = require('./backend/config/db');
+  for (const file of files) {
+    try {
+      const sql = fs.readFileSync(path.join(dir, file), 'utf8');
+      await pool.query(sql);
+      console.log(`✅ Migration applied: ${file}`);
+    } catch (err) {
+      console.error(`⚠️ Migration failed (${file}): ${err.message}`);
+    }
+  }
+};
+
 // ─── Temporary: Test database connection ──────────────
 app.get('/api/test-db', async (req, res) => {
   try {
@@ -79,4 +114,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 API available at /api`);
   console.log(`🌐 ${process.env.NODE_ENV === 'production' ? 'Frontend served from /frontend/build' : 'Dev mode: use npm run dev'}`);
+  // Deliberately not awaited: the site starts serving immediately and the
+  // schema catches up alongside.
+  runMigrations();
 });
