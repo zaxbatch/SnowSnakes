@@ -13,6 +13,7 @@ const Header = ({
   doodleImageUrl, setDoodleImageUrl,
   doodleImagePreview, setDoodleImagePreview,
   onOpenDoodleMaker,
+  onDrawImage,
 }) => {
   const { user, logout, login, register } = useContext(AuthContext);
   const { deleteMode, setDeleteMode } = useDeleteMode();
@@ -650,7 +651,7 @@ const Header = ({
                     <button type="button" className="btn btn-primary" onClick={() => openWidget(setDoodleImageUrl, setDoodleImagePreview)}>
                       <i className="fas fa-upload"></i> Choose Image
                     </button>
-                    <button type="button" className="btn btn-warning" onClick={onOpenDoodleMaker}>
+                    <button type="button" className="btn btn-warning" onClick={() => onDrawImage((url) => { setDoodleImageUrl(url); setDoodleImagePreview(url); })}>
                       <i className="fas fa-paintbrush"></i> Or draw one
                     </button>
                     {doodleImagePreview && (
@@ -753,6 +754,9 @@ const Header = ({
                     <button type="button" className="btn btn-primary" onClick={() => openWidget(setSongCoverUrl, setSongCoverPreview)}>
                       <i className="fas fa-upload"></i> Choose Image
                     </button>
+                    <button type="button" className="btn btn-warning" onClick={() => onDrawImage((url) => { setSongCoverUrl(url); setSongCoverPreview(url); })}>
+                      <i className="fas fa-paintbrush"></i> Or draw one
+                    </button>
                     {songCoverPreview && (
                       <div style={{ position: 'relative', display: 'inline-block' }}>
                         <img src={songCoverPreview} alt="Cover preview" style={{ maxWidth: '100px', maxHeight: '100px', border: '3px solid #660099' }} />
@@ -798,6 +802,9 @@ const Header = ({
                       <button type="button" className="btn btn-primary" onClick={() => openWidget(setGameIconImageUrl, setGameIconImagePreview)}>
                         <i className="fas fa-upload"></i> Upload Image
                       </button>
+                      <button type="button" className="btn btn-warning" onClick={() => onDrawImage((url) => { setGameIconImageUrl(url); setGameIconImagePreview(url); })}>
+                        <i className="fas fa-paintbrush"></i> Draw One
+                      </button>
                       {gameIconImagePreview && (
                         <div style={{ position: 'relative', display: 'inline-block' }}>
                           <img src={gameIconImagePreview} alt="Icon" style={{ maxWidth: '50px', maxHeight: '50px', border: '2px solid #003399' }} />
@@ -805,7 +812,7 @@ const Header = ({
                         </div>
                       )}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>Choose an emoji or upload an image (max 10MB). Image will be displayed if uploaded.</div>
+                    <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>Choose an emoji, upload an image, or draw one in the Doodle Maker (max 10MB).</div>
                   </div>
                   <div className="form-group">
                     <label>🏷️ TAGS (comma separated)</label>

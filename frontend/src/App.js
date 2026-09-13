@@ -71,6 +71,10 @@ function App() {
   // The image it produces is shared with the form, so finishing a drawing
   // leaves the form ready to publish.
   const [doodleMakerOpen, setDoodleMakerOpen] = useState(false);
+  // When the maker is opened from a specific image field (a game thumbnail, a
+  // song cover, the doodle image) this records which one, so its output is
+  // handed back to that field instead of to the Add Doodle form.
+  const [doodleTarget, setDoodleTarget] = useState(null);
   const [doodleImageUrl, setDoodleImageUrl] = useState('');
   const [doodleImagePreview, setDoodleImagePreview] = useState('');
 
@@ -96,6 +100,12 @@ function App() {
                 doodleImagePreview={doodleImagePreview}
                 setDoodleImagePreview={setDoodleImagePreview}
                 onOpenDoodleMaker={() => { setShowDoodleModal(false); setDoodleMakerOpen(true); }}
+                onDrawImage={(target) => {
+                  // Keep the form open behind the maker: the picture is going
+                  // into a field the visitor is already filling in.
+                  setDoodleTarget(() => target);
+                  setDoodleMakerOpen(true);
+                }}
               />
               <Nav />
               <GlobalActionBar
@@ -130,9 +140,17 @@ function App() {
               onClose={() => setDoodleMakerOpen(false)}
               uploadImage={uploadImageBlob}
               onUseDoodle={(imageUrl) => {
+                setDoodleMakerOpen(false);
+                if (doodleTarget) {
+                  // Hand the drawing back to the field that asked for it and
+                  // leave the form as it was.
+                  doodleTarget(imageUrl);
+                  setDoodleTarget(null);
+                  return;
+                }
+                // Opened from the doodles page: fill the Add Doodle form.
                 setDoodleImageUrl(imageUrl);
                 setDoodleImagePreview(imageUrl);
-                setDoodleMakerOpen(false);
                 setShowDoodleModal(true);
               }}
             />
