@@ -5,6 +5,7 @@ The site is live at **https://snowsnakes.zerric.xyz**.
 - Netlify project: `snowsnakes-zerric`
 - Site ID: `fa925d98-3075-4b1c-959d-4e9845437867`
 - Netlify URL: https://snowsnakes-zerric.netlify.app
+- GitHub repo: `zaxbatch/SnowSnakes`, branch `main` (linked for push-to-deploy)
 - The accidental site in the other account was deleted.
 
 - React is built to `frontend/build` and served by Netlify's CDN.
@@ -91,7 +92,7 @@ Or use **Site configuration → Environment variables** in the Netlify UI.
 
 ## 3. Deploying
 
-### CLI (what was used for this deploy)
+### CLI (used for the initial deploy)
 
 ```bash
 cd snowSnakes
@@ -109,21 +110,20 @@ npx netlify-cli deploy --prod --build
 Netlify then bundles `netlify/functions/api.js` with esbuild. No Netlify Server
 entry may exist: if `netlify/server/` is added back, the build fails on this plan.
 
-### Git-connected deploys (recommended for ongoing work)
+### Git-connected deploys
 
-Netlify → **Site configuration → Build & deploy → Link repository** and choose
-`zaxbatch/SnowSnakes`, branch `main`. The settings come from `netlify.toml`:
+The site is linked to `zaxbatch/SnowSnakes`, branch `main`. Every push to
+`main` builds and deploys automatically. The first Git deploy was built from
+commit `44bf08c` and finished successfully.
+
+Settings come from `netlify.toml`:
 
 - Build command: `npm run build:netlify`
 - Publish directory: `frontend/build`
 - Functions directory: `netlify/functions`
 
-Once linked, every push to `main` builds and deploys automatically. Until then,
-use the CLI command above after changes.
-
-> **Before linking the repository, commit and push these changes.** GitHub's
-> `main` branch still contains the pre-Netlify version of the project. Linking
-> it now would build that older code and replace the working CLI deploy.
+To redeploy without a code change, use **Deploys → Trigger deploy** in the
+Netlify UI, or push an empty commit.
 
 ---
 
