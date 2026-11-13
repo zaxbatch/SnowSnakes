@@ -1,16 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const cloudinary = require('cloudinary').v2;
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const { cloudinary, isConfigured } = require('../config/cloudinary');
 
 // Generate upload signature (no auth for now)
 router.post('/signature', (req, res) => {
   try {
+    if (!isConfigured()) {
+      return res.status(500).json({ error: 'Cloudinary is not configured on the server.' });
+    }
     const timestamp = Math.round(new Date().getTime() / 1000);
     // MUST include upload_preset in the signed parameters
     const params = {

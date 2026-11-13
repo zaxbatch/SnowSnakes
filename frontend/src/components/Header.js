@@ -312,8 +312,30 @@ const Header = ({
 
   // ─── Game ───────────────────────────────────────────────
 
+  // Keep these in step with GAME_MAX_FILE_BYTES / GAME_MAX_TOTAL_BYTES on the
+  // server. Netlify Functions buffer the whole multipart body (6 MB, and
+  // base64 adds ~33%), so 4 MB is the safe limit for the free-plan adapter.
+  const GAME_MAX_FILE_BYTES = 4 * 1000 * 1000;
+  const GAME_MAX_TOTAL_BYTES = 4 * 1000 * 1000;
+
   const handleGameFileChange = (e) => {
     const files = Array.from(e.target.files);
+    const tooLarge = files.filter(f => f.size > GAME_MAX_FILE_BYTES);
+    if (tooLarge.length > 0) {
+      alert(`These files are over 4 MB each and cannot be uploaded:\n\n${tooLarge.map(f => f.name).join('\n')}`);
+      e.target.value = '';
+      setGameFiles([]);
+      setGameFilesList([]);
+      return;
+    }
+    const total = files.reduce((sum, f) => sum + f.size, 0);
+    if (total > GAME_MAX_TOTAL_BYTES) {
+      alert(`This game is ${(total / (1000 * 1000)).toFixed(1)} MB. The limit is 4 MB per game through the Netlify Function.`);
+      e.target.value = '';
+      setGameFiles([]);
+      setGameFilesList([]);
+      return;
+    }
     setGameFiles(files);
     setGameFilesList(files.map(f => f.name));
   };
@@ -347,8 +369,8 @@ const Header = ({
       formData.append('description', gameDescription);
       formData.append('icon', gameIconImageUrl || gameIconEmoji);
       formData.append('tags', gameTags);
-      // Encode pasted code as base64 so Hostinger's edge WAF doesn't flag
-      // HTML-form-looking content (it blocks raw <input>/<select>/<script>
+      // Encode pasted code as base64 so intermediary firewalls don't flag
+      // HTML-form-looking content (some proxies block raw <input>/<select>/<script>
       // bodies with 403 Forbidden before the request reaches the server).
       formData.append('code', btoa(unescape(encodeURIComponent(gameCode))));
       formData.append('code_encoding', 'base64');
@@ -873,6 +895,8 @@ const Header = ({
                   </div>
                   <div style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '4px' }}>
                     Supported: HTML, JS, CSS, PNG, JPG, GIF, MP3, MP4, and more.
+                    Max 4 MB per file and 4 MB per game on the free-plan Netlify Function.
+                    Files are stored on Cloudinary, so they survive redeploys.
                   </div>
                 </div>
 

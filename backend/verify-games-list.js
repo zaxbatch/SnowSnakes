@@ -2,8 +2,8 @@
 // payload reduction, by comparing the two column lists on the same rows.
 const { pool } = require('./config/db');
 
-// Mirrors Game.findAllForList. Note: no `files` column exists in production,
-// only `file_count`.
+// Mirrors Game.findAllForList. `files` and `entry_html` are intentionally
+// omitted from list responses; `file_count` is enough for the gallery badge.
 const LIST_COLUMNS = `g.id, g.title, g.description, g.icon, g.tags, g.author_id, g.type,
                       g.votes, g.plays, g.file_count, g.created_at, g.shares, g.likes`;
 

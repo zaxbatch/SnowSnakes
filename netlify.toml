@@ -1,0 +1,76 @@
+# Netlify configuration for SnowSnakes.
+#
+# The React app is built to static files and served by Netlify's CDN. The
+# Express API runs as a Netlify Function (netlify/functions/api.js) wrapped by
+# serverless-http. A Netlify Server would fit the app better but is only
+# available on credit-based plans, so this uses the free-plan-compatible
+# Function adapter.
+
+[build]
+  command = "npm run build:netlify"
+  publish = "frontend/build"
+  functions = "netlify/functions"
+
+[build.environment]
+  # Node 24 is supported by Netlify's build image and the function runtime.
+  NODE_VERSION = "24"
+  # CRA turns lint warnings into build failures when CI=true. Keep the build
+  # tolerant while still allowing real compile errors to fail it.
+  CI = "false"
+
+[functions]
+  node_bundler = "esbuild"
+
+# ─── API ───────────────────────────────────────────────
+# This rewrite must come before any SPA rewrite so /api/* never falls through
+# to index.html.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# ─── SPA deep links ─────────────────────────────────────
+# BrowserRouter routes. Add a rule here when a new top-level route is added to
+# frontend/src/App.js.
+[[redirects]]
+  from = "/jokes"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/doodles"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/songs"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/games"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/spread"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/randomizer"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/index.html"
+  status = 200
+
+# ─── Caching ───────────────────────────────────────────
+# Create React App fingerprints filenames under /static, so these can be
+# cached forever.
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

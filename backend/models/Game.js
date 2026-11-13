@@ -12,9 +12,9 @@ class Game {
   }
 
   // ─── Find all WITHOUT the game source (for list/gallery views) ───
-  // Everything the gallery renders, minus the multi-megabyte `code` column.
-  // Note: production's games table has no `files` column (only `file_count`),
-  // so the badge count comes from file_count rather than a files array.
+  // Everything the gallery renders, minus the multi-megabyte `code` and
+  // `entry_html` columns. The badge count comes from file_count, so the
+  // Cloudinary manifest does not need to be sent to every visitor.
   static async findAllForList({ search, sort } = {}) {
     return this._find({
       search,
@@ -60,11 +60,34 @@ class Game {
   }
 
   // ─── Create ──────────────────────────────────────────────
-  static async create({ title, description, icon, tags, author_id, type = 'user', code = '', file_count = 0 }) {
+  static async create({
+    title, description, icon, tags, author_id, type = 'user',
+    code = '', file_count = 0, files = [], entry_html = null,
+  }) {
     const result = await pool.query(
-      `INSERT INTO games (title, description, icon, tags, author_id, type, code, file_count, votes, plays)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, 0) RETURNING *`,
-      [title, description, icon || '🎮', tags || [], author_id, type, code || '', file_count]
+      `INSERT INTO games
+         (title, description, icon, tags, author_id, type, code, file_count, files, entry_html, votes, plays)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, 0, 0)
+       RETURNING *`,
+      [
+        title, description, icon || '🎮', tags || [], author_id, type,
+        code || '', file_count, JSON.stringify(files || []), entry_html,
+      ]
+    );
+    return result.rows[0];
+  }
+
+  // Records the Cloudinary manifest and the entry HTML after the files have
+  // been uploaded. Kept separate from create() because the Cloudinary public
+  // ids include the game id, which only exists after the row is inserted.
+  static async setFiles(id, files, entryHtml = null) {
+    const manifest = files || [];
+    const result = await pool.query(
+      `UPDATE games
+          SET files = $2::jsonb, entry_html = $3, file_count = $4
+        WHERE id = $1
+        RETURNING *`,
+      [id, JSON.stringify(manifest), entryHtml, manifest.length]
     );
     return result.rows[0];
   }

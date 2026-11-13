@@ -1,17 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const cloudinary = require('cloudinary').v2;
+const { cloudinary } = require('../config/cloudinary');
 const Song = require('../models/Song');
 const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
 const optionalAuth = require('../middleware/optionalAuth');
 const admin = require('../middleware/admin');
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 // Uploaded files are served by Cloudinary, so deleting a song should delete
 // its mp3 and cover too — otherwise orphans accumulate against the account

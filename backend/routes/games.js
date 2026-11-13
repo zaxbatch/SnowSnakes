@@ -3,38 +3,40 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const Game = require('../models/Game');
 const Interaction = require('../services/interaction');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
-// Populates req.user when a valid token is present but never rejects anonymous
-// requests: games may be posted by guests, and anyone can share a link.
 const optionalAuth = require('../middleware/optionalAuth');
+const {
+  ALLOWED_EXTENSIONS,
+  MAX_FILE_BYTES,
+  uploadGameFiles,
+  deleteGameAssets,
+  buildLaunchHtml,
+} = require('../services/gameAssets');
 
 // ─── File upload config ──────────────────────────────────
+// /tmp is writable on both a normal Node process and a Netlify Function
+// instance. Files only stay here while they are uploaded to Cloudinary.
+const TEMP_DIR = path.join(os.tmpdir(), 'snowsnakes-games');
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../uploads/games/temp');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
+    if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
+    cb(null, TEMP_DIR);
   },
   filename: (req, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
     cb(null, 'game-' + unique + ext);
-  }
+  },
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedExts = [
-    '.html', '.htm', '.js', '.css', '.json', '.txt',
-    '.png', '.jpg', '.jpeg', '.gif', '.webp',
-    '.mp3', '.wav', '.mp4', '.webm', '.wasm', '.zip'
-  ];
   const ext = path.extname(file.originalname).toLowerCase();
-  if (allowedExts.includes(ext)) {
+  if (ALLOWED_EXTENSIONS.includes(ext)) {
     cb(null, true);
   } else {
     const err = new Error('File type not allowed: ' + file.originalname);
@@ -47,33 +49,42 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 50 * 1024 * 1024, // per-file
-    files: 100,                 // max number of files
-    fieldSize: 50 * 1024 * 1024 // pasted code can be a full HTML game (>1MB default!)
-  }
+    fileSize: MAX_FILE_BYTES,
+    files: 100, // max number of files
+    fieldSize: 50 * 1024 * 1024, // pasted code can be a full HTML game (>1MB default!)
+  },
 });
 
 // ─── Helpers ──────────────────────────────────────────────
-const moveFilesToGameFolder = (gameId, files) => {
-  const tempFolder = path.join(__dirname, '../uploads/games/temp');
-  const gameFolder = path.join(__dirname, '../uploads/games', String(gameId));
-  if (!fs.existsSync(gameFolder)) fs.mkdirSync(gameFolder, { recursive: true });
-  const moved = [];
-  for (const file of files) {
-    const src = path.join(tempFolder, file.filename);
-    const dest = path.join(gameFolder, file.filename);
-    if (fs.existsSync(src)) { fs.renameSync(src, dest); moved.push(file.filename); }
-  }
-  return moved;
-};
-
 const cleanupTempFiles = (files) => {
   if (!files) return;
   for (const f of files) {
-    const filePath = path.join(__dirname, '../uploads/games/temp', f.filename);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (!f || !f.path) continue;
+    try {
+      if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+    } catch (err) {
+      console.error('⚠️ Could not remove temporary upload:', err.message);
+    }
   }
 };
+
+const parseStoredFiles = (value) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+const escapeHtml = (value) =>
+  String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]));
 
 // ─── Routes ──────────────────────────────────────────────
 
@@ -81,10 +92,10 @@ const cleanupTempFiles = (files) => {
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const { search, sort } = req.query;
-    // findAllForList omits the `code` column: one game here carries 5.3 MB of
-    // pasted source, and the gallery never renders it, so including it made
-    // every visit to /games download ~5.4 MB. The full row is still used by
-    // the single-game and launch endpoints.
+    // findAllForList omits `code` and `entry_html`: one game here carries
+    // 5.3 MB of pasted source, and the gallery never renders it, so including
+    // it made every visit to /games download ~5.4 MB. The full row is still
+    // used by the single-game and launch endpoints.
     const games = await Game.findAllForList({ search, sort });
     // One query for all comments and one for like status, instead of
     // two round trips per game.
@@ -129,19 +140,21 @@ router.get('/:id', optionalAuth, async (req, res) => {
   }
 });
 
-// POST a new game (with file upload)
+// POST a new game (with optional file upload)
 router.post('/', optionalAuth, upload.array('files', 100), async (req, res) => {
+  const files = req.files || [];
+  let game = null;
+  let uploadedAssets = null;
   try {
     const { title, description, icon, tags, type, code, code_encoding } = req.body;
     const author_id = req.user ? req.user.id : null;
 
     if (!title || !description) {
-      cleanupTempFiles(req.files);
       return res.status(400).json({ error: 'Title and description are required' });
     }
 
-    // Decode base64-transported code (frontend encodes pasted HTML/JS so
-    // Hostinger's edge WAF doesn't 403 the multipart body).
+    // Decode base64-transported code. The frontend still encodes pasted
+    // HTML/JS so intermediary firewalls don't reject the multipart body.
     let finalCode = code || '';
     if (code_encoding === 'base64' && finalCode) {
       try {
@@ -151,27 +164,50 @@ router.post('/', optionalAuth, upload.array('files', 100), async (req, res) => {
       }
     }
 
-    const game = await Game.create({
+    game = await Game.create({
       title,
       description,
       icon: icon || '🎮',
-      tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
       author_id,
       type: type || 'user',
       code: finalCode,
-      file_count: req.files ? req.files.length : 0,
+      file_count: 0,
     });
 
-    let movedFiles = [];
-    if (req.files && req.files.length > 0) {
-      movedFiles = moveFilesToGameFolder(game.id, req.files);
+    if (files.length > 0) {
+      const paths = Array.isArray(req.body.paths)
+        ? req.body.paths
+        : req.body.paths
+          ? [req.body.paths]
+          : [];
+      uploadedAssets = await uploadGameFiles(game.id, files, paths);
+      game = await Game.setFiles(game.id, uploadedAssets.files, uploadedAssets.entryHtml) || game;
     }
 
-    res.status(201).json({ ...game, uploadedFiles: movedFiles });
+    res.status(201).json({
+      ...game,
+      files: uploadedAssets ? uploadedAssets.files : [],
+      file_count: uploadedAssets ? uploadedAssets.files.length : 0,
+      uploadedFiles: uploadedAssets ? uploadedAssets.files.map((f) => f.path) : [],
+    });
   } catch (err) {
     console.error('Game creation error:', err);
-    cleanupTempFiles(req.files);
-    res.status(500).json({ error: err.message });
+    if (uploadedAssets) {
+      await deleteGameAssets(uploadedAssets.files).catch((cleanupErr) => {
+        console.error('⚠️ Could not clean up Cloudinary game assets:', cleanupErr.message);
+      });
+    }
+    if (game) {
+      await Game.delete(game.id).catch((cleanupErr) => {
+        console.error('⚠️ Could not remove the incomplete game row:', cleanupErr.message);
+      });
+    }
+    if (!res.headersSent) {
+      res.status(err.status || 500).json({ error: err.message });
+    }
+  } finally {
+    cleanupTempFiles(files);
   }
 });
 
@@ -181,30 +217,39 @@ router.get('/:id/launch', async (req, res) => {
     const game = await Game.findById(req.params.id);
     if (!game) return res.status(404).send('Game not found');
 
-    // 1️⃣ If there are uploaded local files, serve index.html
-    const gameFolder = path.join(__dirname, '../uploads/games', String(game.id));
-    if (game.file_count > 0 && fs.existsSync(gameFolder)) {
-      const files = fs.readdirSync(gameFolder);
-      let htmlFile = files.find(f => f.toLowerCase() === 'index.html') ||
-                     files.find(f => f.endsWith('.html') || f.endsWith('.htm'));
-      if (htmlFile) {
-        return res.sendFile(path.join(gameFolder, htmlFile));
+    // 1️⃣ Uploaded files now live in Cloudinary. The entry HTML is stored in
+    // Postgres so it can be served with the right Content-Type and a <base>
+    // tag; Cloudinary delivers raw HTML as an attachment.
+    const storedFiles = parseStoredFiles(game.files);
+    if (storedFiles.length > 0) {
+      if (!game.entry_html) {
+        return res.status(404).send('This game has files but no HTML entry file to launch.');
       }
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      return res.send(buildLaunchHtml(game.entry_html, storedFiles, game.id));
     }
 
-    // 2️⃣ If there's pasted code, serve it with improved handling
+    // 2️⃣ A game from the old host whose files were on the Hostinger disk.
+    if (Number(game.file_count) > 0) {
+      return res.status(410).send(
+        'This game’s files were stored on the previous host and need to be re-uploaded to Cloudinary.'
+      );
+    }
+
+    // 3️⃣ If there's pasted code, serve it.
     if (game.code && game.code.trim()) {
       const trimmed = game.code.trim();
+      const safeTitle = escapeHtml(game.title);
       let html;
 
-      // 2a. If it looks like HTML (starts with '<'), inject it directly
+      // 3a. If it looks like HTML (starts with '<'), inject it directly
       if (trimmed.startsWith('<')) {
         html = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>${game.title}</title>
+  <title>${safeTitle}</title>
   <style>
     body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a2a3a; font-family: sans-serif; }
     #game-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
@@ -218,13 +263,13 @@ router.get('/:id/launch', async (req, res) => {
 </html>
         `;
       } else {
-        // 2b. Otherwise treat as JavaScript with auto‑execution
+        // 3b. Otherwise treat as JavaScript with auto‑execution
         html = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>${game.title}</title>
+  <title>${safeTitle}</title>
   <style>
     body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a2a3a; color: #fff; font-family: sans-serif; }
     #game-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
@@ -276,12 +321,11 @@ router.get('/:id/launch', async (req, res) => {
         `;
       }
 
-      // ✅ Explicitly set content type to HTML
-      res.set('Content-Type', 'text/html');
+      res.set('Content-Type', 'text/html; charset=utf-8');
       return res.send(html);
     }
 
-    // 3️⃣ No content at all
+    // 4️⃣ No content at all
     res.status(404).send('No game content found (no files and no code).');
   } catch (err) {
     console.error('Launch error:', err);
@@ -314,11 +358,16 @@ router.post('/:id/play', async (req, res) => {
 // ─── Delete game ──────────────────────────────────────────
 router.delete('/:id', auth, admin, async (req, res) => {
   try {
-    const game = await Game.delete(req.params.id);
+    const game = await Game.findById(req.params.id);
     if (!game) return res.status(404).json({ error: 'Not found' });
-    const folder = path.join(__dirname, '../uploads/games', String(req.params.id));
-    if (fs.existsSync(folder)) fs.rmSync(folder, { recursive: true, force: true });
+    await Game.delete(req.params.id);
     res.json({ success: true });
+
+    // Storage cleanup after responding, so a slow Cloudinary call cannot
+    // delay the UI.
+    deleteGameAssets(parseStoredFiles(game.files)).catch((err) => {
+      console.error('⚠️ Could not remove Cloudinary game assets:', err.message);
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
